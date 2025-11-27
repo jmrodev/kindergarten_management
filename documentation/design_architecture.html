@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diseño, Interfaces y Arquitectura - Guía de Jardín de Infantes</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; background-color: #f4f4f4; color: #333; }
+        h1, h2, h3 { color: #0056b3; }
+        nav ul { list-style: none; padding: 0; }
+        nav ul li { display: inline; margin-right: 20px; }
+        nav ul li a { text-decoration: none; color: #007bff; }
+        nav ul li a:hover { text-decoration: underline; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Diseño, Interfaces y Arquitectura</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="project_management.html">Administración del Proyecto</a></li>
+                <li><a href="business_analysis.html">Análisis de Negocio</a></li>
+                <li><a href="design_architecture.html">Diseño y Arquitectura</a></li>
+                <li><a href="data_modeling.html">Modelado de Datos y Procesos</a></li>
+                <li><a href="testing.html">Pruebas</a></li>
+                <li><a href="entity_relationship_diagram.html">Diagrama Entidad-Relación</a></li>
+            </ul>
+            <div class="language-switcher">
+                <a href="design_architecture.html" class="active">ES</a> | <a href="design_architecture_en.html">EN</a>
+            </div>
+        </nav>
+        <hr>
+        <h2>Arquitectura General del Sistema</h2>
+        <p>Se propone una arquitectura de tres capas para el sistema de administración de direcciones:</p>
+        <ul>
+            <li><strong>Capa de Presentación (Frontend):</strong> Interfaz de usuario (Web o Desktop) para la interacción con el sistema.</li>
+            <li><strong>Capa de Lógica de Negocio (Backend):</strong> Contiene la lógica principal del negocio, validaciones y coordinación de operaciones.</li>
+            <li><strong>Capa de Acceso a Datos:</strong> Encargada de la persistencia y recuperación de datos de la base de datos.</li>
+        </ul>
+        <p>Considerar el uso de una arquitectura de microservicios si la complejidad y escalabilidad futura lo justifican, aunque para un proyecto inicial monolítico puede ser suficiente.</p>
+
+        <h2>Diseño de Interfaces de Usuario (UI/UX)</h2>
+        <p>Las interfaces deben ser intuitivas, fáciles de usar y accesibles para el personal del jardín de infantes.</p>
+        <ul>
+            <li><strong>Wireframes y Mockups:</strong> Crear diseños visuales de las pantallas principales (ej. listado de alumnos, formulario de registro, perfil de contacto).</li>
+            <li><strong>Consistencia:</strong> Mantener un diseño consistente en toda la aplicación (colores, fuentes, disposición de elementos).</li>
+            <li><strong>Usabilidad:</strong> Priorizar la facilidad de navegación y la reducción de pasos para tareas comunes.</li>
+        </ul>
+
+        <h2>Diseño de Datos</h2>
+        <p>Para el detalle del modelado de datos y el diagrama Entidad-Relación, por favor, consulte la sección dedicada: <a href="entity_relationship_diagram.html">Diagrama Entidad-Relación</a>.</p>
+
+        <h2>Herramientas, Frameworks y Librerías</h2>
+        <p>Selección de tecnologías adecuadas para el desarrollo.</p>
+        <ul>
+            <li><strong>Frontend:</strong> React, Angular, Vue.js (para web) o Flutter, React Native (para móvil/multiplataforma).</li>
+            <li><strong>Backend:</strong> Node.js (Express), Python (Django/Flask/FastAPI), Java (Spring Boot), .NET.</li>
+            <li><strong>Base de Datos:</strong> PostgreSQL, MySQL (relacionales) o MongoDB (NoSQL, si aplica).</li>
+            <li><strong>Control de Versiones:</strong> Git.</li>
+            <li><strong>Herramientas de Diseño:</strong> Figma, Adobe XD, Balsamiq.</li>
+        </ul>
+
+        <h2>Documentación de API (si aplica)</h2>
+        <p>Si el sistema expone una API, documentarla utilizando estándares como OpenAPI/Swagger para facilitar la integración y el mantenimiento.</p>
+        <p><em>Ejemplos de Endpoints:</em></p>
+        <ul>
+            <li><code>GET /api/alumnos</code>: Obtener listado de alumnos.</li>
+            <li><code>POST /api/alumnos</code>: Registrar nuevo alumno.</li>
+            <li><code>GET /api/alumnos/{id}</code>: Obtener detalles de un alumno.</li>
+            <li><code>PUT /api/alumnos/{id}</code>: Actualizar información de un alumno.</li>
+        </ul>
+    </div>
+</body>
+</html>

@@ -1,0 +1,43 @@
+graph TD
+    A[Administración del Proyecto] --> B(Metodología de Trabajo)
+    A --> C(Planificación)
+    A --> D(Control de Versiones)
+
+    B --> B1[Metodología Ágil]
+    B1 --> B1_1(Scrum o Kanban)
+    B1 --> B1_2(Roles)
+    B1 --> B1_3(Eventos)
+    B1 --> B1_4(Artefactos)
+
+    B1_2 --> B1_2_1[Product Owner]
+    B1_2 --> B1_2_2[Scrum Master]
+    B1_2 --> B1_2_3[Equipo de Desarrollo]
+
+    B1_3 --> B1_3_1[Sprints]
+    B1_3 --> B1_3_2[Planificación de Sprint]
+    B1_3 --> B1_3_3[Daily Scrum]
+    B1_3 --> B1_3_4[Revisión de Sprint]
+    B1_3 --> B1_3_5[Retrospectiva de Sprint]
+
+    B1_4 --> B1_4_1[Product Backlog]
+    B1_4 --> B1_4_2[Sprint Backlog]
+    B1_4 --> B1_4_3[Incremento]
+
+    C --> C1[Diagrama de Gantt / PERT]
+    C --> C2[Tareas Clave]
+
+    C2 --> C2_1[Recopilación de requisitos iniciales]
+    C2 --> C2_2[Diseño de la base de datos]
+    C2 --> C2_3[Desarrollo del módulo de gestión de alumnos]
+    C2 --> C2_4[Implementación de la autenticación de usuarios]
+    C2 --> C2_5[Pruebas de integración]
+    C2 --> C2_6[Despliegue inicial]
+
+    D --> D1[Sistema de Control de Versiones: Git]
+    D --> D2[Flujo de Trabajo Basado en Ramas]
+
+    D2 --> D2_1[Rama `main` o `master`]
+    D2 --> D2_2[Ramas `develop`]
+    D2 --> D2_3[Ramas de `feature`]
+    D2 --> D2_4[Ramas de `hotfix`]
+    D2 --> D2_5[Commits claros y descriptivos]

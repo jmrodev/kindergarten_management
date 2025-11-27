@@ -1,0 +1,23 @@
+graph TD
+    A[Pruebas] --> B(Estrategia de Pruebas)
+    A --> C(Desarrollo Guiado por Pruebas TDD)
+    A --> D(Herramientas de Pruebas)
+    A --> E(Entorno de Pruebas)
+
+    B --> B1[Pruebas Unitarias]
+    B --> B2[Pruebas de Integración]
+    B --> B3[Pruebas de Sistema]
+    B --> B4[Pruebas de Aceptación de Usuario UAT]
+
+    D --> D1[Unitarias/Integración]
+    D --> D2[API End-to-End]
+    D --> D3[UI/E2E]
+
+    D1 --> D1_1[JUnit, Pytest, Jest, PHPUnit]
+    D2 --> D2_1[Postman, Insomnia, Hurl]
+    D3 --> D3_1[Selenium, Cypress, Playwright]
+
+    E --> E1[Entorno aislado]
+    E --> E2[Base de datos de pruebas separada]
+    E --> E3[Datos de prueba anonimizados/generados]
+    E --> E4[Automatización del despliegue]

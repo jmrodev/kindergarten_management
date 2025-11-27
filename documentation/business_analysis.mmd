@@ -1,0 +1,35 @@
+graph TD
+    A --> B(System Actors)
+    A --> C(Project Scope)
+    A --> D(Use Cases and Acceptance Criteria)
+    A --> E(Current Processes and Problems)
+
+    B --> B1[Kindergarten Administrator]
+    B --> B2[Secretary]
+    B --> B3[Teacher]
+    B --> B4[Parent/Guardian]
+
+    C --> C_INC[Includes]
+    C --> C_EXC[Excludes]
+
+    C_INC --> CI1[Student Management]
+    C_INC --> CI2[Parent/Guardian Management]
+    C_INC --> CI3[Staff Management]
+    C_INC --> CI4[Search and Filtering]
+    C_INC --> CI5[List Generation]
+    C_INC --> CI6[Classroom Management]
+    C_INC --> CI7[Attendance and Calendar Management]
+    C_INC --> CI8[Internal Communication]
+
+    CI8 --> CI8_1[Parents with Classroom Staff]
+    CI8 --> CI8_2[Among all Staff]
+
+    C_EXC --> CE1[Financial Management]
+
+    D --> D1[Register New Student]
+    D --> D2[Acceptance Criteria]
+    D --> D3[Gherkin Scenario]
+
+    E --> E1[Dispersed Information]
+    E --> E2[Difficulty finding addresses]
+    E --> E3[Manual and error-prone process]

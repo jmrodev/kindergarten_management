@@ -1,0 +1,159 @@
+erDiagram
+    address {
+        BIGINT id PK
+        TEXT street
+        TEXT number
+        TEXT city
+        TEXT state
+        TEXT postal_code_optional
+    }
+
+    emergency_contact {
+        BIGINT id PK
+        TEXT full_name
+        TEXT relationship
+        TEXT phone
+    }
+
+    classroom {
+        BIGINT id PK
+        TEXT name
+        INT capacity
+    }
+
+    access_level {
+        BIGINT id PK
+        TEXT access_name
+        TEXT description
+    }
+
+    role {
+        BIGINT id PK
+        TEXT role_name
+        BIGINT access_level_id FK
+    }
+
+    staff {
+        BIGINT id PK
+        TEXT first_name
+        TEXT middle_name_optional
+        TEXT paternal_surname
+        TEXT maternal_surname
+        TEXT preferred_surname
+        BIGINT address_id FK
+        TEXT phone
+        TEXT email_optional
+        BIGINT classroom_id FK
+        BIGINT role_id FK
+    }
+
+    student {
+        BIGINT id PK
+        TEXT first_name
+        TEXT middle_name_optional
+        TEXT paternal_surname
+        TEXT maternal_surname
+        TEXT preferred_surname
+        TEXT nickname_optional
+        DATE birth_date
+        BIGINT address_id FK
+        BIGINT emergency_contact_id FK
+        BIGINT classroom_id FK
+        TEXT shift
+    }
+
+    guardian {
+        BIGINT id PK
+        TEXT first_name
+        TEXT middle_name_optional
+        TEXT paternal_surname
+        TEXT maternal_surname
+        TEXT preferred_surname
+        TEXT relationship
+        BIGINT address_id FK
+        TEXT phone
+        TEXT email_optional
+        BOOLEAN authorized_pickup
+        BOOLEAN authorized_change
+    }
+
+    attendance {
+        BIGINT id PK
+        BIGINT student_id FK
+        DATE date
+        TEXT status
+        TEXT leave_type_optional
+        BIGINT classroom_id FK
+    }
+
+    calendar {
+        BIGINT id PK
+        DATE date
+        TEXT description
+        TEXT event_type
+        BIGINT classroom_id FK
+    }
+
+    activity {
+        BIGINT id PK
+        TEXT name
+        TEXT description_optional
+        TEXT schedule_optional
+        BIGINT teacher_id FK
+    }
+
+    conversation {
+        BIGINT id PK
+        BIGINT classroom_id FK
+        TIMESTAMP creation_date
+    }
+
+    conversation_guardian {
+        BIGINT conversation_id PK,FK
+        BIGINT guardian_id PK,FK
+    }
+
+    conversation_staff {
+        BIGINT conversation_id PK,FK
+        BIGINT staff_id PK,FK
+    }
+
+    guardian_message {
+        BIGINT id PK
+        BIGINT conversation_id FK
+        BIGINT sender_guardian_id FK
+        TEXT content
+        TIMESTAMP send_date
+        BOOLEAN read
+    }
+
+    staff_message {
+        BIGINT id PK
+        BIGINT conversation_id FK
+        BIGINT sender_staff_id FK
+        TEXT content
+        TIMESTAMP send_date
+        BOOLEAN read
+    }
+
+    student ||--o{ address : "has a"
+    student ||--o{ emergency_contact : "has an"
+    student ||--|{ classroom : "belongs to"
+    guardian ||--o{ address : "has a"
+    staff ||--o{ address : "has a"
+    staff }|--o{ classroom : "assigned to"
+    staff }|--o{ role : "has a"
+    role }|--o{ access_level : "has an"
+    attendance ||--|{ student : "records"
+    attendance ||--|{ classroom : "in"
+    calendar }|--o{ classroom : "associated with"
+    activity }|--o{ staff : "in charge of"
+    conversation }o--o{ classroom : "associated with"
+    conversation_guardian ||--|{ conversation : "participates in"
+    conversation_guardian }o--o{ guardian : "is a"
+    conversation_staff ||--|{ conversation : "participates in"
+    conversation_staff }o--o{ staff : "is a"
+    guardian_message ||--|{ conversation : "part of"
+    guardian_message }o--o{ guardian : "sent by"
+    staff_message ||--|{ conversation : "part of"
+    staff_message }o--o{ staff : "sent by"

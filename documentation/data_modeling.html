@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelado de Datos y Procesos - Guía de Jardín de Infantes</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; background-color: #f4f4f4; color: #333; }
+        h1, h2, h3 { color: #0056b3; }
+        nav ul { list-style: none; padding: 0; }
+        nav ul li { display: inline; margin-right: 20px; }
+        nav ul li a { text-decoration: none; color: #007bff; }
+        nav ul li a:hover { text-decoration: underline; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Modelado de Datos y Procesos</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="project_management.html">Administración del Proyecto</a></li>
+                <li><a href="business_analysis.html">Análisis de Negocio</a></li>
+                <li><a href="design_architecture.html">Diseño y Arquitectura</a></li>
+                <li><a href="data_modeling.html">Modelado de Datos y Procesos</a></li>
+                <li><a href="testing.html">Pruebas</a></li>
+                <li><a href="entity_relationship_diagram.html">Diagrama Entidad-Relación</a></li>
+            </ul>
+            <div class="language-switcher">
+                <a href="data_modeling.html" class="active">ES</a> | <a href="data_modeling_en.html">EN</a>
+            </div>
+        </nav>
+        <hr>
+        <h2>Casos de Uso Detallados</h2>
+        <p>Ampliación de los casos de uso identificados en la fase de análisis de negocio, incluyendo flujos alternativos y excepciones.</p>
+        <p><em>Ejemplo:</em></p>
+        <ul>
+            <li><strong>Caso de Uso:</strong> Actualizar Dirección de Alumno.</li>
+            <li><strong>Actor:</strong> Secretaria/o.</li>
+            <li><strong>Precondición:</strong> El alumno existe en el sistema.</li>
+            <li><strong>Flujo Principal:</strong>
+                <ol>
+                    <li>Secretaria/o busca al alumno por nombre o ID.</li>
+                    <li>Sistema muestra los datos del alumno, incluyendo la dirección actual.</li>
+                    <li>Secretaria/o edita los campos de la dirección.</li>
+                    <li>Secretaria/o guarda los cambios.</li>
+                    <li>Sistema valida los datos y actualiza la dirección.</li>
+                    <li>Sistema confirma la actualización exitosa.</li>
+                </ol>
+            </li>
+            <li><strong>Flujo Alternativo:</strong> Datos de dirección inválidos.</li>
+            <li><strong>Postcondición:</strong> La dirección del alumno ha sido actualizada en la base de datos.</li>
+        </ul>
+
+        <p><em>Ejemplo:</em></p>
+        <ul>
+            <li><strong>Caso de Uso:</strong> Registrar Nuevo Alumno.</li>
+            <li><strong>Actor:</strong> Secretaria/o, Administrador del Jardín.</li>
+            <li><strong>Precondición:</strong> El usuario ha iniciado sesión y tiene permisos para registrar alumnos.</li>
+            <li><strong>Flujo Principal:</strong>
+                <ol>
+                    <li>Usuario navega a la sección de registro de alumnos.</li>
+                    <li>Sistema presenta el formulario de registro de alumnos.</li>
+                    <li>Usuario ingresa los datos obligatorios del alumno (nombre, segundo nombre, alias, apellido materno, apellido paterno, fecha de nacimiento, sala, turno).</li>
+                    <li>Usuario ingresa la información de al menos un padre/tutor (nombre, apellido materno, apellido paterno, relación, teléfono, email, autorizado para retiro, autorizado para cambiado).</li>
+                    <li>Usuario ingresa la dirección principal del alumno.</li>
+                    <li>Usuario guarda el registro.</li>
+                    <li>Sistema valida los datos ingresados.</li>
+                    <li>Sistema crea el nuevo registro de alumno, padre/tutor y dirección en la base de datos.</li>
+                    <li>Sistema confirma el registro exitoso y muestra el alumno en el listado.</li>
+                </ol>
+            </li>
+            <li><strong>Flujo Alternativo:</strong> Datos obligatorios faltantes o inválidos.
+                <ol>
+                    <li>Sistema detecta datos faltantes o inválidos.</li>
+                    <li>Sistema muestra mensajes de error indicando los campos a corregir.</li>
+                    <li>Usuario corrige los datos y reintenta guardar.</li>
+                </ol>
+            </li>
+            <li><strong>Postcondición:</strong> Un nuevo alumno, con su padre/tutor asociado y dirección, ha sido registrado exitosamente en el sistema.</li>
+        </ul>
+
+        <h2>Diagramas de Actividad</h2>
+        <p>Representación gráfica de los flujos de trabajo y las secuencias de acciones dentro del sistema.</p>
+        <p><em>Ejemplo: Diagrama de Actividad para "Registrar Nuevo Alumno"</em></p>
+        <ul>
+            <li>Inicio -> Ingresar Datos Alumno -> Validar Datos -> (Si Válido) -> Guardar Alumno -> Fin.</li>
+            <li>(Si No Válido) -> Mostrar Mensaje de Error -> Fin.</li>
+        </ul>
+
+        <h2>Diagrama de Contexto</h2>
+        <p>Visualización del sistema central y sus interacciones con entidades externas.</p>
+        <p><em>Entidades Externas:</em></p>
+        <ul>
+            <li>Usuarios (Administrador, Secretaria/o, Docente).</li>
+            <li>Posibles sistemas externos (ej. sistema de gestión académica si se integra en el futuro).</li>
+        </ul>
+
+        <h2>Diagrama de Transición de Estado (si aplica)</h2>
+        <p>Para entidades con estados bien definidos que cambian a lo largo de su ciclo de vida (ej. un alumno podría tener estados como "Pre-inscrito", "Inscrito", "Egresado").</p>
+
+        <h2>Diccionario de Datos</h2>
+        <p>Documentación detallada de cada campo de la base de datos, incluyendo tipo de dato, longitud, restricciones, descripción y si es obligatorio. Esta sección detalla las entidades y sus atributos principales, basándose en los alcances definidos en el Análisis de Negocio.</p>
+
+        <h3>Entidad: Alumno</h3>
+        <ul>
+            <li><strong>nombre:</strong> VARCHAR(50), Obligatorio. Primer nombre del alumno.</li>
+            <li><strong>segundo_nombre:</strong> VARCHAR(50), Opcional. Segundo nombre del alumno.</li>
+            <li><strong>tercer_nombre:</strong> VARCHAR(50), Opcional. Tercer nombre del alumno.</li>
+            <li><strong>alias:</strong> VARCHAR(50), Opcional. Apodo o nombre corto del alumno.</li>
+            <li><strong>apellido_materno:</strong> VARCHAR(50), Obligatorio. Apellido materno del alumno.</li>
+            <li><strong>apellido_paterno:</strong> VARCHAR(50), Obligatorio. Apellido paterno del alumno.</li>
+            <li><strong>fecha_nacimiento:</strong> DATE, Obligatorio. Fecha de nacimiento del alumno.</li>
+            <li><strong>direccion:</strong> Referencia a Entidad Dirección, Obligatorio. Dirección principal del alumno.</li>
+            <li><strong>contacto_emergencia:</strong> Referencia a Entidad ContactoEmergencia, Obligatorio. Información de contacto para emergencias.</li>
+            <li><strong>sala_id:</strong> Referencia a Entidad Sala, Obligatorio. Sala a la que pertenece el alumno.</li>
+            <li><strong>turno:</strong> ENUM('Mañana', 'Tarde', 'Completo'), Obligatorio. Turno del alumno.</li>
+        </ul>
+
+        <h3>Entidad: Padre/Tutor</h3>
+        <ul>
+            <li><strong>nombre:</strong> VARCHAR(50), Obligatorio. Primer nombre del padre/tutor.</li>
+            <li><strong>segundo_nombre:</strong> VARCHAR(50), Opcional. Segundo nombre del padre/tutor.</li>
+            <li><strong>tercer_nombre:</strong> VARCHAR(50), Opcional. Tercer nombre del padre/tutor.</li>
+            <li><strong>apellido_materno:</strong> VARCHAR(50), Obligatorio. Apellido materno del padre/tutor.</li>
+            <li><strong>apellido_paterno:</strong> VARCHAR(50), Obligatorio. Apellido paterno del padre/tutor.</li>
+            <li><strong>relacion:</strong> VARCHAR(50), Obligatorio. Relación con el alumno (ej. 'Padre', 'Madre', 'Tutor').</li>
+            <li><strong>direccion:</strong> Referencia a Entidad Dirección, Obligatorio. Dirección del padre/tutor.</li>
+            <li><strong>telefono:</strong> VARCHAR(20), Obligatorio. Número de teléfono de contacto.</li>
+            <li><strong>email:</strong> VARCHAR(100), Opcional. Correo electrónico de contacto.</li>
+            <li><strong>autorizado_retiro:</strong> BOOLEAN, Obligatorio. Indica si está autorizado para retirar al alumno.</li>
+            <li><strong>autorizado_cambiado:</strong> BOOLEAN, Obligatorio. Indica si está autorizado para cambiar al alumno.</li>
+        </ul>
+
+        <h3>Entidad: Personal</h3>
+        <ul>
+            <li><strong>nombre:</strong> VARCHAR(50), Obligatorio. Primer nombre del personal.</li>
+            <li><strong>segundo_nombre:</strong> VARCHAR(50), Opcional. Segundo nombre del personal.</li>
+            <li><strong>tercer_nombre:</strong> VARCHAR(50), Opcional. Tercer nombre del personal.</li>
+            <li><strong>rol:</strong> VARCHAR(50), Obligatorio. Rol del personal (ej. 'Docente', 'Secretaria', 'Administrador').</li>
+            <li><strong>direccion:</strong> Referencia a Entidad Dirección, Obligatorio. Dirección del personal.</li>
+            <li><strong>telefono:</strong> VARCHAR(20), Obligatorio. Número de teléfono de contacto.</li>
+            <li><strong>email:</strong> VARCHAR(100), Opcional. Correo electrónico de contacto.</li>
+            <li><strong>sala_id:</strong> Referencia a Entidad Sala, Opcional. Sala principal a la que está asignado el personal.</li>
+        </ul>
+
+        <h3>Entidad: Dirección</h3>
+        <ul>
+            <li><strong>calle:</strong> VARCHAR(100), Obligatorio. Nombre de la calle.</li>
+            <li><strong>numero:</strong> VARCHAR(10), Obligatorio. Número de la dirección.</li>
+            <li><strong>ciudad:</strong> VARCHAR(50), Obligatorio. Ciudad.</li>
+            <li><strong>provincia:</strong> VARCHAR(50), Obligatorio. Provincia.</li>
+            <li><strong>codigo_postal:</strong> VARCHAR(10), Opcional. Código postal.</li>
+        </ul>
+
+        <h3>Entidad: ContactoEmergencia</h3>
+        <ul>
+            <li><strong>nombre_completo:</strong> VARCHAR(100), Obligatorio. Nombre completo del contacto de emergencia.</li>
+            <li><strong>relacion:</strong> VARCHAR(50), Obligatorio. Relación con el alumno.</li>
+            <li><strong>telefono:</strong> VARCHAR(20), Obligatorio. Número de teléfono de contacto de emergencia.</li>
+        </ul>
+
+        <h3>Entidad: Sala</h3>
+        <ul>
+            <li><strong>nombre:</strong> VARCHAR(50), Obligatorio. Nombre de la sala (ej. 'Sala Roja', 'Sala Verde').</li>
+            <li><strong>capacidad:</strong> INT, Obligatorio. Capacidad máxima de alumnos.</li>
+        </ul>
+
+        <h3>Entidad: Asistencia</h3>
+        <ul>
+            <li><strong>alumno_id:</strong> Referencia a Entidad Alumno, Obligatorio. Alumno al que corresponde la asistencia.</li>
+            <li><strong>fecha:</strong> DATE, Obligatorio. Fecha de la asistencia.</li>
+            <li><strong>estado:</strong> ENUM('Presente', 'Ausente', 'Tardanza', 'Justificado'), Obligatorio. Estado de la asistencia.</li>
+            <li><strong>tipo_licencia:</strong> VARCHAR(50), Opcional. Tipo de licencia si aplica (ej. 'Enfermedad', 'Personal').</li>
+        </ul>
+
+        <h3>Entidad: Calendario</h3>
+        <ul>
+            <li><strong>fecha:</strong> DATE, Obligatorio. Fecha del evento.</li>
+            <li><strong>descripcion:</strong> TEXT, Obligatorio. Descripción del evento.</li>
+            <li><strong>tipo_evento:</strong> ENUM('Feriado', 'Licencia', 'Actividad Jardin', 'Actividad Sala', 'Actividad Comunidad', 'Actividad Pais'), Obligatorio. Tipo de evento.</li>
+            <li><strong>sala_id:</strong> Referencia a Entidad Sala, Opcional. Sala asociada al evento (si es una actividad de sala).</li>
+        </ul>
+
+        <h3>Entidad: Actividad</h3>
+        <ul>
+            <li><strong>nombre:</strong> VARCHAR(100), Obligatorio. Nombre de la actividad (ej. 'Música', 'Expresión Corporal').</li>
+            <li><strong>descripcion:</strong> TEXT, Opcional. Descripción de la actividad.</li>
+            <li><strong>horario:</strong> VARCHAR(50), Opcional. Horario de la actividad.</li>
+            <li><strong>docente_id:</strong> Referencia a Entidad Personal, Opcional. Docente a cargo de la actividad.</li>
+        </ul>
+
+
+        <h3>Entidad: Conversacion</h3>
+        <ul>
+            <li><strong>id:</strong> INT, Clave Primaria. Identificador único de la conversación.</li>
+            <li><strong>sala_id:</strong> Referencia a Entidad Sala, Opcional. Sala a la que está asociada la conversación (si aplica).</li>
+            <li><strong>fecha_creacion:</strong> DATETIME, Obligatorio. Fecha y hora de creación de la conversación.</li>
+        </ul>
+
+        <h3>Entidad: ParticipanteConversacion</h3>
+        <ul>
+            <li><strong>id:</strong> INT, Clave Primaria. Identificador único del participante en la conversación.</li>
+            <li><strong>conversacion_id:</strong> Referencia a Entidad Conversacion, Obligatorio. Conversación a la que pertenece el participante.</li>
+            <li><strong>padre_tutor_id:</strong> Referencia a Entidad Padre/Tutor, Opcional. ID del padre/tutor participante.</li>
+            <li><strong>personal_id:</strong> Referencia a Entidad Personal, Opcional. ID del personal participante.</li>
+            <li><strong>tipo_participante:</strong> ENUM('Padre/Tutor', 'Personal'), Obligatorio. Tipo de usuario participante.</li>
+        </ul>
+
+        <h3>Entidad: Mensaje</h3>
+        <ul>
+            <li><strong>id:</strong> INT, Clave Primaria. Identificador único del mensaje.</li>
+            <li><strong>conversacion_id:</strong> Referencia a Entidad Conversacion, Obligatorio. Conversación a la que pertenece el mensaje.</li>
+            <li><strong>remitente_padre_tutor_id:</strong> Referencia a Entidad Padre/Tutor, Opcional. ID del padre/tutor que envió el mensaje.</li>
+            <li><strong>remitente_personal_id:</strong> Referencia a Entidad Personal, Opcional. ID del personal que envió el mensaje.</li>
+            <li><strong>contenido:</strong> TEXT, Obligatorio. Contenido del mensaje.</li>
+            <li><strong>fecha_envio:</strong> DATETIME, Obligatorio. Fecha y hora de envío del mensaje.</li>
+            <li><strong>leido:</strong> BOOLEAN, Obligatorio. Indica si el mensaje ha sido leído.</li>
+        </ul>
+
+
+        <h2>Modelado de Procesos de Negocio</h2>
+        <p>Descripción de los procesos de negocio del jardín de infantes que el sistema automatizará o apoyará, utilizando notaciones como BPMN si es necesario.</p>
+    </div>
+</body>
+</html>

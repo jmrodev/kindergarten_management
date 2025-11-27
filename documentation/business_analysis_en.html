@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Analysis - Kindergarten Guide</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; background-color: #f4f4f4; color: #333; }
+        h1, h2, h3 { color: #0056b3; }
+        nav ul { list-style: none; padding: 0; }
+        nav ul li { display: inline; margin-right: 20px; }
+        nav ul li a { text-decoration: none; color: #007bff; }
+        nav ul li a:hover { text-decoration: underline; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Business Analysis</h1>
+        <nav>
+            <ul>
+                <li><a href="index_en.html">Home</a></li>
+                <li><a href="project_management_en.html">Project Management</a></li>
+                <li><a href="business_analysis_en.html">Business Analysis</a></li>
+                <li><a href="design_architecture_en.html">Design and Architecture</a></li>
+                <li><a href="data_modeling_en.html">Data Modeling and Processes</a></li>
+                <li><a href="testing_en.html">Testing</a></li>
+                <li><a href="entity_relationship_diagram_en.html">Entity-Relationship Diagram</a></li>
+            </ul>
+            <div class="language-switcher">
+                <a href="business_analysis.html">ES</a> | <a href="business_analysis_en.html" class="active">EN</a>
+            </div>
+        </nav>
+        <hr>
+        <h2>System Actors</h2>
+        <p>Identification of key users who will interact with the address management system.</p>
+        <ul>
+            <li><strong>Kindergarten Administrator:</strong> Manages all information, users, roles.</li>
+            <li><strong>Secretary:</strong> Enters, updates, and consults student, parent, and staff data.</li>
+            <li><strong>Teacher:</strong> Consults contact information for students and parents assigned to their course.</li>
+            <li><strong>Parent/Guardian (optional):</strong> Consults their own information and that of their children (with limited access).</li>
+        </ul>
+
+        <h2>Project Scope</h2>
+        <p>Clear definition of what the system will include and what it will not.</p>
+        <h3>Includes:</h3>
+        <ul>
+            <li>Management of student information (ID, first name, middle name (optional), paternal surname, maternal surname, preferred surname, nickname (optional), birth date, address, emergency contact, classroom, shift).</li>
+            <li>Management of parent/guardian information (ID, first name, middle name (optional), paternal surname, maternal surname, preferred surname, relationship, address, phone, email, authorized for student pickup (boolean), authorized for student changes (boolean)).</li>
+            <li>Management of staff information (ID, first name, middle name (optional), paternal surname, maternal surname, preferred surname, address, phone, email, classroom, role).</li>
+            <li>Search and filtering functionalities for information.</li>
+            <li>Generation of basic lists (e.g., student list by classroom, emergency contact list, staff attendance, student attendance).</li>
+            <li>Classroom management (students, attendance, activity teacher schedules (e.g., music, body expression, etc.)).</li>
+            <li>Attendance management in relation to the calendar: holidays, ordinary annual leave, sick leave, personal leave, etc. (students and staff).</li>
+            <li>Calendar management (holidays, leave, activities: annual, monthly, weekly, and daily; kindergarten, community, country, classroom).</li>
+            <li>Internal communication (messaging between users: parents with classroom staff of their children, and among all staff).</li>
+        </ul>
+        <p>These details will form the basis for data modeling, which will be explored in the <a href="data_modeling.html">Data Modeling and Processes</a> section.</p>
+        <h3>Excludes:</h3>
+        <ul>
+            <li>Financial management (payments, invoicing).</li>
+        </ul>
+
+        <h2>Use Cases and Acceptance Criteria</h2>
+        <p>Detailed description of actor interactions with the system and criteria for considering a functionality complete.</p>
+        <p><em>Examples:</em></p>
+        <p>For an extension and detail of use cases, consult the <a href="data_modeling.html">Data Modeling and Processes</a> section.</p>
+        <ul>
+            <li><strong>Use Case:</strong> Register New Student.</li>
+            <li><strong>Acceptance Criteria:</strong> The system must validate mandatory fields (first names, surnames, birth date). The system must associate the student with at least one parent/guardian. The system must save the student's primary address.</li>
+            <li><strong>Gherkin Scenario:</strong></li>
+            <pre><code>Feature: Student Management
+  As a Secretary or Director
+  I want to register a new student
+  To keep the database updated
+
+  Scenario: Successful student registration
+    Given I am on the student registration page
+    When I enter student data "Juan Pérez" with birth date "01/01/2020"
+    And I associate parent "Carlos Pérez" with phone "123456789"
+    And I save the address "Calle Falsa 123"
+    Then student "Juan Pérez" should appear in the student list
+    And their contact information should be correct</code></pre>
+        </ul>
+
+        <h2>Current Processes and Problems</h2>
+        <p>Documentation of current address management processes in the kindergarten and the problems the new system seeks to solve.</p>
+        <ul>
+            <li><strong>Problem:</strong> Contact information dispersed across different documents (paper, spreadsheets).</li>
+            <li><strong>Problem:</strong> Difficulty quickly finding a student's address in case of emergency.</li>
+            <li><strong>Problem:</strong> Manual and error-prone process for updating information.</li>
+        </ul>
+    </div>
+</body>
+</html>

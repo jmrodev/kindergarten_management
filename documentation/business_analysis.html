@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis de Negocio - Guía de Jardín de Infantes</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; background-color: #f4f4f4; color: #333; }
+        h1, h2, h3 { color: #0056b3; }
+        nav ul { list-style: none; padding: 0; }
+        nav ul li { display: inline; margin-right: 20px; }
+        nav ul li a { text-decoration: none; color: #007bff; }
+        nav ul li a:hover { text-decoration: underline; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Análisis de Negocio</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="project_management.html">Administración del Proyecto</a></li>
+                <li><a href="business_analysis.html">Análisis de Negocio</a></li>
+                <li><a href="design_architecture.html">Diseño y Arquitectura</a></li>
+                <li><a href="data_modeling.html">Modelado de Datos y Procesos</a></li>
+                <li><a href="testing.html">Pruebas</a></li>
+                <li><a href="entity_relationship_diagram.html">Diagrama Entidad-Relación</a></li>
+            </ul>
+            <div class="language-switcher">
+                <a href="business_analysis.html" class="active">ES</a> | <a href="business_analysis_en.html">EN</a>
+            </div>
+        </nav>
+        <hr>
+        <h2>Actores del Sistema</h2>
+        <p>Identificación de los usuarios clave que interactuarán con el sistema de administración de direcciones.</p>
+        <ul>
+            <li><strong>Administrador del Jardín:</strong> Gestiona toda la información, usuarios, roles.</li>
+            <li><strong>Secretaria/o:</strong> Ingresa, actualiza y consulta datos de alumnos, padres y personal.</li>
+            <li><strong>Docente:</strong> Consulta información de contacto de alumnos y padres asignados a su curso.</li>
+            <li><strong>Padre/Tutor (opcional):</strong> Consulta su propia información y la de sus hijos (con acceso limitado).</li>
+        </ul>
+
+        <h2>Alcances del Proyecto</h2>
+        <p>Definición clara de lo que el sistema incluirá y lo que no.</p>
+        <h3>Incluye:</h3>
+        <ul>
+            <li>Gestión de información de alumnos (nombre ,segundo nombre (opcional), tercer nombre (opcional), alias, apellido materno, apellido paterno, fecha de nacimiento, dirección, contacto de emergencia, sala, turno ).</li>
+            <li>Gestión de información de padres/tutores (nombre, segundo nombre (opcional), tercer nombre (opcional), apellido materno, apellido paterno, relación, dirección, teléfono, email,autorizado para retiro de alumno(booleano), autorizado para cambiado(booleano) ).</li>
+            <li>Gestión de información de personal (nombre, segundo nombre (opcional), tercer nombre (opcional), rol, dirección, teléfono, email).</li>
+            <li>Funcionalidades de búsqueda y filtrado de información.</li>
+            <li>Generación de listados básicos (ej. listado de alumnos por sala, listado de contactos de emergencia, asistencia de persoanl , asistencia de alumnos).</li>
+	    <li>Gestion de sala(alumnos, asistencia, horarios de maestros de actividades(ej musica, expresion corporal,etc))</li>
+	    <li>Gestion de asistencia con relacion con el calendario: feriados ,licencias anuales ordinarias, licencias por enfermedad , licencias personales etc (alumnos y personal) </li>
+	    <li>Gestion de calendario (feriados ,licencias,actividades: anuales,mensuales,semanales y diarias ;del jardin ,de la comunidad, del pais, de la sala ) </li>
+            <li>Comunicación interna (mensajería entre usuarios: padres con personal de la sala de sus hijos, y entre todo el personal).</li>
+        </ul>
+        <p>Estos detalles serán la base para el modelado de datos, que se explorará en la sección de <a href="data_modeling.html">Modelado de Datos y Procesos</a>.</p>
+        <h3>No Incluye:</h3>
+        <ul>
+            <li>Gestión financiera (pagos, facturación).</li>
+        </ul>
+
+        <h2>Casos de Uso y Criterios de Aceptación</h2>
+        <p>Descripción detallada de las interacciones de los actores con el sistema y los criterios para considerar una funcionalidad como completa.</p>
+        <p><em>Ejemplos:</em></p>
+        <p>Para una ampliación y detalle de los casos de uso, consulte la sección de <a href="data_modeling.html">Modelado de Datos y Procesos</a>.</p>
+        <ul>
+            <li><strong>Caso de Uso:</strong> Registrar Nuevo Alumno.</li>
+            <li><strong>Criterios de Aceptación:</strong> El sistema debe validar los campos obligatorios (nombres, apellidos, fecha de nacimiento). El sistema debe asociar al alumno con al menos un padre/tutor. El sistema debe guardar la dirección principal del alumno.</li>
+            <li><strong>Escenario Gherkin:</strong></li>
+            <pre><code>Característica: Gestión de Alumnos
+  Como Secretaria o como Directivo
+  Quiero registrar un nuevo alumno
+  Para mantener la base de datos actualizada
+
+  Escenario: Registro exitoso de un alumno
+    Dado que estoy en la página de registro de alumnos
+    Cuando ingreso los datos del alumno "Juan Pérez" con fecha de nacimiento "01/01/2020"
+    Y asocio al padre "Carlos Pérez" con teléfono "123456789"
+    Y guardo la dirección "Calle Falsa 123"
+    Entonces el alumno "Juan Pérez" debe aparecer en el listado de alumnos
+    Y su información de contacto debe ser correcta</code></pre>
+        </ul>
+
+        <h2>Procesos y Problemas Actuales</h2>
+        <p>Documentación de los procesos actuales de gestión de direcciones en el jardín de infantes y los problemas que el nuevo sistema busca resolver.</p>
+        <ul>
+            <li><strong>Problema:</strong> Información de contacto dispersa en diferentes documentos (papel, hojas de cálculo).</li>
+            <li><strong>Problema:</strong> Dificultad para encontrar rápidamente la dirección de un alumno en caso de emergencia.</li>
+            <li><strong>Problema:</strong> Proceso manual y propenso a errores para actualizar la información.</li>
+        </ul>
+    </div>
+</body>
+</html>
