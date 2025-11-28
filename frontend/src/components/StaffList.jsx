@@ -4,7 +4,6 @@ import staffService from '../services/staffService';
 import StaffForm from './StaffForm';
 import StaffDetail from './StaffDetail';
 import ConfirmModal from './ConfirmModal';
-import ToastNotification from './ToastNotification';
 
 const ROLE_TRANSLATIONS = {
     'admin': 'Administrador',
@@ -14,7 +13,7 @@ const ROLE_TRANSLATIONS = {
     'tutor': 'Padre/Tutor'
 };
 
-function StaffList({ darkMode }) {
+function StaffList({ darkMode, showSuccess, showError }) { // Accept showSuccess and showError as props
     const [staff, setStaff] = useState([]);
     const [filteredStaff, setFilteredStaff] = useState([]);
     const [showForm, setShowForm] = useState(false);
@@ -25,7 +24,6 @@ function StaffList({ darkMode }) {
     const [filterRole, setFilterRole] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
     const [roles, setRoles] = useState([]);
-    const [toast, setToast] = useState({ show: false, message: '', variant: '' });
 
     useEffect(() => {
         loadStaff();
@@ -41,7 +39,7 @@ function StaffList({ darkMode }) {
             const response = await staffService.getAllStaff();
             setStaff(response.data);
         } catch (error) {
-            showToast('Error al cargar personal', 'danger');
+            showError('Error', 'Error al cargar personal'); // Use showError prop
         }
     };
 
@@ -51,6 +49,7 @@ function StaffList({ darkMode }) {
             setRoles(response.data);
         } catch (error) {
             console.error('Error loading roles:', error);
+            showError('Error', 'Error al cargar roles'); // Use showError prop
         }
     };
 
@@ -78,10 +77,6 @@ function StaffList({ darkMode }) {
         setFilteredStaff(filtered);
     };
 
-    const showToast = (message, variant = 'success') => {
-        setToast({ show: true, message, variant });
-    };
-
     const handleCreate = () => {
         setSelectedStaff(null);
         setShowForm(true);
@@ -105,10 +100,10 @@ function StaffList({ darkMode }) {
     const handleDelete = async () => {
         try {
             await staffService.deleteStaff(selectedStaff.id);
-            showToast('Personal eliminado correctamente', 'success');
+            showSuccess('Éxito', 'Personal eliminado correctamente'); // Use showSuccess prop
             loadStaff();
         } catch (error) {
-            showToast('Error al eliminar personal', 'danger');
+            showError('Error', error.response?.data?.message || 'Error al eliminar personal'); // Use showError prop
         } finally {
             setShowDeleteModal(false);
             setSelectedStaff(null);
@@ -119,15 +114,15 @@ function StaffList({ darkMode }) {
         try {
             if (selectedStaff) {
                 await staffService.updateStaff(selectedStaff.id, staffData);
-                showToast('Personal actualizado correctamente', 'success');
+                showSuccess('Éxito', 'Personal actualizado correctamente'); // Use showSuccess prop
             } else {
                 await staffService.createStaff(staffData);
-                showToast('Personal creado correctamente', 'success');
+                showSuccess('Éxito', 'Personal creado correctamente'); // Use showSuccess prop
             }
             setShowForm(false);
             loadStaff();
         } catch (error) {
-            showToast(error.response?.data?.message || 'Error al guardar personal', 'danger');
+            showError('Error', error.response?.data?.message || 'Error al guardar personal'); // Use showError prop
         }
     };
 
