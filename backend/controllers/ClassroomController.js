@@ -1,19 +1,21 @@
 // backend/controllers/SalaController.js
 const ClassroomRepository = require('../repositories/ClassroomRepository');
 const Classroom = require('../models/Classroom');
-const { serializeBigInt } = require('../utils/serialization');
+const { AppError } = require('../middleware/errorHandler'); // Import AppError
+const { sanitizeObject, sanitizeWhitespace } = require('../utils/sanitization'); // Import sanitization utilities
 
 class ClassroomController {
     async createClassroom(req, res) {
         try {
-            const { name, capacity, shift, nombre, capacidad, turno, maestroId } = req.body;
+            const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
+            const { name, capacity, shift, nombre, capacidad, turno, maestroId } = sanitizedBody;
             const classroomName = name || nombre;
             const classroomCapacity = capacity || capacidad;
             const classroomShift = shift || turno || 'Mañana';
             const newClassroom = new Classroom(null, classroomName, classroomCapacity, classroomShift);
 
             if (!newClassroom.isValid()) {
-                return res.status(400).json({ message: "Invalid classroom data" });
+                throw new AppError("Invalid classroom data", 400);
             }
 
             const createdClassroom = await ClassroomRepository.create(newClassroom);
@@ -24,20 +26,20 @@ class ClassroomController {
             }
             
             const finalClassroom = await ClassroomRepository.findById(createdClassroom.id);
-            res.status(201).json(serializeBigInt(finalClassroom));
+            res.status(201).json(finalClassroom);
         } catch (error) {
             console.error("Error in createClassroom:", error);
-            res.status(500).json({ message: "Internal server error" });
+            throw new AppError('Error creating classroom', 500);
         }
     }
 
     async getAllClassrooms(req, res) {
         try {
             const classrooms = await ClassroomRepository.findAll();
-            res.status(200).json(serializeBigInt(classrooms));
+            res.status(200).json(classrooms);
         } catch (error) {
             console.error("Error in getAllClassrooms:", error);
-            res.status(500).json({ message: "Internal server error" });
+            throw new AppError('Error fetching classrooms', 500);
         }
     }
 
@@ -46,26 +48,27 @@ class ClassroomController {
             const { id } = req.params;
             const classroom = await ClassroomRepository.findById(id);
             if (!classroom) {
-                return res.status(404).json({ message: "Classroom not found" });
+                throw new AppError("Classroom not found", 404);
             }
-            res.status(200).json(serializeBigInt(classroom));
+            res.status(200).json(classroom);
         } catch (error) {
             console.error(`Error in getClassroomById for id ${req.params.id}:`, error);
-            res.status(500).json({ message: "Internal server error" });
+            throw new AppError('Error fetching classroom', 500);
         }
     }
 
     async updateClassroom(req, res) {
         try {
             const { id } = req.params;
-            const { name, capacity, shift, nombre, capacidad, turno, maestroId } = req.body;
+            const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
+            const { name, capacity, shift, nombre, capacidad, turno, maestroId } = sanitizedBody;
             const classroomName = name || nombre;
             const classroomCapacity = capacity || capacidad;
             const classroomShift = shift || turno;
             const updatedClassroom = new Classroom(id, classroomName, classroomCapacity, classroomShift);
 
             if (!updatedClassroom.isValid()) {
-                return res.status(400).json({ message: "Invalid classroom data" });
+                throw new AppError("Invalid classroom data", 400);
             }
 
             const result = await ClassroomRepository.update(id, updatedClassroom);
@@ -76,10 +79,10 @@ class ClassroomController {
             }
             
             const finalClassroom = await ClassroomRepository.findById(id);
-            res.status(200).json(serializeBigInt(finalClassroom));
+            res.status(200).json(finalClassroom);
         } catch (error) {
             console.error(`Error in updateClassroom for id ${req.params.id}:`, error);
-            res.status(500).json({ message: "Internal server error" });
+            throw new AppError('Error updating classroom', 500);
         }
     }
 
@@ -88,7 +91,7 @@ class ClassroomController {
             const { id } = req.params;
             const success = await ClassroomRepository.delete(id);
             if (!success) {
-                return res.status(404).json({ message: "Classroom not found or could not be deleted" });
+                throw new AppError("Classroom not found or could not be deleted", 404);
             }
             res.status(204).send(); // No content for successful deletion
         } catch (error) {
@@ -96,10 +99,10 @@ class ClassroomController {
             
             // Check if it's a constraint error
             if (error.message && error.message.includes('student(s) are still assigned')) {
-                return res.status(409).json({ message: error.message });
+                throw new AppError(error.message, 409);
             }
             
-            res.status(500).json({ message: "Internal server error" });
+            throw new AppError('Error deleting classroom', 500);
         }
     }
 }
