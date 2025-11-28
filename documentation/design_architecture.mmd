@@ -5,9 +5,11 @@ graph TD
     A --> E(Documentación de API)
 
     B --> B1[Arquitectura de Tres Capas]
-    B1 --> B1_1[Capa de Presentación (Frontend)]
-    B1 --> B1_2[Capa de Lógica de Negocio (Backend)]
-    B1 --> B1_3[Capa de Acceso a Datos]
+    B1 --> B1_1[Capa de Presentación (Frontend: React, Vite)]
+    B1 --> B1_2[Capa de Lógica de Negocio (Backend: Node.js, Express)]
+    B1 --> B1_3[Capa de Acceso a Datos (MariaDB)]
+    B1 --> B1_4[Autenticación (Google OAuth, JWT)]
+    B1 --> B1_5[Inicialización de Base de Datos (Script Personalizado)]
 
     C --> C1[Wireframes y Mockups]
     C --> C2[Consistencia]
@@ -19,16 +21,18 @@ graph TD
     D --> D4[Control de Versiones]
     D --> D5[Herramientas de Diseño]
 
-    D1 --> D1_1[React, Angular, Vue.js]
-    D2 --> D2_1[Node.js, Python, Java, .NET]
-    D3 --> D3_1[PostgreSQL, MySQL, MongoDB]
+    D1 --> D1_1[React, Vite]
+    D2 --> D2_1[Node.js, Express]
+    D3 --> D3_1[MariaDB]
     D4 --> D4_1[Git]
     D5 --> D5_1[Figma, Adobe XD, Balsamiq]
 
     E --> E1[Estándares: OpenAPI/Swagger]
-    E --> E2[Ejemplos de Endpoints]
+    E --> E2[Ejemplos de Endpoints (Expandidos para Inscripciones y Portal de Padres)]
 
     E2 --> E2_1[GET /api/alumnos]
     E2 --> E2_2[POST /api/alumnos]
     E2 --> E2_3[GET /api/alumnos/{id}]
     E2 --> E2_4[PUT /api/alumnos/{id}]
+    E2 --> E2_5[GET /api/enrollments]
+    E2 --> E2_6[POST /api/parent-portal/submit]
