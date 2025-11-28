@@ -1,16 +1,15 @@
 // frontend/src/pages/GuardiansPage.jsx
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Button, Card, Badge, Spinner, Alert, Form, InputGroup, ListGroup, Nav, Modal } from 'react-bootstrap';
+import { Container, Row, Col, Button, Card, Badge, Spinner, Form, InputGroup, ListGroup, Nav, Modal } from 'react-bootstrap';
 import guardianService from '../services/guardianService';
 import GuardianForm from '../components/GuardianForm';
 import AssignGuardianToStudentModal from '../components/AssignGuardianToStudentModal';
 
-const GuardiansPage = () => {
+const GuardiansPage = ({ showSuccess, showError }) => { // Accept showSuccess and showError
     const [relationships, setRelationships] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [editingGuardian, setEditingGuardian] = useState(null);
-    const [message, setMessage] = useState(null);
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [selectedGuardian, setSelectedGuardian] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -41,18 +40,11 @@ const GuardiansPage = () => {
             const unassigned = all.filter(g => !assignedIds.has(g.id));
             setUnassignedGuardians(unassigned);
         } catch (error) {
-            showMessage('danger', 'Error al cargar relaciones');
+            showError('Error', 'Error al cargar relaciones'); // Use showError
             console.error(error);
         } finally {
             setLoading(false);
         }
-    };
-
-    const showMessage = (type, text) => {
-        setMessage({ type, text });
-        // Mensajes de warning duran más tiempo (8 segundos)
-        const duration = type === 'warning' || type === 'danger' ? 8000 : 4000;
-        setTimeout(() => setMessage(null), duration);
     };
 
     const handleSearch = (e) => {
@@ -86,17 +78,17 @@ const GuardiansPage = () => {
 
             if (editingGuardian) {
                 await guardianService.update(editingGuardian.guardian_id, dataToSave);
-                showMessage('success', 'Responsable actualizado correctamente');
+                showSuccess('Éxito', 'Responsable actualizado correctamente'); // Use showSuccess
             } else {
                 await guardianService.create(dataToSave);
-                showMessage('success', 'Responsable creado correctamente');
+                showSuccess('Éxito', 'Responsable creado correctamente'); // Use showSuccess
             }
             
             setShowForm(false);
             setEditingGuardian(null);
             loadRelationships(searchTerm);
         } catch (error) {
-            showMessage('danger', 'Error al guardar responsable');
+            showError('Error', 'Error al guardar responsable'); // Use showError
             console.error(error);
         }
     };
@@ -120,17 +112,17 @@ const GuardiansPage = () => {
                 relationshipToDelete.guardian_id
             );
             console.log('Resultado eliminación:', result);
-            showMessage('success', 'Relación eliminada correctamente');
+            showSuccess('Éxito', 'Relación eliminada correctamente'); // Use showSuccess
             await loadRelationships(searchTerm);
         } catch (error) {
             console.error('Error completo al eliminar relación:', error);
             console.error('Response:', error.response);
             if (error.response?.status === 409) {
-                showMessage('warning', error.response?.data?.message || 'No se puede eliminar: es el único responsable del alumno');
+                showError('Advertencia', error.response?.data?.message || 'No se puede eliminar: es el único responsable del alumno'); // Use showError
             } else if (error.response?.data?.message) {
-                showMessage('danger', error.response.data.message);
+                showError('Error', error.response.data.message); // Use showError
             } else {
-                showMessage('danger', 'Error al eliminar la relación: ' + (error.message || 'Error desconocido'));
+                showError('Error', 'Error al eliminar la relación: ' + (error.message || 'Error desconocido')); // Use showError
             }
         } finally {
             setShowDeleteModal(false);
@@ -152,7 +144,7 @@ const GuardiansPage = () => {
     };
 
     const handleAssignSuccess = () => {
-        showMessage('success', 'Responsable asignado al alumno correctamente');
+        showSuccess('Éxito', 'Responsable asignado al alumno correctamente'); // Use showSuccess
         setShowAssignModal(false);
         setSelectedGuardian(null);
         loadRelationships(searchTerm);
@@ -647,6 +639,7 @@ const GuardiansPage = () => {
                 guardian={selectedGuardian}
                 onSuccess={handleAssignSuccess}
                 onCancel={handleAssignCancel}
+                showError={showError} // Pass showError
             />
 
             {/* Modal de Confirmación de Eliminación */}

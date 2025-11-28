@@ -1,21 +1,14 @@
 // frontend/src/pages/ConfiguracionPage.jsx
 import { useState, useEffect } from 'react';
-import { Container, Card, Row, Col, Table, Badge, Alert, Spinner } from 'react-bootstrap';
+import { Container, Card, Row, Col, Table, Badge, Spinner } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { ROLE_TRANSLATIONS } from '../utils/constants'; // Import from constants.js
 
 const API_URL = 'http://localhost:3000/api';
 
-const ROLE_NAMES = {
-    admin: 'Administrador',
-    directivo: 'Director/a',
-    secretaria: 'Secretaria',
-    maestro: 'Maestro/a',
-    tutor: 'Padre/Tutor'
-};
-
-function ConfiguracionPage({ darkMode }) {
+function ConfiguracionPage({ darkMode, showSuccess, showError }) { // Accept showSuccess and showError
     const { user } = useAuth();
     const navigate = useNavigate();
     const [permissions, setPermissions] = useState({});
@@ -23,10 +16,9 @@ function ConfiguracionPage({ darkMode }) {
     const [actions, setActions] = useState([]);
     const [roles, setRoles] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [message, setMessage] = useState(null);
 
     useEffect(() => {
-        if (!user || (user.role !== 'admin' && user.role !== 'directivo')) {
+        if (!user || (user.role !== 'Administrator' && user.role !== 'Directivo')) { // Updated role names
             navigate('/dashboard');
             return;
         }
@@ -72,7 +64,7 @@ function ConfiguracionPage({ darkMode }) {
             setRoles(rolesRes.data);
         } catch (error) {
             console.error('Error loading permissions:', error);
-            setMessage({ type: 'danger', text: 'Error al cargar permisos' });
+            showError('Error', 'Error al cargar permisos'); // Use showError
         } finally {
             setLoading(false);
         }
@@ -81,8 +73,8 @@ function ConfiguracionPage({ darkMode }) {
     const isPermissionLocked = (roleName, moduleKey) => {
         // Permisos bloqueados que no se pueden modificar
         const lockedPermissions = {
-            admin: ['personal', 'configuracion'],
-            directivo: ['personal', 'configuracion']
+            Administrator: ['personal', 'configuracion'], // Updated role names
+            Directivo: ['personal', 'configuracion']     // Updated role names
         };
         
         return lockedPermissions[roleName]?.includes(moduleKey) || false;
@@ -91,11 +83,7 @@ function ConfiguracionPage({ darkMode }) {
     const togglePermission = async (roleId, roleName, moduleId, moduleKey, actionId, actionKey) => {
         // Verificar si el permiso está bloqueado
         if (isPermissionLocked(roleName, moduleKey)) {
-            setMessage({ 
-                type: 'warning', 
-                text: 'Los permisos de Personal y Configuración para Admin/Directivo están protegidos y no pueden modificarse' 
-            });
-            setTimeout(() => setMessage(null), 5000);
+            showError('Advertencia', 'Los permisos de Personal y Configuración para Administrador/Directivo están protegidos y no pueden modificarse'); // Use showError
             return;
         }
 
@@ -123,15 +111,10 @@ function ConfiguracionPage({ darkMode }) {
             }
 
             setPermissions(newPerms);
-            setMessage({ 
-                type: 'success', 
-                text: `Permiso ${!currentHasPermission ? 'otorgado' : 'revocado'} exitosamente` 
-            });
-
-            setTimeout(() => setMessage(null), 3000);
+            showSuccess('Éxito', `Permiso ${!currentHasPermission ? 'otorgado' : 'revocado'} exitosamente`); // Use showSuccess
         } catch (error) {
             console.error('Error toggling permission:', error);
-            setMessage({ type: 'danger', text: 'Error al cambiar permiso' });
+            showError('Error', 'Error al cambiar permiso'); // Use showError
         }
     };
 
@@ -141,11 +124,11 @@ function ConfiguracionPage({ darkMode }) {
 
     const getRoleBadgeVariant = (role) => {
         const variants = {
-            admin: 'danger',
-            directivo: 'warning',
-            secretaria: 'info',
-            maestro: 'success',
-            tutor: 'secondary'
+            Administrator: 'danger',
+            Directivo: 'warning',
+            Secretary: 'info',
+            Teacher: 'success',
+            Guardian: 'secondary'
         };
         return variants[role] || 'secondary';
     };
@@ -165,7 +148,7 @@ function ConfiguracionPage({ darkMode }) {
         return actions.filter(a => moduleActions[moduleKey]?.includes(a.action_key));
     };
 
-    if (!user || (user.role !== 'admin' && user.role !== 'directivo')) {
+    if (!user || (user.role !== 'Administrator' && user.role !== 'Directivo')) { // Updated role names
         return null;
     }
 
@@ -184,12 +167,6 @@ function ConfiguracionPage({ darkMode }) {
             paddingBottom: '2rem',
             minHeight: 'calc(100vh - 80px)'
         }}>
-            {message && (
-                <Alert variant={message.type} dismissible onClose={() => setMessage(null)} className="mb-4">
-                    {message.text}
-                </Alert>
-            )}
-
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h2 style={{ color: darkMode ? '#e5e7eb' : '#212529', marginBottom: '0.5rem' }}>
@@ -259,7 +236,7 @@ function ConfiguracionPage({ darkMode }) {
                                                     verticalAlign: 'middle'
                                                 }}>
                                                     <Badge bg={getRoleBadgeVariant(role.role_name)}>
-                                                        {ROLE_NAMES[role.role_name] || role.role_name}
+                                                        {ROLE_TRANSLATIONS[role.role_name] || role.role_name}
                                                     </Badge>
                                                 </td>
                                                 {getActionsByModule(module.module_key).map(action => {

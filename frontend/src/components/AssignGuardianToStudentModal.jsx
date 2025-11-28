@@ -1,15 +1,14 @@
 // frontend/src/components/AssignGuardianToStudentModal.jsx
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Button, Row, Col, Alert, ListGroup, Badge, InputGroup } from 'react-bootstrap';
+import { Modal, Form, Button, Row, Col, ListGroup, Badge, InputGroup } from 'react-bootstrap';
 import alumnoService from '../services/alumnoService';
 import guardianService from '../services/guardianService';
 
-const AssignGuardianToStudentModal = ({ show, guardian, onSuccess, onCancel }) => {
+const AssignGuardianToStudentModal = ({ show, guardian, onSuccess, onCancel, showError }) => { // Accept showError
     const [searchTerm, setSearchTerm] = useState('');
     const [students, setStudents] = useState([]);
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
     const [relationData, setRelationData] = useState({
         relacion: 'Padre',
         esPrincipal: false,
@@ -35,7 +34,6 @@ const AssignGuardianToStudentModal = ({ show, guardian, onSuccess, onCancel }) =
         setSearchTerm('');
         setStudents([]);
         setSelectedStudent(null);
-        setError(null);
         setRelationData({
             relacion: 'Padre',
             esPrincipal: false,
@@ -52,16 +50,15 @@ const AssignGuardianToStudentModal = ({ show, guardian, onSuccess, onCancel }) =
         }
 
         setLoading(true);
-        setError(null);
         try {
             const results = await alumnoService.searchAlumnos({ searchText: term });
             setStudents(results);
             if (results.length === 0) {
-                setError('No se encontraron alumnos con ese apellido');
+                showError('Búsqueda', 'No se encontraron alumnos con ese apellido'); // Use showError
             }
         } catch (err) {
             console.error('Error buscando alumnos:', err);
-            setError('Error al buscar alumnos');
+            showError('Error', 'Error al buscar alumnos'); // Use showError
         } finally {
             setLoading(false);
         }
@@ -79,7 +76,6 @@ const AssignGuardianToStudentModal = ({ show, guardian, onSuccess, onCancel }) =
 
     const handleSelectStudent = (student) => {
         setSelectedStudent(student);
-        setError(null);
     };
 
     const handleRelationChange = (e) => {
@@ -94,17 +90,16 @@ const AssignGuardianToStudentModal = ({ show, guardian, onSuccess, onCancel }) =
         e.preventDefault();
         
         if (!selectedStudent) {
-            setError('Debe seleccionar un alumno');
+            showError('Validación', 'Debe seleccionar un alumno'); // Use showError
             return;
         }
 
         if (!relationData.relacion) {
-            setError('Debe especificar la relación');
+            showError('Validación', 'Debe especificar la relación'); // Use showError
             return;
         }
 
         setLoading(true);
-        setError(null);
 
         try {
             await guardianService.assignToStudent(
@@ -117,7 +112,7 @@ const AssignGuardianToStudentModal = ({ show, guardian, onSuccess, onCancel }) =
             resetForm();
         } catch (err) {
             console.error('Error asignando responsable:', err);
-            setError(err.response?.data?.message || 'Error al asignar responsable al alumno');
+            showError('Error', err.response?.data?.message || 'Error al asignar responsable al alumno'); // Use showError
         } finally {
             setLoading(false);
         }
