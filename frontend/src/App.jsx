@@ -371,7 +371,18 @@ function AppContent() {
                                 <Dashboard 
                                         alumnos={alumnos} 
                                     salas={salas}
-                                    onNavigate={(view) => navigate(`/${view}`)}
+                                    onNavigate={(view) => {
+                                        const routeMap = {
+                                            'students': '/alumnos',
+                                            'classrooms': '/salas',
+                                            'responsables': '/responsables',
+                                            'alumnos': '/alumnos',
+                                            'salas': '/salas',
+                                            'personal': '/personal',
+                                            'configuracion': '/configuracion'
+                                        };
+                                        navigate(routeMap[view] || `/${view}`);
+                                    }}
                                     onShowOcupacion={() => setShowOcupacionModal(true)}
                                 />
                             </ProtectedRoute>

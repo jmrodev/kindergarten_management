@@ -23,6 +23,9 @@ router.get('/draft', ParentPortalController.ensureAuthenticated, ParentPortalCon
 router.post('/draft', ParentPortalController.ensureAuthenticated, ParentPortalController.saveDraft);
 router.delete('/draft', ParentPortalController.ensureAuthenticated, ParentPortalController.deleteDraft);
 
+// Document upload
+router.post('/upload-document', ParentPortalController.ensureAuthenticated, ParentPortalController.uploadDocument);
+
 // Submit complete registration
 router.post('/submit', ParentPortalController.ensureAuthenticated, ParentPortalController.submitRegistration);
 

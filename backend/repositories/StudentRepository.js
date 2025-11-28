@@ -55,25 +55,26 @@ class StudentRepository {
             conn = await getConnection();
             const rows = await conn.query(`
                 SELECT
-                    a.id, a.first_name, a.middle_name_optional, a.third_name_optional, a.nickname_optional, a.paternal_surname, a.maternal_surname, a.birth_date, a.shift,
+                    a.id, a.first_name, a.middle_name_optional, a.third_name_optional, a.nickname_optional, 
+                    a.paternal_surname, a.maternal_surname, a.birth_date, a.shift, a.status,
                     d.id AS direccion_id, d.street, d.number, d.city, d.provincia, d.postal_code_optional,
                     ce.id AS contacto_emergencia_id, ce.full_name AS ce_full_name, ce.relationship AS ce_relacion, ce.phone AS ce_phone,
                     s.id AS classroom_id, s.name AS classroom_name, s.capacity AS classroom_capacity
                 FROM student a
-                JOIN address d ON a.address_id = d.id
-                JOIN emergency_contact ce ON a.emergency_contact_id = ce.id
-                JOIN classroom s ON a.classroom_id = s.id
+                LEFT JOIN address d ON a.address_id = d.id
+                LEFT JOIN emergency_contact ce ON a.emergency_contact_id = ce.id
+                LEFT JOIN classroom s ON a.classroom_id = s.id
             `);
             return rows.map(row => {
-                const direccion = Address.fromDbRow({
+                const direccion = row.direccion_id ? Address.fromDbRow({
                     id: row.direccion_id, street: row.street, number: row.number, city: row.city, provincia: row.provincia, postal_code_optional: row.postal_code_optional
-                });
-                const contactoEmergencia = EmergencyContact.fromDbRow({
+                }) : null;
+                const contactoEmergencia = row.contacto_emergencia_id ? EmergencyContact.fromDbRow({
                     id: row.contacto_emergencia_id, full_name: row.ce_full_name, relationship: row.ce_relacion, phone: row.ce_phone
-                });
-                const sala = Classroom.fromDbRow({
+                }) : null;
+                const sala = row.classroom_id ? Classroom.fromDbRow({
                     id: row.classroom_id, name: row.classroom_name, capacity: row.classroom_capacity
-                });
+                }) : null;
                 return Student.fromDbRow(row, direccion, contactoEmergencia, sala);
             });
         } catch (err) {

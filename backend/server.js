@@ -12,7 +12,9 @@ const authRoutes = require('./routes/auth');
 const permissionsRoutes = require('./routes/permissions');
 const guardianRoutes = require('./routes/guardianRoutes');
 const parentPortalRoutes = require('./routes/parentPortalRoutes');
+const enrollmentRoutes = require('./routes/enrollmentRoutes');
 const { passport, isGoogleConfigured } = require('./config/passport');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -50,6 +52,7 @@ app.use(cors({
     credentials: true
 })); // Enable CORS with credentials
 app.use(bodyParser.json()); // Parse JSON request bodies
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Servir archivos estáticos
 // Solo habilitar sesiones si Google OAuth está configurado
 if (isGoogleConfigured) {
     app.use(session({
@@ -72,6 +75,7 @@ app.use('/api/classrooms', classroomRoutes); // Protected in next step
 app.use('/api/staff', staffRoutes); // Staff management
 app.use('/api/permissions', permissionsRoutes); // Permissions management (admin/directivo only)
 app.use('/api/guardians', guardianRoutes); // Guardian/tutor management
+app.use('/api/enrollments', enrollmentRoutes); // Enrollment management
 
 // Solo habilitar rutas del portal si Google OAuth está configurado
 if (isGoogleConfigured) {

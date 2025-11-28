@@ -50,7 +50,7 @@ const Dashboard = ({ alumnos, salas, onNavigate, onShowOcupacion }) => {
                     <Card 
                         className="h-100 shadow-sm"
                         style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
-                        onClick={() => onNavigate('students')}
+                        onClick={() => onNavigate('alumnos')}
                         onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
                         onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                     >
@@ -77,7 +77,7 @@ const Dashboard = ({ alumnos, salas, onNavigate, onShowOcupacion }) => {
                     <Card 
                         className="h-100 shadow-sm"
                         style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
-                        onClick={() => onNavigate('classrooms')}
+                        onClick={() => onNavigate('salas')}
                         onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
                         onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                     >
@@ -125,7 +125,13 @@ const Dashboard = ({ alumnos, salas, onNavigate, onShowOcupacion }) => {
                     <Card 
                         className="h-100 shadow-sm"
                         style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
-                        onClick={onShowOcupacion}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (onShowOcupacion) {
+                                onShowOcupacion();
+                            }
+                        }}
                         onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
                         onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                     >

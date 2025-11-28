@@ -1,9 +1,43 @@
-const pool = require('../db');
+const { pool } = require('../db');
 const StudentRepository = require('../repositories/StudentRepository');
 const Student = require('../models/Student');
 const Address = require('../models/Address');
 const EmergencyContact = require('../models/EmergencyContact');
 const Guardian = require('../models/Guardian');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Configuración de multer para subida de archivos
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = path.join(__dirname, '../uploads/documents');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = /jpeg|jpg|png|pdf/;
+        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = allowedTypes.test(file.mimetype);
+        
+        if (mimetype && extname) {
+            return cb(null, true);
+        } else {
+            cb(new Error('Solo se permiten archivos JPG, PNG o PDF'));
+        }
+    }
+});
 
 class ParentPortalController {
     ensureAuthenticated(req, res, next) {
@@ -44,9 +78,20 @@ class ParentPortalController {
             );
 
             if (rows.length > 0) {
+                let formData;
+                try {
+                    // Intentar parsear el JSON
+                    formData = typeof rows[0].form_data === 'string' 
+                        ? JSON.parse(rows[0].form_data) 
+                        : rows[0].form_data;
+                } catch (parseError) {
+                    console.error('Error parsing draft data:', parseError);
+                    formData = {};
+                }
+                
                 res.json({
                     draft: {
-                        data: JSON.parse(rows[0].form_data),
+                        data: formData,
                         currentStep: rows[0].current_step,
                         updatedAt: rows[0].updated_at
                     }
@@ -106,16 +151,31 @@ class ParentPortalController {
             await conn.beginTransaction();
 
             const {
+                // Datos alumno
                 nombre, segundoNombre, tercerNombre, alias,
-                apellidoPaterno, apellidoMaterno, fechaNacimiento, turno,
+                apellidoPaterno, apellidoMaterno, dni, fechaNacimiento, turno,
+                salaPreferida, tieneHermanos,
+                // Dirección
                 calle, numero, ciudad, provincia, codigoPostal,
+                // Información médica
+                obraSocial, numeroAfiliado, grupoSanguineo, alergias, medicacion,
+                observacionesMedicas, pediatraNombre, pediatraTelefono, estadoVacunacion,
+                necesidadesEspeciales,
+                // Contacto emergencia
                 nombreEmergencia, relacionEmergencia, telefonoEmergencia,
+                telefonoAlternativoEmergencia, autorizadoRetiroEmergencia,
+                // Responsable
                 nombrePadre, segundoNombrePadre, apellidoPaternoPadre,
-                apellidoMaternoPadre, apellidoPreferidoPadre, telefonoPadre,
-                emailPadre, autorizadoRetiro, autorizadoCambio
+                apellidoMaternoPadre, apellidoPreferidoPadre, dniPadre,
+                telefonoPadre, emailPadre, lugarTrabajo, telefonoTrabajo,
+                relacionConAlumno, autorizadoRetiro, autorizadoCambio,
+                // Autorizaciones
+                autorizacionFotos, autorizacionSalidas, autorizacionAtencionMedica,
+                // Documentos (rutas ya subidas)
+                documents
             } = req.body;
 
-            // Crear dirección
+            // 1. Crear dirección
             const addressResult = await conn.query(
                 `INSERT INTO address (street, number, city, provincia, postal_code_optional)
                  VALUES (?, ?, ?, ?, ?)`,
@@ -123,46 +183,90 @@ class ParentPortalController {
             );
             const addressId = addressResult.insertId;
 
-            // Crear contacto de emergencia
+            // 2. Crear contacto de emergencia
             const emergencyResult = await conn.query(
-                `INSERT INTO emergency_contact (full_name, relationship, phone)
-                 VALUES (?, ?, ?)`,
-                [nombreEmergencia, relacionEmergencia, telefonoEmergencia]
+                `INSERT INTO emergency_contact (full_name, relationship, phone, alternative_phone, is_authorized_pickup)
+                 VALUES (?, ?, ?, ?, ?)`,
+                [nombreEmergencia, relacionEmergencia, telefonoEmergencia, 
+                 telefonoAlternativoEmergencia || null, autorizadoRetiroEmergencia || false]
             );
             const emergencyContactId = emergencyResult.insertId;
 
-            // Crear tutor/responsable
-            const guardianResult = await conn.query(
-                `INSERT INTO guardian (first_name, middle_name_optional, paternal_surname, 
-                 maternal_surname, preferred_surname, address_id, phone, email_optional, 
-                 authorized_pickup, authorized_change)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [nombrePadre, segundoNombrePadre || null, apellidoPaternoPadre,
-                 apellidoMaternoPadre, apellidoPreferidoPadre || null, addressId,
-                 telefonoPadre, emailPadre || null, autorizadoRetiro, autorizadoCambio]
-            );
-            const guardianId = guardianResult.insertId;
-
-            // Crear alumno
+            // 3. Crear alumno con TODOS los campos
             const studentResult = await conn.query(
-                `INSERT INTO student (first_name, middle_name_optional, third_name_optional,
-                 nickname_optional, paternal_surname, maternal_surname, birth_date,
-                 address_id, emergency_contact_id, shift)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [nombre, segundoNombre || null, tercerNombre || null, alias || null,
-                 apellidoPaterno, apellidoMaterno, fechaNacimiento, addressId,
-                 emergencyContactId, turno]
+                `INSERT INTO student (
+                    first_name, middle_name_optional, third_name_optional, nickname_optional,
+                    paternal_surname, maternal_surname, dni, birth_date, address_id, 
+                    emergency_contact_id, shift, status, enrollment_date,
+                    health_insurance, affiliate_number, allergies, medications, 
+                    medical_observations, blood_type, pediatrician_name, pediatrician_phone,
+                    photo_authorization, trip_authorization, medical_attention_authorization,
+                    has_siblings_in_school, special_needs, vaccination_status, observations
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    nombre, segundoNombre || null, tercerNombre || null, alias || null,
+                    apellidoPaterno, apellidoMaterno, dni || null, fechaNacimiento, addressId,
+                    emergencyContactId, turno, 'inscripto', new Date(),
+                    obraSocial || null, numeroAfiliado || null, alergias || null, medicacion || null,
+                    observacionesMedicas || null, grupoSanguineo || null, pediatraNombre || null, 
+                    pediatraTelefono || null, autorizacionFotos || false, autorizacionSalidas || false,
+                    autorizacionAtencionMedica || false, tieneHermanos || false, necesidadesEspeciales || null,
+                    estadoVacunacion || 'no_informado', salaPreferida || null
+                ]
             );
             const studentId = studentResult.insertId;
 
-            // Relacionar tutor con alumno
+            // 4. Crear tutor/responsable
+            const guardianResult = await conn.query(
+                `INSERT INTO guardian (
+                    first_name, middle_name_optional, paternal_surname, maternal_surname,
+                    preferred_surname, dni, address_id, phone, email_optional,
+                    workplace, work_phone, authorized_pickup, authorized_change
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    nombrePadre, segundoNombrePadre || null, apellidoPaternoPadre,
+                    apellidoMaternoPadre, apellidoPreferidoPadre || null, dniPadre || null,
+                    addressId, telefonoPadre, emailPadre || null, lugarTrabajo || null,
+                    telefonoTrabajo || null, autorizadoRetiro !== false, autorizadoCambio !== false
+                ]
+            );
+            const guardianId = guardianResult.insertId;
+
+            // 5. Relacionar tutor con alumno
             await conn.query(
-                `INSERT INTO student_guardian (student_id, guardian_id, relationship, is_primary, authorized_pickup, authorized_diaper_change)
-                 VALUES (?, ?, ?, ?, ?, ?)`,
-                [studentId, guardianId, 'Padre/Madre/Tutor', true, autorizadoRetiro, autorizadoCambio]
+                `INSERT INTO student_guardian (
+                    student_id, guardian_id, relationship, is_primary, 
+                    custody_rights, financial_responsible
+                ) VALUES (?, ?, ?, ?, ?, ?)`,
+                [studentId, guardianId, relacionConAlumno || 'padre', true, true, true]
             );
 
-            // Registrar el envío del usuario
+            // 6. Guardar documentos si existen
+            if (documents && Object.keys(documents).length > 0) {
+                const docTypeMap = {
+                    dniAlumno: 'dni',
+                    dniResponsable: 'dni',
+                    certificadoNacimiento: 'certificado_nacimiento',
+                    carnetVacunas: 'certificado_vacunas',
+                    certificadoMedico: 'certificado_medico',
+                    constanciaObraSocial: 'otro'
+                };
+
+                for (const [key, filePath] of Object.entries(documents)) {
+                    if (filePath) {
+                        await conn.query(
+                            `INSERT INTO student_documents (
+                                student_id, document_type, file_name, file_path, 
+                                uploaded_by, upload_date
+                            ) VALUES (?, ?, ?, ?, ?, NOW())`,
+                            [studentId, docTypeMap[key] || 'otro', 
+                             path.basename(filePath), filePath, req.user.id]
+                        );
+                    }
+                }
+            }
+
+            // 7. Registrar el envío
             await conn.query(
                 `INSERT INTO parent_portal_submissions (user_id, student_id, submitted_at)
                  VALUES (?, ?, NOW())`,
@@ -178,10 +282,32 @@ class ParentPortalController {
         } catch (error) {
             await conn.rollback();
             console.error('Submit registration error:', error);
-            res.status(500).json({ error: 'Error al procesar el registro' });
+            res.status(500).json({ 
+                error: 'Error al procesar el registro',
+                details: error.message 
+            });
         } finally {
             conn.release();
         }
+    }
+
+    // Método para subir un documento
+    uploadDocument(req, res) {
+        return upload.single('document')(req, res, async (err) => {
+            if (err) {
+                return res.status(400).json({ error: err.message });
+            }
+
+            if (!req.file) {
+                return res.status(400).json({ error: 'No se subió ningún archivo' });
+            }
+
+            res.json({
+                success: true,
+                filePath: `/uploads/documents/${req.file.filename}`,
+                fileName: req.file.originalname
+            });
+        });
     }
 }
 

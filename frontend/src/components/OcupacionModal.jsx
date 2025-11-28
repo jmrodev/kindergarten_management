@@ -4,20 +4,21 @@ import { Modal, Badge, ProgressBar, Row, Col, Table } from 'react-bootstrap';
 import { getClassroomStatus } from '../utils/classroomStatus';
 
 const OcupacionModal = ({ show, onHide, salas }) => {
-    if (!salas || salas.length === 0) return null;
+    const salasValidas = salas || [];
+    const haySalas = salasValidas.length > 0;
 
-    const capacidadTotal = salas.reduce((sum, s) => sum + s.capacidad, 0);
-    const ocupacionTotal = salas.reduce((sum, s) => sum + (s.asignados || 0), 0);
+    const capacidadTotal = salasValidas.reduce((sum, s) => sum + s.capacidad, 0);
+    const ocupacionTotal = salasValidas.reduce((sum, s) => sum + (s.asignados || 0), 0);
     const porcentajeOcupacion = capacidadTotal > 0 ? (ocupacionTotal / capacidadTotal) * 100 : 0;
     const espaciosDisponibles = capacidadTotal - ocupacionTotal;
 
-    const salasVacias = salas.filter(s => s.asignados === 0).length;
-    const salasDisponibles = salas.filter(s => s.asignados > 0 && s.asignados < s.capacidad).length;
-    const salasCompletas = salas.filter(s => s.asignados === s.capacidad).length;
-    const salasSobrepasadas = salas.filter(s => s.asignados > s.capacidad).length;
+    const salasVacias = salasValidas.filter(s => s.asignados === 0).length;
+    const salasDisponibles = salasValidas.filter(s => s.asignados > 0 && s.asignados < s.capacidad).length;
+    const salasCompletas = salasValidas.filter(s => s.asignados === s.capacidad).length;
+    const salasSobrepasadas = salasValidas.filter(s => s.asignados > s.capacidad).length;
 
     // Ordenar salas por ocupación descendente
-    const salasOrdenadas = [...salas].sort((a, b) => {
+    const salasOrdenadas = [...salasValidas].sort((a, b) => {
         const ocupA = (a.asignados / a.capacidad) * 100;
         const ocupB = (b.asignados / b.capacidad) * 100;
         return ocupB - ocupA;
@@ -124,41 +125,52 @@ const OcupacionModal = ({ show, onHide, salas }) => {
                             </tr>
                         </thead>
                         <tbody>
-                            {salasOrdenadas.map((sala, index) => {
-                                const status = getClassroomStatus(sala.asignados, sala.capacidad);
-                                const porcentaje = sala.capacidad > 0 ? ((sala.asignados / sala.capacidad) * 100).toFixed(1) : 0;
-                                const disponibles = sala.capacidad - (sala.asignados || 0);
-                                
-                                return (
-                                    <tr key={sala.id}>
-                                        <td>{index + 1}</td>
-                                        <td><strong>{sala.nombre}</strong></td>
-                                        <td className="text-center">
-                                            <Badge bg="info">{sala.asignados || 0}</Badge>
-                                        </td>
-                                        <td className="text-center">
-                                            <Badge bg="primary">{sala.capacidad}</Badge>
-                                        </td>
-                                        <td className="text-center">
-                                            <Badge bg={disponibles > 0 ? 'success' : 'secondary'}>
-                                                {disponibles}
-                                            </Badge>
-                                        </td>
-                                        <td className="text-center">
-                                            <strong style={{
-                                                color: porcentaje >= 100 ? '#f5576c' : porcentaje >= 90 ? '#f39c12' : '#38ef7d'
-                                            }}>
-                                                {porcentaje}%
-                                            </strong>
-                                        </td>
-                                        <td>
-                                            <Badge bg={status.variant}>
-                                                {status.label}
-                                            </Badge>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                            {!haySalas ? (
+                                <tr>
+                                    <td colSpan="7" className="text-center text-muted py-4">
+                                        <span className="material-icons d-block" style={{fontSize: '3rem', opacity: 0.3}}>
+                                            meeting_room
+                                        </span>
+                                        No hay salas registradas
+                                    </td>
+                                </tr>
+                            ) : (
+                                salasOrdenadas.map((sala, index) => {
+                                    const status = getClassroomStatus(sala.asignados, sala.capacidad);
+                                    const porcentaje = sala.capacidad > 0 ? ((sala.asignados / sala.capacidad) * 100).toFixed(1) : 0;
+                                    const disponibles = sala.capacidad - (sala.asignados || 0);
+                                    
+                                    return (
+                                        <tr key={sala.id}>
+                                            <td>{index + 1}</td>
+                                            <td><strong>{sala.nombre}</strong></td>
+                                            <td className="text-center">
+                                                <Badge bg="info">{sala.asignados || 0}</Badge>
+                                            </td>
+                                            <td className="text-center">
+                                                <Badge bg="primary">{sala.capacidad}</Badge>
+                                            </td>
+                                            <td className="text-center">
+                                                <Badge bg={disponibles > 0 ? 'success' : 'secondary'}>
+                                                    {disponibles}
+                                                </Badge>
+                                            </td>
+                                            <td className="text-center">
+                                                <strong style={{
+                                                    color: porcentaje >= 100 ? '#f5576c' : porcentaje >= 90 ? '#f39c12' : '#38ef7d'
+                                                }}>
+                                                    {porcentaje}%
+                                                </strong>
+                                            </td>
+                                            <td>
+                                                <Badge bg={status.variant}>
+                                                    {status.label}
+                                                </Badge>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
                         </tbody>
                     </Table>
                 </div>
