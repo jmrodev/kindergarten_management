@@ -56,10 +56,12 @@ CREATE TABLE staff (
     middle_name_optional TEXT,
     paternal_surname TEXT,
     maternal_surname TEXT,
+    dni TEXT UNIQUE,
     email TEXT UNIQUE,
     password_hash TEXT,
     is_active BOOLEAN,
     last_login TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     preferred_surname TEXT,
     address_id BIGINT,
     phone TEXT,
@@ -386,15 +388,11 @@ SET @admin_role_id = LAST_INSERT_ID();
 INSERT INTO address (street, number, city, provincia, postal_code_optional) VALUES ('Admin Street', '123', 'Admin City', 'Admin Province', '12345');
 SET @admin_address_id = LAST_INSERT_ID();
 
--- Insert a dummy classroom for the admin user (if required by schema, can be a generic one)
-INSERT INTO classroom (name, capacity, shift, academic_year, age_group, is_active) VALUES ('Admin Classroom', 1, 'Mañana', 2025, 0, FALSE);
-SET @admin_classroom_id = LAST_INSERT_ID();
-
 -- Insert the default administrator user
 INSERT INTO staff (
     first_name, paternal_surname, email, password_hash, is_active,
     address_id, classroom_id, role_id, last_login
 ) VALUES (
     'Admin', 'User', 'admin@kindergarten.com', '$2b$10$1LlL9Li2/zWwTPse6RQdO.2Zoa400EqHo1AA9pSgzAR8AaYWSvLTW', TRUE,
-    @admin_address_id, @admin_classroom_id, @admin_role_id, NOW()
+    @admin_address_id, NULL, @admin_role_id, NOW()
 );

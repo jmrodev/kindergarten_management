@@ -322,12 +322,7 @@ function StaffList({ darkMode, showSuccess, showError }) { // Accept showSuccess
                 darkMode={darkMode}
             />
 
-            <ToastNotification
-                show={toast.show}
-                onClose={() => setToast({ ...toast, show: false })}
-                message={toast.message}
-                variant={toast.variant}
-            />
+            {/* Modales */}
         </div>
     );
 }
