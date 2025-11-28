@@ -1,43 +1,45 @@
 // backend/controllers/GuardianController.js
 const GuardianRepository = require('../repositories/GuardianRepository');
 const Guardian = require('../models/Guardian');
-const { serializeBigInt } = require('../utils/serialization');
+const { AppError } = require('../middleware/errorHandler'); // Import AppError
+const { sanitizeObject, sanitizeWhitespace } = require('../utils/sanitization'); // Import sanitization utilities
 
 class GuardianController {
     async createGuardian(req, res) {
         try {
+            const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
             const guardianData = Guardian.fromDbRow({
-                first_name: req.body.nombre || req.body.firstName,
-                middle_name_optional: req.body.segundoNombre || req.body.middleName,
-                paternal_surname: req.body.apellidoPaterno || req.body.paternalSurname,
-                maternal_surname: req.body.apellidoMaterno || req.body.maternalSurname,
-                preferred_surname: req.body.apellidoPreferido || req.body.preferredSurname,
-                address_id: req.body.direccionId || req.body.addressId,
-                phone: req.body.telefono || req.body.phone,
-                email_optional: req.body.email,
-                authorized_pickup: req.body.autorizadoRetiro || req.body.authorizedPickup,
-                authorized_change: req.body.autorizadoCambio || req.body.authorizedChange
+                first_name: sanitizedBody.nombre || sanitizedBody.firstName,
+                middle_name_optional: sanitizedBody.segundoNombre || sanitizedBody.middleName,
+                paternal_surname: sanitizedBody.apellidoPaterno || sanitizedBody.paternalSurname,
+                maternal_surname: sanitizedBody.apellidoMaterno || sanitizedBody.maternalSurname,
+                preferred_surname: sanitizedBody.apellidoPreferido || sanitizedBody.preferredSurname,
+                address_id: sanitizedBody.direccionId || sanitizedBody.addressId,
+                phone: sanitizedBody.telefono || sanitizedBody.phone,
+                email_optional: sanitizedBody.email,
+                authorized_pickup: sanitizedBody.autorizadoRetiro || sanitizedBody.authorizedPickup,
+                authorized_change: sanitizedBody.autorizadoCambio || sanitizedBody.authorizedChange
             });
 
             if (!guardianData.isValid()) {
-                return res.status(400).json({ message: 'Invalid guardian data' });
+                throw new AppError('Invalid guardian data', 400);
             }
 
             const created = await GuardianRepository.create(guardianData);
-            res.status(201).json(serializeBigInt(created));
+            res.status(201).json(created);
         } catch (error) {
             console.error('Error in createGuardian:', error);
-            res.status(500).json({ message: 'Internal server error' });
+            throw new AppError('Error creating guardian', 500);
         }
     }
 
     async getAllGuardians(req, res) {
         try {
             const guardians = await GuardianRepository.findAll();
-            res.status(200).json(serializeBigInt(guardians));
+            res.status(200).json(guardians);
         } catch (error) {
             console.error('Error in getAllGuardians:', error);
-            res.status(500).json({ message: 'Internal server error' });
+            throw new AppError('Error fetching guardians', 500);
         }
     }
 
@@ -46,12 +48,12 @@ class GuardianController {
             const { id } = req.params;
             const guardian = await GuardianRepository.findById(id);
             if (!guardian) {
-                return res.status(404).json({ message: 'Guardian not found' });
+                throw new AppError('Guardian not found', 404);
             }
-            res.status(200).json(serializeBigInt(guardian));
+            res.status(200).json(guardian);
         } catch (error) {
             console.error(`Error in getGuardianById for id ${req.params.id}:`, error);
-            res.status(500).json({ message: 'Internal server error' });
+            throw new AppError('Error fetching guardian', 500);
         }
     }
 
@@ -59,38 +61,39 @@ class GuardianController {
         try {
             const { studentId } = req.params;
             const guardians = await GuardianRepository.findByStudentId(studentId);
-            res.status(200).json(serializeBigInt(guardians));
+            res.status(200).json(guardians);
         } catch (error) {
             console.error(`Error in getGuardiansByStudent for student ${req.params.studentId}:`, error);
-            res.status(500).json({ message: 'Internal server error' });
+            throw new AppError('Error fetching guardians by student', 500);
         }
     }
 
     async updateGuardian(req, res) {
         try {
             const { id } = req.params;
+            const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
             const guardianData = Guardian.fromDbRow({
-                first_name: req.body.nombre || req.body.firstName,
-                middle_name_optional: req.body.segundoNombre || req.body.middleName,
-                paternal_surname: req.body.apellidoPaterno || req.body.paternalSurname,
-                maternal_surname: req.body.apellidoMaterno || req.body.maternalSurname,
-                preferred_surname: req.body.apellidoPreferido || req.body.preferredSurname,
-                address_id: req.body.direccionId || req.body.addressId,
-                phone: req.body.telefono || req.body.phone,
-                email_optional: req.body.email,
-                authorized_pickup: req.body.autorizadoRetiro || req.body.authorizedPickup,
-                authorized_change: req.body.autorizadoCambio || req.body.authorizedChange
+                first_name: sanitizedBody.nombre || sanitizedBody.firstName,
+                middle_name_optional: sanitizedBody.segundoNombre || sanitizedBody.middleName,
+                paternal_surname: sanitizedBody.apellidoPaterno || sanitizedBody.paternalSurname,
+                maternal_surname: sanitizedBody.apellidoMaterno || sanitizedBody.maternalSurname,
+                preferred_surname: sanitizedBody.apellidoPreferido || sanitizedBody.preferredSurname,
+                address_id: sanitizedBody.direccionId || sanitizedBody.addressId,
+                phone: sanitizedBody.telefono || sanitizedBody.phone,
+                email_optional: sanitizedBody.email,
+                authorized_pickup: sanitizedBody.autorizadoRetiro || sanitizedBody.authorizedPickup,
+                authorized_change: sanitizedBody.autorizadoCambio || sanitizedBody.authorizedChange
             });
 
             if (!guardianData.isValid()) {
-                return res.status(400).json({ message: 'Invalid guardian data' });
+                throw new AppError('Invalid guardian data', 400);
             }
 
             const updated = await GuardianRepository.update(id, guardianData);
-            res.status(200).json(serializeBigInt(updated));
+            res.status(200).json(updated);
         } catch (error) {
             console.error(`Error in updateGuardian for id ${req.params.id}:`, error);
-            res.status(500).json({ message: 'Internal server error' });
+            throw new AppError('Error updating guardian', 500);
         }
     }
 
@@ -99,65 +102,68 @@ class GuardianController {
             const { id } = req.params;
             const success = await GuardianRepository.delete(id);
             if (!success) {
-                return res.status(404).json({ message: 'Guardian not found or could not be deleted' });
+                throw new AppError('Guardian not found or could not be deleted', 404);
             }
             res.status(204).send();
         } catch (error) {
             console.error(`Error in deleteGuardian for id ${req.params.id}:`, error);
             if (error.message && error.message.includes('Still assigned')) {
-                return res.status(409).json({ message: error.message });
+                throw new AppError(error.message, 409);
             }
-            res.status(500).json({ message: 'Internal server error' });
+            throw new AppError('Error deleting guardian', 500);
         }
     }
 
     // Métodos para gestionar relaciones student-guardian
     async getAllRelationships(req, res) {
         try {
-            const { searchTerm } = req.query;
+            const sanitizedQuery = sanitizeObject(req.query, sanitizeWhitespace);
+            const { searchTerm } = sanitizedQuery;
             const relationships = await GuardianRepository.getAllRelationships(searchTerm);
-            res.status(200).json(serializeBigInt(relationships));
+            res.status(200).json(relationships);
         } catch (error) {
             console.error('Error in getAllRelationships:', error);
-            res.status(500).json({ message: 'Internal server error' });
+            throw new AppError('Error fetching relationships', 500);
         }
     }
 
     async assignGuardianToStudent(req, res) {
         try {
             const { studentId, guardianId } = req.params;
+            const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
             const relationData = {
-                relationship: req.body.relacion || req.body.relationship,
-                isPrimary: req.body.esPrincipal || req.body.isPrimary || false,
-                authorizedPickup: req.body.autorizadoRetiro || req.body.authorizedPickup || false,
-                authorizedDiaperChange: req.body.autorizadoPañales || req.body.authorizedDiaperChange || false,
-                notes: req.body.notas || req.body.notes
+                relationship: sanitizedBody.relacion || sanitizedBody.relationship,
+                isPrimary: sanitizedBody.esPrincipal || sanitizedBody.isPrimary || false,
+                authorizedPickup: sanitizedBody.autorizadoRetiro || sanitizedBody.authorizedPickup || false,
+                authorizedDiaperChange: sanitizedBody.autorizadoPañales || sanitizedBody.authorizedDiaperChange || false,
+                notes: sanitizedBody.notas || sanitizedBody.notes
             };
 
             const relationId = await GuardianRepository.assignToStudent(studentId, guardianId, relationData);
             res.status(201).json({ success: true, relationId });
         } catch (error) {
             console.error('Error in assignGuardianToStudent:', error);
-            res.status(500).json({ message: 'Internal server error' });
+            throw new AppError('Error assigning guardian to student', 500);
         }
     }
 
     async updateGuardianRelation(req, res) {
         try {
             const { studentId, guardianId } = req.params;
+            const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
             const relationData = {
-                relationship: req.body.relacion || req.body.relationship,
-                isPrimary: req.body.esPrincipal || req.body.isPrimary || false,
-                authorizedPickup: req.body.autorizadoRetiro || req.body.authorizedPickup || false,
-                authorizedDiaperChange: req.body.autorizadoPañales || req.body.authorizedDiaperChange || false,
-                notes: req.body.notas || req.body.notes
+                relationship: sanitizedBody.relacion || sanitizedBody.relationship,
+                isPrimary: sanitizedBody.esPrincipal || sanitizedBody.isPrimary || false,
+                authorizedPickup: sanitizedBody.autorizadoRetiro || sanitizedBody.authorizedPickup || false,
+                authorizedDiaperChange: sanitizedBody.autorizadoPañales || sanitizedBody.authorizedDiaperChange || false,
+                notes: sanitizedBody.notas || sanitizedBody.notes
             };
 
             await GuardianRepository.updateRelation(studentId, guardianId, relationData);
             res.status(200).json({ success: true });
         } catch (error) {
             console.error('Error in updateGuardianRelation:', error);
-            res.status(500).json({ message: 'Internal server error' });
+            throw new AppError('Error updating guardian relation', 500);
         }
     }
 
@@ -166,17 +172,15 @@ class GuardianController {
             const { studentId, guardianId } = req.params;
             const success = await GuardianRepository.removeFromStudent(studentId, guardianId);
             if (!success) {
-                return res.status(404).json({ message: 'Relación no encontrada' });
+                throw new AppError('Relación no encontrada', 404);
             }
             res.status(204).send();
         } catch (error) {
             console.error('Error in removeGuardianFromStudent:', error);
             if (error.message && error.message.includes('Cannot remove last guardian')) {
-                return res.status(409).json({ 
-                    message: 'No se puede eliminar: es el único responsable del alumno. Cada alumno debe tener al menos un responsable.' 
-                });
+                throw new AppError('No se puede eliminar: es el único responsable del alumno. Cada alumno debe tener al menos un responsable.', 409);
             }
-            res.status(500).json({ message: 'Error interno del servidor' });
+            throw new AppError('Error removing guardian from student', 500);
         }
     }
 }
