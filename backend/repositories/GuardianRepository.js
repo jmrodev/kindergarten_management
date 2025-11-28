@@ -89,7 +89,7 @@ class GuardianRepository {
             const rows = await conn.query(`
                 SELECT 
                     g.*,
-                    sg.relationship,
+                    sg.relationship_type as relationship,
                     sg.is_primary,
                     sg.authorized_pickup as sg_authorized_pickup,
                     sg.authorized_diaper_change,
@@ -206,22 +206,21 @@ class GuardianRepository {
                 `INSERT INTO student_guardian (
                     student_id, 
                     guardian_id, 
-                    relationship, 
-                    is_primary,
-                    authorized_pickup,
-                    authorized_diaper_change,
-                    notes
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    studentId,
-                    guardianId,
-                    relationData.relationship,
-                    relationData.isPrimary || false,
-                    relationData.authorizedPickup || false,
-                    relationData.authorizedDiaperChange || false,
-                    relationData.notes || null
-                ]
-            );
+                                        relationship_type, 
+                                        is_primary,
+                                        authorized_pickup,
+                                        authorized_diaper_change,
+                                        notes
+                                    ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                                    [
+                                        studentId,
+                                        guardianId,
+                                        relationData.relationship_type,
+                                        relationData.isPrimary || false,
+                                        relationData.authorizedPickup || false,
+                                        relationData.authorizedDiaperChange || false,
+                                        relationData.notes || null
+                                    ]            );
             
             return result.insertId;
         } catch (err) {
@@ -247,14 +246,14 @@ class GuardianRepository {
             
             await conn.query(
                 `UPDATE student_guardian SET
-                    relationship = ?,
+                    relationship_type = ?,
                     is_primary = ?,
                     authorized_pickup = ?,
                     authorized_diaper_change = ?,
                     notes = ?
                 WHERE student_id = ? AND guardian_id = ?`,
                 [
-                    relationData.relationship,
+                    relationData.relationship_type,
                     relationData.isPrimary || false,
                     relationData.authorizedPickup || false,
                     relationData.authorizedDiaperChange || false,
@@ -325,7 +324,7 @@ class GuardianRepository {
                     s.shift,
                     c.id as classroom_id,
                     c.name as classroom_name,
-                    sg.relationship,
+                    sg.relationship_type as relationship,
                     sg.is_primary,
                     sg.authorized_pickup,
                     sg.authorized_diaper_change,
@@ -339,7 +338,7 @@ class GuardianRepository {
             
             const params = [];
             
-            if (searchTerm) {
+            if (searchTerm && searchTerm.trim().length > 0) {
                 const searchTerms = searchTerm.trim().split(/\s+/);
                 searchTerms.forEach(term => {
                     query += ` AND (

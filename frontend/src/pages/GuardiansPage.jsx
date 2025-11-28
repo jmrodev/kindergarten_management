@@ -451,27 +451,7 @@ const GuardiansPage = ({ showSuccess, showError }) => { // Accept showSuccess an
                 </Button>
             </div>
 
-            {message && (
-                <Alert 
-                    variant={message.type} 
-                    dismissible 
-                    onClose={() => setMessage(null)}
-                    className="shadow-sm"
-                    style={{ 
-                        fontSize: '1rem',
-                        fontWeight: message.type === 'warning' || message.type === 'danger' ? '500' : 'normal'
-                    }}
-                >
-                    <div className="d-flex align-items-center">
-                        <span className="material-icons me-2" style={{ fontSize: '1.5rem' }}>
-                            {message.type === 'success' ? 'check_circle' : 
-                             message.type === 'warning' ? 'warning' : 
-                             message.type === 'danger' ? 'error' : 'info'}
-                        </span>
-                        <div>{message.text}</div>
-                    </div>
-                </Alert>
-            )}
+
 
             {/* Buscador */}
             <Card className="mb-4">
