@@ -1,12 +1,5 @@
 import { Modal, Button, Row, Col, Badge } from 'react-bootstrap';
-
-const ROLE_TRANSLATIONS = {
-    'admin': 'Administrador',
-    'directivo': 'Director/a',
-    'secretaria': 'Secretaria',
-    'maestro': 'Maestro/a',
-    'tutor': 'Padre/Tutor'
-};
+import { ROLE_TRANSLATIONS } from '../utils/constants'; // Import from constants.js
 
 function StaffDetail({ show, onHide, staff, onEdit, darkMode }) {
     if (!staff) return null;

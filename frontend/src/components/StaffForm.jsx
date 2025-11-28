@@ -1,13 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Modal, Form, Button, Row, Col } from 'react-bootstrap';
-
-const ROLE_TRANSLATIONS = {
-    'admin': 'Administrador',
-    'directivo': 'Director/a',
-    'secretaria': 'Secretaria',
-    'maestro': 'Maestro/a',
-    'tutor': 'Padre/Tutor'
-};
+import { ROLE_TRANSLATIONS } from '../utils/constants'; // Import from constants.js
 
 function StaffForm({ show, onHide, onSave, staff, roles, classrooms = [], darkMode }) {
     const [formData, setFormData] = useState({

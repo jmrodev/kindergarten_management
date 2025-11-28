@@ -4,14 +4,7 @@ import staffService from '../services/staffService';
 import StaffForm from './StaffForm';
 import StaffDetail from './StaffDetail';
 import ConfirmModal from './ConfirmModal';
-
-const ROLE_TRANSLATIONS = {
-    'admin': 'Administrador',
-    'directivo': 'Director/a',
-    'secretaria': 'Secretaria',
-    'maestro': 'Maestro/a',
-    'tutor': 'Padre/Tutor'
-};
+import { ROLE_TRANSLATIONS } from '../utils/constants'; // Import from constants.js
 
 function StaffList({ darkMode, showSuccess, showError }) { // Accept showSuccess and showError as props
     const [staff, setStaff] = useState([]);
