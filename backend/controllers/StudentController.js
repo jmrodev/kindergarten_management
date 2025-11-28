@@ -4,23 +4,18 @@ const Student = require('../models/Student');
 const Address = require('../models/Address');
 const EmergencyContact = require('../models/EmergencyContact');
 const Classroom = require('../models/Classroom');
-const { serializeBigInt } = require('../utils/serialization');
+const { AppError } = require('../middleware/errorHandler'); // Import AppError
+const { sanitizeObject, sanitizeWhitespace } = require('../utils/sanitization'); // Import sanitization utilities
 
 class StudentController {
     async createStudent(req, res) {
         try {
-            const { nombre, segundoNombre, tercerNombre, alias, apellidoMaterno, apellidoPaterno, fechaNacimiento, direccion, contactoEmergencia, sala, turno } = req.body;
+            const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
+            const { nombre, segundoNombre, tercerNombre, alias, apellidoMaterno, apellidoPaterno, fechaNacimiento, direccion, contactoEmergencia, sala, turno } = sanitizedBody;
 
             // Validar que existan los objetos requeridos
             if (!direccion || !contactoEmergencia || !sala) {
-                return res.status(400).json({ 
-                    message: "Faltan datos requeridos: direccion, contactoEmergencia o sala",
-                    received: { 
-                        hasDireccion: !!direccion, 
-                        hasContactoEmergencia: !!contactoEmergencia, 
-                        hasSala: !!sala 
-                    }
-                });
+                throw new AppError("Faltan datos requeridos: direccion, contactoEmergencia o sala", 400);
             }
 
             // Create model objects from request body
@@ -53,29 +48,30 @@ class StudentController {
             );
 
             if (!newStudent.isValid()) {
-                return res.status(400).json({ message: "Invalid student data" });
+                throw new AppError("Invalid student data", 400);
             }
 
             const createdStudent = await StudentRepository.create(newStudent);
-            res.status(201).json(serializeBigInt(createdStudent));
+            res.status(201).json(createdStudent);
         } catch (error) {
             console.error("Error in createStudent:", error);
-            res.status(500).json({ message: "Internal server error" });
+            throw new AppError('Error creating student', 500);
         }
     }
 
     async getAllStudents(req, res) {
         try {
             const students = await StudentRepository.findAll();
-            res.status(200).json(serializeBigInt(students));
+            res.status(200).json(students);
         } catch (error) {
             console.error("Error in getAllStudents:", error);
-            res.status(500).json({ message: "Internal server error" });
+            throw new AppError('Error fetching students', 500);
         }
     }
 
     async searchStudents(req, res) {
         try {
+            const sanitizedQuery = sanitizeObject(req.query, sanitizeWhitespace);
             const { 
                 searchText, 
                 nombre, 
@@ -88,7 +84,7 @@ class StudentController {
                 edadMin,
                 edadMax,
                 contactoEmergencia
-            } = req.query;
+            } = sanitizedQuery;
             
             const filters = {};
             
@@ -108,10 +104,10 @@ class StudentController {
             if (contactoEmergencia) filters.contactoEmergencia = contactoEmergencia;
             
             const students = await StudentRepository.search(filters);
-            res.status(200).json(serializeBigInt(students));
+            res.status(200).json(students);
         } catch (error) {
             console.error("Error in searchStudents:", error);
-            res.status(500).json({ message: "Internal server error" });
+            throw new AppError('Error searching students', 500);
         }
     }
 
@@ -120,19 +116,20 @@ class StudentController {
             const { id } = req.params;
             const student = await StudentRepository.findById(id);
             if (!student) {
-                return res.status(404).json({ message: "Student not found" });
+                throw new AppError("Student not found", 404);
             }
-            res.status(200).json(serializeBigInt(student));
+            res.status(200).json(student);
         } catch (error) {
             console.error(`Error in getStudentById for id ${req.params.id}:`, error);
-            res.status(500).json({ message: "Internal server error" });
+            throw new AppError('Error fetching student', 500);
         }
     }
 
     async updateStudent(req, res) {
         try {
             const { id } = req.params;
-            const { nombre, segundoNombre, tercerNombre, alias, apellidoMaterno, apellidoPaterno, fechaNacimiento, direccion, contactoEmergencia, sala, turno } = req.body;
+            const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
+            const { nombre, segundoNombre, tercerNombre, alias, apellidoMaterno, apellidoPaterno, fechaNacimiento, direccion, contactoEmergencia, sala, turno } = sanitizedBody;
 
             // Reconstruct model objects. IDs are crucial for update.
             const updatedAddress = new Address(direccion.id, direccion.calle, direccion.numero, direccion.ciudad, direccion.provincia, direccion.codigoPostal);
@@ -146,14 +143,14 @@ class StudentController {
             );
 
             if (!updatedStudent.isValid()) {
-                return res.status(400).json({ message: "Invalid student data" });
+                throw new AppError("Invalid student data", 400);
             }
 
             const result = await StudentRepository.update(updatedStudent);
-            res.status(200).json(serializeBigInt(result));
+            res.status(200).json(result);
         } catch (error) {
             console.error(`Error in updateStudent for id ${req.params.id}:`, error);
-            res.status(500).json({ message: "Internal server error" });
+            throw new AppError('Error updating student', 500);
         }
     }
 
@@ -162,34 +159,35 @@ class StudentController {
             const { id } = req.params;
             const success = await StudentRepository.delete(id);
             if (!success) {
-                return res.status(404).json({ message: "Student not found or could not be deleted" });
+                throw new AppError("Student not found or could not be deleted", 404);
             }
             res.status(204).send(); // No content for successful deletion
         } catch (error) {
             console.error(`Error in deleteStudent for id ${req.params.id}:`, error);
-            res.status(500).json({ message: "Internal server error" });
+            throw new AppError('Error deleting student', 500);
         }
     }
 
     async assignClassroom(req, res) {
         try {
             const { studentId } = req.params;
-            const { classroomId } = req.body;
+            const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
+            const { classroomId } = sanitizedBody;
 
             if (!classroomId) {
-                return res.status(400).json({ message: "classroomId is required" });
+                throw new AppError("classroomId is required", 400);
             }
 
             const success = await StudentRepository.assignClassroom(studentId, classroomId);
             if (!success) {
-                return res.status(404).json({ message: "Student or Classroom not found" });
+                throw new AppError("Student or Classroom not found", 404);
             }
 
             const updatedStudent = await StudentRepository.findById(studentId);
-            res.status(200).json(serializeBigInt(updatedStudent));
+            res.status(200).json(updatedStudent);
         } catch (error) {
             console.error(`Error in assignClassroom for student ${req.params.studentId}:`, error);
-            res.status(500).json({ message: "Internal server error" });
+            throw new AppError('Error assigning classroom', 500);
         }
     }
 }
