@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Form, Button, Modal, Row, Col, Spinner, Alert } from 'react-bootstrap';
 import axios from 'axios';
 
-const ClassroomForm = ({ show, initialData = {}, onSubmit, onCancel }) => {
+const ClassroomForm = ({ show, initialData = {}, onSubmit, onCancel, showError }) => {
     const [formData, setFormData] = useState({
         nombre: '',
         capacidad: '',
@@ -51,6 +51,9 @@ const ClassroomForm = ({ show, initialData = {}, onSubmit, onCancel }) => {
             setMaestros(maestrosFiltrados);
         } catch (error) {
             console.error('Error cargando maestros:', error);
+            if (showError) {
+                showError('Error', 'Error cargando maestros: ' + error.message);
+            }
         } finally {
             setLoadingMaestros(false);
         }

@@ -16,7 +16,8 @@ const SalasPage = ({
     onDelete,
     onSubmit,
     onAssignStudent,
-    setMessage
+    showSuccess, // New prop
+    showError     // New prop
 }) => {
     const [showClassroomForm, setShowClassroomForm] = useState(false);
     const [showAssignModal, setShowAssignModal] = useState(false);
@@ -138,6 +139,7 @@ const SalasPage = ({
                         setShowClassroomForm(false);
                         setEditingClassroom(null);
                     }}
+                    showError={showError} // Pass showError
                 />
             )}
 
@@ -148,8 +150,9 @@ const SalasPage = ({
                 onDelete={onDelete}
                 onSelect={setSelectedClassroom}
                 onAssignStudent={handleOpenAssignModal}
-                onShowMessage={setMessage}
                 onViewAssigned={handleViewAssignedStudents}
+                showSuccess={showSuccess} // Pass showSuccess
+                showError={showError}     // Pass showError
             />
 
             <SalaDetail 
