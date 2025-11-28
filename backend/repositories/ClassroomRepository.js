@@ -130,6 +130,16 @@ class ClassroomRepository {
             if (studentsCheck[0].count > 0) {
                 throw new Error(`Cannot delete classroom: ${studentsCheck[0].count} student(s) are still assigned to this classroom. Please reassign or remove students first.`);
             }
+
+            // Check if there are staff members assigned to this classroom
+            const staffCheck = await conn.query(
+                "SELECT COUNT(*) as count FROM staff WHERE classroom_id = ?", 
+                [id]
+            );
+
+            if (staffCheck[0].count > 0) {
+                throw new Error(`Cannot delete classroom: ${staffCheck[0].count} staff member(s) are still assigned to this classroom. Please reassign or remove staff first.`);
+            }
             
             const result = await conn.query("DELETE FROM classroom WHERE id = ?", [id]);
             return result.affectedRows > 0;
