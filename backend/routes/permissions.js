@@ -2,17 +2,20 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
+const { AppError } = require('../middleware/errorHandler'); // Import AppError
+const { sanitizeObject, sanitizeWhitespace } = require('../utils/sanitization'); // Import sanitization utilities
 
 // Middleware para verificar que solo admin/directivo accedan
 const requireDirectionRole = (req, res, next) => {
-    if (req.user.role !== 'admin' && req.user.role !== 'directivo') {
-        return res.status(403).json({ error: 'Acceso denegado. Solo admin/directivo' });
+    // Assuming 'Administrator' and 'Directivo' are the role_name values in the database
+    if (req.user.role !== 'Administrator' && req.user.role !== 'Directivo') {
+        return next(new AppError('Acceso denegado. Solo administradores o directivos pueden realizar esta acción.', 403));
     }
     next();
 };
 
 // GET /api/permissions - Obtener todos los permisos
-router.get('/', authenticateToken, requireDirectionRole, async (req, res) => {
+router.get('/', authenticateToken, requireDirectionRole, async (req, res, next) => {
     const pool = req.app.get('pool');
     
     try {
@@ -24,12 +27,12 @@ router.get('/', authenticateToken, requireDirectionRole, async (req, res) => {
         res.json(permissions);
     } catch (error) {
         console.error('Error fetching permissions:', error);
-        res.status(500).json({ error: 'Error al obtener permisos' });
+        next(new AppError('Error al obtener permisos', 500));
     }
 });
 
 // GET /api/permissions/modules - Obtener módulos
-router.get('/modules', authenticateToken, requireDirectionRole, async (req, res) => {
+router.get('/modules', authenticateToken, requireDirectionRole, async (req, res, next) => {
     const pool = req.app.get('pool');
     
     try {
@@ -42,12 +45,12 @@ router.get('/modules', authenticateToken, requireDirectionRole, async (req, res)
         res.json(modules);
     } catch (error) {
         console.error('Error fetching modules:', error);
-        res.status(500).json({ error: 'Error al obtener módulos' });
+        next(new AppError('Error al obtener módulos', 500));
     }
 });
 
 // GET /api/permissions/actions - Obtener acciones
-router.get('/actions', authenticateToken, requireDirectionRole, async (req, res) => {
+router.get('/actions', authenticateToken, requireDirectionRole, async (req, res, next) => {
     const pool = req.app.get('pool');
     
     try {
@@ -59,18 +62,19 @@ router.get('/actions', authenticateToken, requireDirectionRole, async (req, res)
         res.json(actions);
     } catch (error) {
         console.error('Error fetching actions:', error);
-        res.status(500).json({ error: 'Error al obtener acciones' });
+        next(new AppError('Error al obtener acciones', 500));
     }
 });
 
 // POST /api/permissions/toggle - Toggle permiso
-router.post('/toggle', authenticateToken, requireDirectionRole, async (req, res) => {
+router.post('/toggle', authenticateToken, requireDirectionRole, async (req, res, next) => {
     const pool = req.app.get('pool');
-    const { roleId, moduleId, actionId, isGranted } = req.body;
+    const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
+    const { roleId, moduleId, actionId, isGranted } = sanitizedBody;
     const userId = req.user.id;
 
     if (!roleId || !moduleId || !actionId || isGranted === undefined) {
-        return res.status(400).json({ error: 'Faltan parámetros requeridos' });
+        return next(new AppError('Faltan parámetros requeridos', 400));
     }
 
     try {
@@ -85,11 +89,9 @@ router.post('/toggle', authenticateToken, requireDirectionRole, async (req, res)
             const { role_name, module_key } = permCheck[0];
             
             // Bloquear modificación de permisos críticos para admin/directivo
-            if ((role_name === 'admin' || role_name === 'directivo') && 
+            if ((role_name === 'Administrator' || role_name === 'Directivo') && // Updated role names
                 (module_key === 'personal' || module_key === 'configuracion')) {
-                return res.status(403).json({ 
-                    error: 'Los permisos de Personal y Configuración para Admin/Directivo están protegidos' 
-                });
+                return next(new AppError('Los permisos de Personal y Configuración para Administrador/Directivo están protegidos', 403));
             }
         }
 
@@ -125,14 +127,16 @@ router.post('/toggle', authenticateToken, requireDirectionRole, async (req, res)
         });
     } catch (error) {
         console.error('Error toggling permission:', error);
-        res.status(500).json({ error: 'Error al actualizar permiso' });
+        next(new AppError('Error al actualizar permiso', 500));
     }
 });
 
 // GET /api/permissions/audit - Obtener log de auditoría
-router.get('/audit', authenticateToken, requireDirectionRole, async (req, res) => {
+router.get('/audit', authenticateToken, requireDirectionRole, async (req, res, next) => {
     const pool = req.app.get('pool');
-    const { limit = 100 } = req.query;
+    const sanitizedQuery = sanitizeObject(req.query, sanitizeWhitespace);
+    const { limit } = sanitizedQuery;
+    const parsedLimit = parseInt(limit) || 100;
 
     try {
         const logs = await pool.query(`
@@ -150,19 +154,20 @@ router.get('/audit', authenticateToken, requireDirectionRole, async (req, res) =
             LEFT JOIN staff s ON pal.changed_by = s.id
             ORDER BY pal.changed_at DESC
             LIMIT ?
-        `, [parseInt(limit)]);
+        `, [parsedLimit]);
 
         res.json(logs);
     } catch (error) {
         console.error('Error fetching audit logs:', error);
-        res.status(500).json({ error: 'Error al obtener logs de auditoría' });
+        next(new AppError('Error al obtener logs de auditoría', 500));
     }
 });
 
 // GET /api/permissions/check/:role/:module/:action - Verificar permiso específico
-router.get('/check/:role/:module/:action', authenticateToken, async (req, res) => {
+router.get('/check/:role/:module/:action', authenticateToken, async (req, res, next) => {
     const pool = req.app.get('pool');
-    const { role, module, action } = req.params;
+    const sanitizedParams = sanitizeObject(req.params, sanitizeWhitespace);
+    const { role, module, action } = sanitizedParams;
 
     try {
         const result = await pool.query(`
@@ -176,7 +181,7 @@ router.get('/check/:role/:module/:action', authenticateToken, async (req, res) =
         });
     } catch (error) {
         console.error('Error checking permission:', error);
-        res.status(500).json({ error: 'Error al verificar permiso' });
+        next(new AppError('Error al verificar permiso', 500));
     }
 });
 
