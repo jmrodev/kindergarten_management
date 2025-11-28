@@ -2,16 +2,19 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { generateToken, authenticateToken } = require('../middleware/auth');
+const { AppError } = require('../middleware/errorHandler'); // Import AppError
+const { sanitizeObject, sanitizeWhitespace } = require('../utils/sanitization'); // Import sanitization utilities
 
 const router = express.Router();
 
 // POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', async (req, res, next) => {
     const pool = req.app.get('pool');
-    const { email, password } = req.body;
+    const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
+    const { email, password } = sanitizedBody;
 
     if (!email || !password) {
-        return res.status(400).json({ error: 'Email y contraseña son requeridos' });
+        return next(new AppError('Email y contraseña son requeridos', 400));
     }
 
     try {
@@ -25,20 +28,20 @@ router.post('/login', async (req, res) => {
         );
 
         if (rows.length === 0) {
-            return res.status(401).json({ error: 'Credenciales inválidas' });
+            return next(new AppError('Credenciales inválidas', 401));
         }
 
         const user = rows[0];
 
         // Verificar que el usuario tenga password_hash
         if (!user.password_hash) {
-            return res.status(401).json({ error: 'Usuario no configurado para acceso' });
+            return next(new AppError('Usuario no configurado para acceso', 401));
         }
 
         // Verificar contraseña
         const validPassword = await bcrypt.compare(password, user.password_hash);
         if (!validPassword) {
-            return res.status(401).json({ error: 'Credenciales inválidas' });
+            return next(new AppError('Credenciales inválidas', 401));
         }
 
         // Actualizar último login
@@ -62,12 +65,12 @@ router.post('/login', async (req, res) => {
         });
     } catch (error) {
         console.error('Error in login:', error);
-        res.status(500).json({ error: 'Error al iniciar sesión' });
+        next(new AppError('Error al iniciar sesión', 500));
     }
 });
 
 // GET /api/auth/me - Obtener usuario actual
-router.get('/me', authenticateToken, async (req, res) => {
+router.get('/me', authenticateToken, async (req, res, next) => {
     const pool = req.app.get('pool');
 
     try {
@@ -82,7 +85,7 @@ router.get('/me', authenticateToken, async (req, res) => {
         );
 
         if (rows.length === 0) {
-            return res.status(404).json({ error: 'Usuario no encontrado' });
+            return next(new AppError('Usuario no encontrado', 404));
         }
 
         const user = rows[0];
@@ -99,19 +102,20 @@ router.get('/me', authenticateToken, async (req, res) => {
         });
     } catch (error) {
         console.error('Error in /me:', error);
-        res.status(500).json({ error: 'Error al obtener datos del usuario' });
+        next(new AppError('Error al obtener datos del usuario', 500));
     }
 });
 
 // POST /api/auth/register - Registrar nuevo usuario (solo admin)
-router.post('/register', authenticateToken, async (req, res) => {
+router.post('/register', authenticateToken, async (req, res, next) => {
     const pool = req.app.get('pool');
     
     // Solo admin puede registrar usuarios
-    if (req.user.role !== 'admin') {
-        return res.status(403).json({ error: 'Solo administradores pueden registrar usuarios' });
+    if (req.user.role !== 'Administrator') { // Changed from 'admin' to 'Administrator' for consistency with role_name
+        return next(new AppError('Solo administradores pueden registrar usuarios', 403));
     }
 
+    const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
     const { 
         firstName, 
         paternalSurname, 
@@ -120,24 +124,28 @@ router.post('/register', authenticateToken, async (req, res) => {
         password, 
         phone,
         roleName 
-    } = req.body;
+    } = sanitizedBody;
 
     if (!firstName || !paternalSurname || !email || !password) {
-        return res.status(400).json({ error: 'Faltan campos requeridos' });
+        return next(new AppError('Faltan campos requeridos', 400));
+    }
+
+    if (password.length < 6) {
+        return next(new AppError('La contraseña debe tener al menos 6 caracteres', 400));
     }
 
     try {
         // Verificar si el email ya existe
         const existing = await pool.query('SELECT id FROM staff WHERE email = ?', [email]);
         if (existing.length > 0) {
-            return res.status(400).json({ error: 'El email ya está registrado' });
+            return next(new AppError('El email ya está registrado', 400));
         }
 
         // Hash de la contraseña
         const passwordHash = await bcrypt.hash(password, 10);
 
         // Obtener role_id
-        const roleRows = await pool.query('SELECT id FROM role WHERE role_name = ?', [roleName || 'secretaria']);
+        const roleRows = await pool.query('SELECT id FROM role WHERE role_name = ?', [roleName || 'Secretary']); // Default to 'Secretary'
         const roleId = roleRows.length > 0 ? roleRows[0].id : null;
 
         // Insertar usuario
@@ -153,21 +161,22 @@ router.post('/register', authenticateToken, async (req, res) => {
         });
     } catch (error) {
         console.error('Error in register:', error);
-        res.status(500).json({ error: 'Error al registrar usuario' });
+        next(new AppError('Error al registrar usuario', 500));
     }
 });
 
 // POST /api/auth/change-password - Cambiar contraseña
-router.post('/change-password', authenticateToken, async (req, res) => {
+router.post('/change-password', authenticateToken, async (req, res, next) => {
     const pool = req.app.get('pool');
-    const { currentPassword, newPassword } = req.body;
+    const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
+    const { currentPassword, newPassword } = sanitizedBody;
 
     if (!currentPassword || !newPassword) {
-        return res.status(400).json({ error: 'Se requieren ambas contraseñas' });
+        return next(new AppError('Se requieren ambas contraseñas', 400));
     }
 
     if (newPassword.length < 6) {
-        return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres' });
+        return next(new AppError('La nueva contraseña debe tener al menos 6 caracteres', 400));
     }
 
     try {
@@ -175,13 +184,13 @@ router.post('/change-password', authenticateToken, async (req, res) => {
         const rows = await pool.query('SELECT password_hash FROM staff WHERE id = ?', [req.user.id]);
         
         if (rows.length === 0) {
-            return res.status(404).json({ error: 'Usuario no encontrado' });
+            return next(new AppError('Usuario no encontrado', 404));
         }
 
         // Verificar contraseña actual
         const validPassword = await bcrypt.compare(currentPassword, rows[0].password_hash);
         if (!validPassword) {
-            return res.status(401).json({ error: 'Contraseña actual incorrecta' });
+            return next(new AppError('Contraseña actual incorrecta', 401));
         }
 
         // Hash de la nueva contraseña
@@ -193,7 +202,7 @@ router.post('/change-password', authenticateToken, async (req, res) => {
         res.json({ message: 'Contraseña actualizada exitosamente' });
     } catch (error) {
         console.error('Error in change-password:', error);
-        res.status(500).json({ error: 'Error al cambiar la contraseña' });
+        next(new AppError('Error al cambiar la contraseña', 500));
     }
 });
 
