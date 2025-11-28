@@ -1,5 +1,7 @@
 const StaffRepository = require('../repositories/StaffRepository');
 const bcrypt = require('bcryptjs');
+const { AppError } = require('../middleware/errorHandler'); // Import AppError
+const { sanitizeObject, sanitizeWhitespace } = require('../utils/sanitization'); // Import sanitization utilities
 
 const StaffController = {
     async getAllStaff(req, res) {
@@ -8,7 +10,7 @@ const StaffController = {
             res.json(staff);
         } catch (error) {
             console.error('Error in getAllStaff:', error);
-            res.status(500).json({ message: 'Error al obtener personal', error: error.message });
+            throw new AppError('Error al obtener personal', 500);
         }
     },
 
@@ -16,18 +18,19 @@ const StaffController = {
         try {
             const staff = await StaffRepository.findById(req.params.id);
             if (!staff) {
-                return res.status(404).json({ message: 'Personal no encontrado' });
+                throw new AppError('Personal no encontrado', 404);
             }
             res.json(staff);
         } catch (error) {
             console.error('Error in getStaffById:', error);
-            res.status(500).json({ message: 'Error al obtener personal', error: error.message });
+            throw new AppError('Error al obtener personal', 500);
         }
     },
 
     async createStaff(req, res) {
         try {
-            const staffData = { ...req.body };
+            const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
+            const staffData = { ...sanitizedBody };
             
             if (staffData.dni) {
                 const passwordHash = await bcrypt.hash(staffData.dni, 10);
@@ -39,7 +42,7 @@ const StaffController = {
             res.status(201).json(newStaff);
         } catch (error) {
             console.error('Error in createStaff:', error);
-            res.status(500).json({ message: 'Error al crear personal', error: error.message });
+            throw new AppError('Error al crear personal', 500);
         }
     },
 
@@ -48,23 +51,23 @@ const StaffController = {
             const staff = await StaffRepository.findById(req.params.id);
             
             if (!staff) {
-                return res.status(404).json({ message: 'Personal no encontrado' });
+                throw new AppError('Personal no encontrado', 404);
             }
+            
+            const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
             
             // Proteger cambio de rol para posiciones de dirección (admin y directivo)
             const isDirectionRole = staff.role_name === 'admin' || staff.role_name === 'directivo';
-            if (isDirectionRole && req.body.role_id && req.body.role_id !== staff.role_id) {
-                return res.status(403).json({ 
-                    message: 'No se puede cambiar el rol de usuarios con posiciones de dirección' 
-                });
+            if (isDirectionRole && sanitizedBody.role_id && sanitizedBody.role_id !== staff.role_id) {
+                throw new AppError('No se puede cambiar el rol de usuarios con posiciones de dirección', 403);
             }
             
-            await StaffRepository.update(req.params.id, req.body);
+            await StaffRepository.update(req.params.id, sanitizedBody);
             const updatedStaff = await StaffRepository.findById(req.params.id);
             res.json(updatedStaff);
         } catch (error) {
             console.error('Error in updateStaff:', error);
-            res.status(500).json({ message: 'Error al actualizar personal', error: error.message });
+            throw new AppError('Error al actualizar personal', 500);
         }
     },
 
@@ -73,21 +76,19 @@ const StaffController = {
             const staff = await StaffRepository.findById(req.params.id);
             
             if (!staff) {
-                return res.status(404).json({ message: 'Personal no encontrado' });
+                throw new AppError('Personal no encontrado', 404);
             }
             
             // Proteger roles de dirección (admin y directivo)
             if (staff.role_name === 'admin' || staff.role_name === 'directivo') {
-                return res.status(403).json({ 
-                    message: 'No se puede eliminar usuarios con roles de dirección (Admin/Directivo)' 
-                });
+                throw new AppError('No se puede eliminar usuarios con roles de dirección (Admin/Directivo)', 403);
             }
             
             await StaffRepository.delete(req.params.id);
             res.json({ message: 'Personal eliminado correctamente' });
         } catch (error) {
             console.error('Error in deleteStaff:', error);
-            res.status(500).json({ message: 'Error al eliminar personal', error: error.message });
+            throw new AppError('Error al eliminar personal', 500);
         }
     },
 
@@ -97,7 +98,7 @@ const StaffController = {
             res.json(roles);
         } catch (error) {
             console.error('Error in getRoles:', error);
-            res.status(500).json({ message: 'Error al obtener roles', error: error.message });
+            throw new AppError('Error al obtener roles', 500);
         }
     }
 };
