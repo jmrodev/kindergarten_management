@@ -34,8 +34,15 @@ const ToastNotification = ({ show, onClose, message, variant = 'success' }) => {
     };
 
     return (
-        <ToastContainer position="top-end" className="p-3" style={{ zIndex: 9999 }}>
-            <Toast show={show} onClose={onClose} delay={3000} autohide className={getBgClass()}>
+        <ToastContainer position="top-end" className="p-3" style={{ zIndex: 99999, position: 'fixed', top: '20px', right: '20px' }}>
+            <Toast 
+                show={show} 
+                onClose={onClose} 
+                delay={5000} 
+                autohide 
+                className={getBgClass()}
+                style={{ minWidth: '300px' }}
+            >
                 <Toast.Header>
                     <strong className="me-auto">
                         <span className="me-2">{getIcon()}</span>

@@ -106,26 +106,32 @@ class StudentRepository {
             
             // Búsqueda general - busca en todos los campos de texto
             if (filters.searchText) {
-                query += ` AND (
-                    a.first_name LIKE ? 
-                    OR a.middle_name_optional LIKE ? 
-                    OR a.third_name_optional LIKE ?
-                    OR a.paternal_surname LIKE ? 
-                    OR a.maternal_surname LIKE ?
-                    OR a.nickname_optional LIKE ?
-                    OR d.street LIKE ?
-                    OR d.city LIKE ?
-                    OR d.provincia LIKE ?
-                    OR d.postal_code_optional LIKE ?
-                    OR s.name LIKE ?
-                    OR ce.full_name LIKE ?
-                    OR ce.relationship LIKE ?
-                    OR ce.phone LIKE ?
-                )`;
-                const searchTerm = `%${filters.searchText}%`;
-                params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, 
-                           searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, 
-                           searchTerm, searchTerm);
+                // Dividir los términos de búsqueda por espacios
+                const searchTerms = filters.searchText.trim().split(/\s+/);
+                
+                // Para cada término, buscar que aparezca en cualquier campo
+                searchTerms.forEach(term => {
+                    query += ` AND (
+                        a.first_name LIKE ? 
+                        OR a.middle_name_optional LIKE ? 
+                        OR a.third_name_optional LIKE ?
+                        OR a.paternal_surname LIKE ? 
+                        OR a.maternal_surname LIKE ?
+                        OR a.nickname_optional LIKE ?
+                        OR d.street LIKE ?
+                        OR d.city LIKE ?
+                        OR d.provincia LIKE ?
+                        OR d.postal_code_optional LIKE ?
+                        OR s.name LIKE ?
+                        OR ce.full_name LIKE ?
+                        OR ce.relationship LIKE ?
+                        OR ce.phone LIKE ?
+                    )`;
+                    const searchTerm = `%${term}%`;
+                    params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, 
+                               searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, 
+                               searchTerm, searchTerm);
+                });
             }
             
             // Filtros específicos (se pueden combinar con búsqueda general)
@@ -363,6 +369,23 @@ class StudentRepository {
         } catch (err) {
             if (conn) await conn.rollback();
             console.error(`Error deleting student with id ${id}:`, err);
+            throw err;
+        } finally {
+            if (conn) conn.release();
+        }
+    }
+
+    async assignClassroom(studentId, classroomId) {
+        let conn;
+        try {
+            conn = await getConnection();
+            const result = await conn.query(
+                "UPDATE student SET classroom_id = ? WHERE id = ?",
+                [classroomId, studentId]
+            );
+            return result.affectedRows > 0;
+        } catch (err) {
+            console.error(`Error assigning classroom ${classroomId} to student ${studentId}:`, err);
             throw err;
         } finally {
             if (conn) conn.release();

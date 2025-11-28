@@ -18,6 +18,9 @@ router.post('/', StudentController.createStudent);
 // PUT (update) an existing alumno by ID
 router.put('/:id', StudentController.updateStudent);
 
+// PATCH assign classroom to student
+router.patch('/:studentId/assign-classroom', StudentController.assignClassroom);
+
 // DELETE an alumno by ID
 router.delete('/:id', StudentController.deleteStudent);
 

@@ -3,9 +3,10 @@ import React from 'react';
 import { Modal, Button } from 'react-bootstrap';
 
 const ConfirmModal = ({ show, onHide, onConfirm, title, message, variant = 'danger' }) => {
-    const handleConfirm = () => {
-        onConfirm();
-        onHide();
+    const handleConfirm = async () => {
+        if (onConfirm) {
+            await onConfirm();
+        }
     };
 
     return (

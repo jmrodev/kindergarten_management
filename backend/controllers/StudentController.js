@@ -170,6 +170,28 @@ class StudentController {
             res.status(500).json({ message: "Internal server error" });
         }
     }
+
+    async assignClassroom(req, res) {
+        try {
+            const { studentId } = req.params;
+            const { classroomId } = req.body;
+
+            if (!classroomId) {
+                return res.status(400).json({ message: "classroomId is required" });
+            }
+
+            const success = await StudentRepository.assignClassroom(studentId, classroomId);
+            if (!success) {
+                return res.status(404).json({ message: "Student or Classroom not found" });
+            }
+
+            const updatedStudent = await StudentRepository.findById(studentId);
+            res.status(200).json(serializeBigInt(updatedStudent));
+        } catch (error) {
+            console.error(`Error in assignClassroom for student ${req.params.studentId}:`, error);
+            res.status(500).json({ message: "Internal server error" });
+        }
+    }
 }
 
 module.exports = new StudentController();

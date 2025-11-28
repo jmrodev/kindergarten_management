@@ -1,39 +1,58 @@
-// frontend/src/App.jsx
-import React, { useState } from 'react';
-import { Container, Row, Col, Button, ButtonGroup } from 'react-bootstrap';
-import StudentList from './components/StudentList';
-import StudentForm from './components/StudentForm';
-import StudentDetail from './components/StudentDetail';
-import StudentFilter from './components/StudentFilter';
+// frontend/src/App-router-v6.jsx
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { Container, ButtonGroup, Button } from 'react-bootstrap';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { PermissionsProvider } from './context/PermissionsContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import LoginPage from './pages/LoginPage';
+import Dashboard from './components/Dashboard';
 import useAlumnos from './hooks/useAlumnos';
-import ClassroomList from './components/ClassroomList';
-import ClassroomForm from './components/ClassroomForm';
-import SalaDetail from './components/SalaDetail';
 import useSalas from './hooks/useSalas';
 import ConfirmModal from './components/ConfirmModal';
 import ToastNotification from './components/ToastNotification';
+import OcupacionModal from './components/OcupacionModal';
+import alumnoService from './services/alumnoService';
 
-function App() {
-    const [activeView, setActiveView] = useState('students'); // 'students' or 'classrooms'
-    const [showStudentForm, setShowStudentForm] = useState(false);
-    const [showClassroomForm, setShowClassroomForm] = useState(false);
-    const [selectedStudent, setSelectedStudent] = useState(null);
-    const [selectedClassroom, setSelectedClassroom] = useState(null);
-    const [editingStudent, setEditingStudent] = useState(null);
-    const [editingClassroom, setEditingClassroom] = useState(null);
+// Importar componentes de páginas
+import AlumnosPage from './pages/AlumnosPage';
+import SalasPage from './pages/SalasPage';
+import PersonalPage from './pages/PersonalPage';
+import ConfiguracionPage from './pages/ConfiguracionPage';
+import GuardiansPage from './pages/GuardiansPage';
+import ParentPortalPage from './pages/ParentPortalPage';
+
+function AppContent() {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { user, logout } = useAuth();
     const [message, setMessage] = useState(null);
-    
-    // Modal de confirmación
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const [showOcupacionModal, setShowOcupacionModal] = useState(false);
     const [confirmAction, setConfirmAction] = useState(null);
     const [confirmData, setConfirmData] = useState({ title: '', message: '' });
+    const [darkMode, setDarkMode] = useState(() => {
+        const saved = localStorage.getItem('darkMode');
+        return saved ? JSON.parse(saved) : false;
+    });
 
-    // Importar TODOS los valores del hook, no solo las funciones
     const { alumnos, loading: loadingAlumnos, searchAlumnos, fetchAlumnos, addAlumno, updateAlumno, deleteAlumno } = useAlumnos();
-    const { salas, loading: loadingSalas, addSala, updateSala, deleteSala } = useSalas();
+    const { salas, loading: loadingSalas, fetchSalas, addSala, updateSala, deleteSala } = useSalas();
+
+    useEffect(() => {
+        if (darkMode) {
+            document.body.classList.add('dark-mode');
+        } else {
+            document.body.classList.remove('dark-mode');
+        }
+        localStorage.setItem('darkMode', JSON.stringify(darkMode));
+    }, [darkMode]);
+
+    const isActive = (path) => location.pathname === path || (path === '/dashboard' && location.pathname === '/');
 
     // Student handlers
-    const handleStudentSubmit = async (studentData) => {
+    const handleStudentSubmit = async (editingStudent, studentData) => {
         try {
             if (editingStudent) {
                 await updateAlumno(editingStudent.id, studentData);
@@ -42,18 +61,9 @@ function App() {
                 await addAlumno(studentData);
                 setMessage({ type: 'success', text: 'Alumno registrado correctamente' });
             }
-            setShowStudentForm(false);
-            setEditingStudent(null);
-            
         } catch (error) {
             setMessage({ type: 'danger', text: `Error: ${error.message}` });
         }
-    };
-
-    const handleEditStudent = (student) => {
-        setEditingStudent(student);
-        setShowStudentForm(true);
-        setSelectedStudent(null);
     };
 
     const handleDeleteStudent = (id) => {
@@ -67,27 +77,18 @@ function App() {
         setConfirmAction(() => async () => {
             try {
                 await deleteAlumno(id);
+                setShowConfirmModal(false);
                 setMessage({ type: 'success', text: 'Alumno eliminado correctamente' });
-                setSelectedStudent(null);
-                
             } catch (error) {
+                setShowConfirmModal(false);
                 setMessage({ type: 'danger', text: `Error al eliminar: ${error.message}` });
             }
         });
         setShowConfirmModal(true);
     };
 
-    const handleSelectStudent = (student) => {
-        setSelectedStudent(student);
-    };
-
-    const handleCancelStudentForm = () => {
-        setShowStudentForm(false);
-        setEditingStudent(null);
-    };
-
     // Classroom handlers
-    const handleClassroomSubmit = async (classroomData) => {
+    const handleClassroomSubmit = async (editingClassroom, classroomData) => {
         try {
             if (editingClassroom) {
                 await updateSala(editingClassroom.id, classroomData);
@@ -96,18 +97,9 @@ function App() {
                 await addSala(classroomData);
                 setMessage({ type: 'success', text: 'Sala registrada correctamente' });
             }
-            setShowClassroomForm(false);
-            setEditingClassroom(null);
-            
         } catch (error) {
             setMessage({ type: 'danger', text: `Error: ${error.message}` });
         }
-    };
-
-    const handleEditClassroom = (classroom) => {
-        setEditingClassroom(classroom);
-        setShowClassroomForm(true);
-        setSelectedClassroom(null);
     };
 
     const handleDeleteClassroom = (id) => {
@@ -121,41 +113,16 @@ function App() {
         setConfirmAction(() => async () => {
             try {
                 await deleteSala(id);
+                setShowConfirmModal(false);
                 setMessage({ type: 'success', text: 'Sala eliminada correctamente' });
-                setSelectedClassroom(null);
-                
             } catch (error) {
+                setShowConfirmModal(false);
                 setMessage({ type: 'danger', text: `Error al eliminar: ${error.message}` });
             }
         });
         setShowConfirmModal(true);
     };
 
-    const handleSelectClassroom = (classroom) => {
-        setSelectedClassroom(classroom);
-        setShowClassroomForm(false);
-    };
-
-    const handleCancelClassroomForm = () => {
-        setShowClassroomForm(false);
-        setEditingClassroom(null);
-    };
-
-    const switchToStudents = () => {
-        setActiveView('students');
-        setShowClassroomForm(false);
-        setSelectedClassroom(null);
-        setEditingClassroom(null);
-    };
-
-    const switchToClassrooms = () => {
-        setActiveView('classrooms');
-        setShowStudentForm(false);
-        setSelectedStudent(null);
-        setEditingStudent(null);
-    };
-
-    // Filter handlers
     const handleFilter = async (filters) => {
         try {
             await searchAlumnos(filters);
@@ -172,181 +139,352 @@ function App() {
         }
     };
 
+    const handleAssignStudent = async (studentId, classroomId) => {
+        try {
+            await alumnoService.assignClassroom(studentId, classroomId);
+            setMessage({ type: 'success', text: 'Alumno asignado correctamente a la sala' });
+            await fetchAlumnos();
+            await fetchSalas();
+        } catch (error) {
+            setMessage({ type: 'danger', text: `Error al asignar alumno: ${error.message}` });
+        }
+    };
+
     return (
-        <Container className="mt-4 mb-5">
-            <div className="text-center mb-5">
-                <h1 className="display-4 fw-bold mb-2" style={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text'
-                }}>
-                    <span style={{fontSize: '3rem'}}>🎓</span> Sistema de Gestión
-                </h1>
-                <p className="text-muted fs-5">Jardín de Infantes</p>
-            </div>
-
-            <ButtonGroup className="mb-4 w-100 shadow-sm" size="lg">
-                <Button 
-                    variant={activeView === 'students' ? 'primary' : 'outline-primary'}
-                    onClick={switchToStudents}
-                    className="py-3 fw-semibold"
-                    style={{
-                        transition: 'all 0.3s ease',
-                        borderWidth: '2px'
-                    }}
-                >
-                    <span style={{fontSize: '1.5rem'}}>👶</span> Alumnos
-                </Button>
-                <Button 
-                    variant={activeView === 'classrooms' ? 'primary' : 'outline-primary'}
-                    onClick={switchToClassrooms}
-                    className="py-3 fw-semibold"
-                    style={{
-                        transition: 'all 0.3s ease',
-                        borderWidth: '2px'
-                    }}
-                >
-                    <span style={{fontSize: '1.5rem'}}>🏫</span> Salas
-                </Button>
-            </ButtonGroup>
-
-            {activeView === 'students' && (
-                <>
-                    <Row className="mb-4">
-                        <Col>
-                            <Button 
-                                variant="success" 
-                                size="lg"
-                                onClick={() => {
-                                    setShowStudentForm(true);
-                                    setEditingStudent(null);
-                                    setSelectedStudent(null);
-                                }}
-                                className="shadow-sm px-4 py-3 fw-semibold"
+        <>
+            <Container className="mt-2 mb-3">
+                <div className="text-center mb-2 position-relative">
+                    <h1 className="h5 mb-0" style={{ fontWeight: '600' }}>
+                        <span className="material-icons" style={{
+                            fontSize: '1.2rem',
+                            color: darkMode ? '#8b5cf6' : '#667eea',
+                            verticalAlign: 'middle',
+                            marginRight: '0.3rem'
+                        }}>school</span>
+                        <span style={{
+                            color: darkMode ? '#8b5cf6' : '#667eea'
+                        }}>Sistema de Gestión - Jardín de Infantes</span>
+                    </h1>
+                    {user && (
+                        <div style={{
+                            position: 'absolute',
+                            right: '0',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            display: 'flex',
+                            gap: '0.5rem',
+                            alignItems: 'center'
+                        }}>
+                            <button 
                                 style={{
-                                    background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                                    background: 'transparent',
                                     border: 'none',
-                                    transition: 'all 0.3s ease'
+                                    cursor: 'pointer',
+                                    padding: '0.25rem',
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.2s ease'
                                 }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(-2px)';
-                                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.2)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(0)';
-                                    e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
-                                }}
+                                onClick={() => setDarkMode(!darkMode)}
+                                title={darkMode ? 'Modo claro' : 'Modo oscuro'}
+                                onMouseEnter={(e) => e.currentTarget.style.background = darkMode ? 'rgba(139, 92, 246, 0.1)' : 'rgba(102, 126, 234, 0.1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                             >
-                                <span style={{fontSize: '1.3rem'}}>➕</span> Registrar Nuevo Alumno
-                            </Button>
-                        </Col>
-                    </Row>
-
-                    <StudentFilter 
-                        onFilter={handleFilter}
-                        onClear={handleClearFilter}
-                        salas={salas}
-                    />
-
-                    {showStudentForm && (
-                        <StudentForm
-                            show={showStudentForm}
-                            initialData={editingStudent || {}}
-                            onSubmit={handleStudentSubmit}
-                            onCancel={handleCancelStudentForm}
-                        />
-                    )}
-
-                    <StudentList
-                        alumnos={alumnos}
-                        loading={loadingAlumnos}
-                        onEdit={handleEditStudent}
-                        onDelete={handleDeleteStudent}
-                        onSelect={handleSelectStudent}
-                    />
-
-                    <StudentDetail 
-                        student={selectedStudent}
-                        show={!!selectedStudent}
-                        onHide={() => setSelectedStudent(null)}
-                    />
-                </>
-            )}
-
-            {activeView === 'classrooms' && (
-                <>
-                    <Row className="mb-4">
-                        <Col>
-                            <Button 
-                                variant="success"
-                                size="lg"
-                                onClick={() => {
-                                    setShowClassroomForm(true);
-                                    setEditingClassroom(null);
-                                    setSelectedClassroom(null);
-                                }}
-                                className="shadow-sm px-4 py-3 fw-semibold"
+                                <span className="material-icons" style={{ 
+                                    fontSize: '1.2rem',
+                                    color: darkMode ? '#8b5cf6' : '#667eea'
+                                }}>
+                                    {darkMode ? 'light_mode' : 'dark_mode'}
+                                </span>
+                            </button>
+                            <button 
                                 style={{
-                                    background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                                    background: 'transparent',
                                     border: 'none',
-                                    transition: 'all 0.3s ease'
+                                    cursor: 'pointer',
+                                    padding: '0.25rem',
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.2s ease'
                                 }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(-2px)';
-                                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.2)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(0)';
-                                    e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
-                                }}
+                                onClick={() => setShowLogoutModal(true)}
+                                title="Cerrar sesión"
+                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(220, 38, 38, 0.1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                             >
-                                <span style={{fontSize: '1.3rem'}}>➕</span> Registrar Nueva Sala
-                            </Button>
-                        </Col>
-                    </Row>
-
-                    {showClassroomForm && (
-                        <ClassroomForm
-                            show={showClassroomForm}
-                            initialData={editingClassroom || {}}
-                            onSubmit={handleClassroomSubmit}
-                            onCancel={handleCancelClassroomForm}
-                        />
+                                <span className="material-icons" style={{ 
+                                    fontSize: '1.2rem',
+                                    color: '#dc2626'
+                                }}>
+                                    logout
+                                </span>
+                            </button>
+                        </div>
                     )}
-
-                    {selectedClassroom && !showClassroomForm && (
-                        <SalaDetail sala={selectedClassroom} />
+                    {!user && (
+                        <button 
+                            style={{
+                                position: 'absolute',
+                                right: '0',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                padding: '0.25rem',
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.2s ease'
+                            }}
+                            onClick={() => setDarkMode(!darkMode)}
+                            title={darkMode ? 'Modo claro' : 'Modo oscuro'}
+                            onMouseEnter={(e) => e.currentTarget.style.background = darkMode ? 'rgba(139, 92, 246, 0.1)' : 'rgba(102, 126, 234, 0.1)'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                            <span className="material-icons" style={{ 
+                                fontSize: '1.2rem',
+                                color: darkMode ? '#8b5cf6' : '#667eea'
+                            }}>
+                                {darkMode ? 'light_mode' : 'dark_mode'}
+                            </span>
+                        </button>
                     )}
+                </div>
 
-                    <ClassroomList
-                        salas={salas}
-                        loading={loadingSalas}
-                        onEdit={handleEditClassroom}
-                        onDelete={handleDeleteClassroom}
-                        onSelect={handleSelectClassroom}
+                {user && (
+                <ButtonGroup className="mb-2 w-100" size="sm">
+                    <Button 
+                        variant={isActive('/dashboard') ? 'primary' : 'outline-primary'}
+                        onClick={() => navigate('/dashboard')}
+                        className="py-2"
+                        style={{
+                            transition: 'all 0.2s ease',
+                            borderWidth: '1.5px',
+                            fontWeight: '500',
+                            fontSize: '0.95rem',
+                            background: isActive('/dashboard') ? '#667eea' : 'transparent',
+                            borderColor: '#667eea',
+                            color: isActive('/dashboard') ? 'white' : '#667eea'
+                        }}
+                    >
+                        <span className="material-icons" style={{fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>dashboard</span> Dashboard
+                    </Button>
+                    <Button 
+                        variant={isActive('/alumnos') ? 'primary' : 'outline-primary'}
+                        onClick={() => navigate('/alumnos')}
+                        className="py-2"
+                        style={{
+                            transition: 'all 0.2s ease',
+                            borderWidth: '1.5px',
+                            fontWeight: '500',
+                            fontSize: '0.95rem',
+                            background: isActive('/alumnos') ? '#667eea' : 'transparent',
+                            borderColor: '#667eea',
+                            color: isActive('/alumnos') ? 'white' : '#667eea'
+                        }}
+                    >
+                        <span className="material-icons" style={{fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>people</span> Alumnos
+                    </Button>
+                    <Button 
+                        variant={isActive('/salas') ? 'primary' : 'outline-primary'}
+                        onClick={() => navigate('/salas')}
+                        className="py-2"
+                        style={{
+                            transition: 'all 0.2s ease',
+                            borderWidth: '1.5px',
+                            fontWeight: '500',
+                            fontSize: '0.95rem',
+                            background: isActive('/salas') ? '#667eea' : 'transparent',
+                            borderColor: '#667eea',
+                            color: isActive('/salas') ? 'white' : '#667eea'
+                        }}
+                    >
+                        <span className="material-icons" style={{fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>meeting_room</span> Salas
+                    </Button>
+                    <Button 
+                        variant={isActive('/personal') ? 'primary' : 'outline-primary'}
+                        onClick={() => navigate('/personal')}
+                        className="py-2"
+                        style={{
+                            transition: 'all 0.2s ease',
+                            borderWidth: '1.5px',
+                            fontWeight: '500',
+                            fontSize: '0.95rem',
+                            background: isActive('/personal') ? '#667eea' : 'transparent',
+                            borderColor: '#667eea',
+                            color: isActive('/personal') ? 'white' : '#667eea'
+                        }}
+                    >
+                        <span className="material-icons" style={{fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>badge</span> Personal
+                    </Button>
+                    <Button 
+                        variant={isActive('/responsables') ? 'primary' : 'outline-primary'}
+                        onClick={() => navigate('/responsables')}
+                        className="py-2"
+                        style={{
+                            transition: 'all 0.2s ease',
+                            borderWidth: '1.5px',
+                            fontWeight: '500',
+                            fontSize: '0.95rem',
+                            background: isActive('/responsables') ? '#667eea' : 'transparent',
+                            borderColor: '#667eea',
+                            color: isActive('/responsables') ? 'white' : '#667eea'
+                        }}
+                    >
+                        <span className="material-icons" style={{fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>family_restroom</span> Responsables
+                    </Button>
+                    {(user.role === 'admin' || user.role === 'directivo') && (
+                        <Button 
+                            variant={isActive('/configuracion') ? 'primary' : 'outline-primary'}
+                            onClick={() => navigate('/configuracion')}
+                            className="py-2"
+                            style={{
+                                transition: 'all 0.2s ease',
+                                borderWidth: '1.5px',
+                                fontWeight: '500',
+                                fontSize: '0.95rem',
+                                background: isActive('/configuracion') ? '#667eea' : 'transparent',
+                                borderColor: '#667eea',
+                                color: isActive('/configuracion') ? 'white' : '#667eea'
+                            }}
+                        >
+                            <span className="material-icons" style={{fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>settings</span> Configuración
+                        </Button>
+                    )}
+                </ButtonGroup>
+                )}
+
+                <Routes>
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/parent-portal" element={<ParentPortalPage />} />
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route 
+                        path="/dashboard" 
+                        element={
+                            <ProtectedRoute>
+                                <Dashboard 
+                                        alumnos={alumnos} 
+                                    salas={salas}
+                                    onNavigate={(view) => navigate(`/${view}`)}
+                                    onShowOcupacion={() => setShowOcupacionModal(true)}
+                                />
+                            </ProtectedRoute>
+                        } 
                     />
-                </>
-            )}
-            
-            {/* Modal de confirmación */}
-            <ConfirmModal
-                show={showConfirmModal}
-                onHide={() => setShowConfirmModal(false)}
-                onConfirm={confirmAction}
-                title={confirmData.title}
-                message={confirmData.message}
-                variant="danger"
-            />
-            
-            {/* Toast de notificaciones */}
-            <ToastNotification
-                show={!!message}
-                onClose={() => setMessage(null)}
-                message={message?.text}
-                variant={message?.type}
-            />
-        </Container>
+                    <Route 
+                        path="/alumnos" 
+                        element={
+                            <ProtectedRoute>
+                                <AlumnosPage 
+                                    alumnos={alumnos}
+                                    loading={loadingAlumnos}
+                                    salas={salas}
+                                    onDelete={handleDeleteStudent}
+                                    onFilter={handleFilter}
+                                    onClearFilter={handleClearFilter}
+                                    onSubmit={handleStudentSubmit}
+                                    setMessage={setMessage}
+                                />
+                            </ProtectedRoute>
+                        } 
+                    />
+                    <Route 
+                        path="/salas" 
+                        element={
+                            <ProtectedRoute>
+                                <SalasPage 
+                                    salas={salas}
+                                    alumnos={alumnos}
+                                    loading={loadingSalas}
+                                    loadingAlumnos={loadingAlumnos}
+                                    onDelete={handleDeleteClassroom}
+                                    onSubmit={handleClassroomSubmit}
+                                    onAssignStudent={handleAssignStudent}
+                                    setMessage={setMessage}
+                                />
+                            </ProtectedRoute>
+                        } 
+                    />
+                    <Route 
+                        path="/personal" 
+                        element={
+                            <ProtectedRoute>
+                                <PersonalPage darkMode={darkMode} />
+                            </ProtectedRoute>
+                        } 
+                    />
+                    <Route 
+                        path="/configuracion" 
+                        element={
+                            <ProtectedRoute>
+                                <ConfiguracionPage darkMode={darkMode} />
+                            </ProtectedRoute>
+                        } 
+                    />
+                    <Route 
+                        path="/responsables" 
+                        element={
+                            <ProtectedRoute>
+                                <GuardiansPage />
+                            </ProtectedRoute>
+                        } 
+                    />
+                </Routes>
+
+                <ConfirmModal
+                    show={showConfirmModal}
+                    onHide={() => setShowConfirmModal(false)}
+                    onConfirm={confirmAction}
+                    title={confirmData.title}
+                    message={confirmData.message}
+                    variant="danger"
+                />
+                
+                <ConfirmModal
+                    show={showLogoutModal}
+                    onHide={() => setShowLogoutModal(false)}
+                    onConfirm={() => {
+                        logout();
+                        navigate('/login');
+                        setShowLogoutModal(false);
+                    }}
+                    title="Cerrar Sesión"
+                    message="¿Está seguro que desea cerrar sesión?"
+                    variant="danger"
+                />
+
+                <ToastNotification
+                    show={!!message}
+                    onClose={() => setMessage(null)}
+                    message={message?.text}
+                    variant={message?.type}
+                />
+
+                <OcupacionModal
+                    show={showOcupacionModal}
+                    onHide={() => setShowOcupacionModal(false)}
+                    salas={salas}
+                />
+            </Container>
+        </>
+    );
+}
+
+function App() {
+    return (
+        <BrowserRouter>
+            <AuthProvider>
+                <PermissionsProvider>
+                    <AppContent />
+                </PermissionsProvider>
+            </AuthProvider>
+        </BrowserRouter>
     );
 }
 

@@ -117,9 +117,9 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                         <InputGroup size="lg" className="shadow-sm" style={{borderRadius: '12px', overflow: 'hidden'}}>
                             <InputGroup.Text 
                                 className="bg-white border-end-0 px-4" 
-                                style={{fontSize: '1.5rem', borderTopLeftRadius: '12px', borderBottomLeftRadius: '12px'}}
+                                style={{fontSize: '1.5rem', borderTopLeftRadius: '12px', borderBottomLeftRadius: '12px', color: '#667eea'}}
                             >
-                                🔍
+                                <span className="material-icons">search</span>
                             </InputGroup.Text>
                             <Form.Control
                                 type="text"
@@ -182,7 +182,7 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                         Buscando...
                                     </>
                                 ) : (
-                                    <>🔎 Buscar</>
+                                    <><span className="material-icons" style={{fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>search</span> Buscar</>
                                 )}
                             </Button>
                         </InputGroup>
@@ -191,28 +191,24 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                         <Button 
                             variant={showAdvanced ? "primary" : "outline-primary"}
                             onClick={() => setShowAdvanced(!showAdvanced)}
-                            className="w-100 position-relative shadow-sm"
+                            className="w-100 position-relative"
                             size="lg"
                             style={{
-                                borderRadius: '12px',
-                                fontWeight: '600',
-                                fontSize: '1.05rem',
-                                transition: 'all 0.3s ease',
-                                borderWidth: '2px',
+                                borderRadius: '8px',
+                                fontWeight: '500',
+                                fontSize: '1rem',
+                                transition: 'all 0.2s ease',
+                                borderWidth: '1.5px',
                                 background: showAdvanced ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'white',
                                 borderColor: showAdvanced ? 'transparent' : '#667eea',
-                                color: showAdvanced ? 'white' : '#667eea'
+                                color: showAdvanced ? 'white' : '#667eea',
+                                boxShadow: 'none'
                             }}
                             onMouseEnter={(e) => {
                                 if (!showAdvanced) {
                                     e.currentTarget.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
                                     e.currentTarget.style.color = 'white';
                                     e.currentTarget.style.borderColor = 'transparent';
-                                    e.currentTarget.style.transform = 'translateY(-2px)';
-                                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.3)';
-                                } else {
-                                    e.currentTarget.style.transform = 'translateY(-2px)';
-                                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.4)';
                                 }
                             }}
                             onMouseLeave={(e) => {
@@ -220,26 +216,20 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                     e.currentTarget.style.background = 'white';
                                     e.currentTarget.style.color = '#667eea';
                                     e.currentTarget.style.borderColor = '#667eea';
-                                    e.currentTarget.style.transform = 'translateY(0)';
-                                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.08)';
-                                } else {
-                                    e.currentTarget.style.transform = 'translateY(0)';
-                                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.08)';
                                 }
                             }}
                         >
-                            <span style={{fontSize: '1.2rem'}}>{showAdvanced ? '▲' : '▼'}</span>
+                            <span className="material-icons" style={{fontSize: '1.1rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>tune</span> Filtros
                             {' '}
-                            <span style={{fontSize: '1.1rem'}}>⚙️</span> Filtros
+                            <span style={{fontSize: '1rem', verticalAlign: 'middle'}}>{showAdvanced ? '▲' : '▼'}</span>
                             {activeFilterCount > 0 && !searchText && (
                                 <Badge 
                                     bg="danger" 
                                     pill 
                                     className="position-absolute top-0 start-100 translate-middle"
                                     style={{
-                                        fontSize: '0.75rem',
-                                        padding: '0.4rem 0.5rem',
-                                        boxShadow: '0 2px 8px rgba(220, 53, 69, 0.5)'
+                                        fontSize: '0.7rem',
+                                        padding: '0.35rem 0.45rem'
                                     }}
                                 >
                                     {activeFilterCount}
@@ -258,7 +248,7 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                             <Form onSubmit={handleAdvancedSearch}>
                                 <div className="d-flex align-items-center justify-content-between mb-3">
                                     <h5 className="mb-0 fw-bold text-primary">
-                                        <span style={{fontSize: '1.3rem'}}>🎯</span> Filtros Avanzados
+                                        <span className="material-icons" style={{fontSize: '1.3rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>filter_alt</span> Filtros Avanzados
                                     </h5>
                                     {Object.values(advancedFilters).some(v => v) && (
                                         <Badge bg="info" className="px-3 py-2">
@@ -270,7 +260,7 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                     <Col md={6} lg={3}>
                                         <Form.Group>
                                             <Form.Label className="small fw-semibold mb-2">
-                                                <span style={{fontSize: '1.1rem'}}>🏫</span> Sala
+                                                <span className="material-icons" style={{fontSize: '1.1rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>meeting_room</span> Sala
                                             </Form.Label>
                                             <Form.Select
                                                 name="salaId"
@@ -295,7 +285,7 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                     <Col md={6} lg={3}>
                                         <Form.Group>
                                             <Form.Label className="small fw-semibold mb-2">
-                                                <span style={{fontSize: '1.1rem'}}>🕐</span> Turno
+                                                <span className="material-icons" style={{fontSize: '1.1rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>schedule</span> Turno
                                             </Form.Label>
                                             <Form.Select
                                                 name="turno"
@@ -308,9 +298,9 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                                 }}
                                             >
                                                 <option value="">Todos los turnos</option>
-                                                <option value="Mañana">☀️ Mañana</option>
-                                                <option value="Tarde">🌙 Tarde</option>
-                                                <option value="Completo">🌞🌙 Completo</option>
+                                                <option value="Mañana">Mañana</option>
+                                                <option value="Tarde">Tarde</option>
+                                                <option value="Completo">Completo</option>
                                             </Form.Select>
                                         </Form.Group>
                                     </Col>
@@ -318,7 +308,7 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                     <Col md={6} lg={3}>
                                         <Form.Group>
                                             <Form.Label className="small fw-semibold mb-2">
-                                                <span style={{fontSize: '1.1rem'}}>📍</span> Ciudad
+                                                <span className="material-icons" style={{fontSize: '1.1rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>location_city</span> Ciudad
                                             </Form.Label>
                                             <Form.Control
                                                 type="text"
@@ -338,7 +328,7 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                     <Col md={6} lg={3}>
                                         <Form.Group>
                                             <Form.Label className="small fw-semibold mb-2">
-                                                <span style={{fontSize: '1.1rem'}}>🗺️</span> Provincia
+                                                <span className="material-icons" style={{fontSize: '1.1rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>map</span> Provincia
                                             </Form.Label>
                                             <Form.Control
                                                 type="text"
@@ -358,7 +348,7 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                     <Col md={6} lg={3}>
                                         <Form.Group>
                                             <Form.Label className="small fw-semibold mb-2">
-                                                <span style={{fontSize: '1.1rem'}}>👶</span> Edad Mínima
+                                                <span className="material-icons" style={{fontSize: '1.1rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>child_care</span> Edad Mínima
                                             </Form.Label>
                                             <InputGroup className="shadow-sm">
                                                 <Form.Control
@@ -382,7 +372,7 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                     <Col md={6} lg={3}>
                                         <Form.Group>
                                             <Form.Label className="small fw-semibold mb-2">
-                                                <span style={{fontSize: '1.1rem'}}>🧒</span> Edad Máxima
+                                                <span className="material-icons" style={{fontSize: '1.1rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>escalator_warning</span> Edad Máxima
                                             </Form.Label>
                                             <InputGroup className="shadow-sm">
                                                 <Form.Control
@@ -407,30 +397,25 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                         <div className="d-flex gap-3 justify-content-end">
                                             <Button 
                                                 type="submit" 
-                                                className="shadow px-5 py-3"
                                                 style={{
                                                     background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
                                                     border: 'none',
-                                                    borderRadius: '12px',
-                                                    fontWeight: '700',
-                                                    fontSize: '1.1rem',
-                                                    transition: 'all 0.3s ease',
+                                                    borderRadius: '8px',
+                                                    fontWeight: '500',
+                                                    fontSize: '1rem',
+                                                    transition: 'all 0.2s ease',
                                                     color: 'white',
-                                                    letterSpacing: '0.5px',
-                                                    minWidth: '180px'
+                                                    minWidth: '160px',
+                                                    padding: '0.6rem 2rem'
                                                 }}
                                                 disabled={isSearching}
                                                 onMouseEnter={(e) => {
                                                     if (!isSearching) {
                                                         e.currentTarget.style.background = 'linear-gradient(135deg, #0e8074 0%, #2fdb6b 100%)';
-                                                        e.currentTarget.style.transform = 'translateY(-3px)';
-                                                        e.currentTarget.style.boxShadow = '0 8px 20px rgba(17, 153, 142, 0.4)';
                                                     }
                                                 }}
                                                 onMouseLeave={(e) => {
                                                     e.currentTarget.style.background = 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)';
-                                                    e.currentTarget.style.transform = 'translateY(0)';
-                                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
                                                 }}
                                             >
                                                 {isSearching ? (
@@ -440,7 +425,7 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <span style={{fontSize: '1.3rem'}}>🔎</span> Aplicar Filtros
+                                                        <span className="material-icons" style={{fontSize: '1.3rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>search</span> Aplicar Filtros
                                                     </>
                                                 )}
                                             </Button>
@@ -448,33 +433,28 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                                 <Button 
                                                     type="button"
                                                     onClick={handleClear}
-                                                    className="shadow px-5 py-3"
                                                     disabled={isSearching}
                                                     style={{
-                                                        background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                                                        background: '#dc3545',
                                                         border: 'none',
-                                                        borderRadius: '12px',
-                                                        fontWeight: '700',
-                                                        fontSize: '1.1rem',
-                                                        transition: 'all 0.3s ease',
+                                                        borderRadius: '8px',
+                                                        fontWeight: '500',
+                                                        fontSize: '1rem',
+                                                        transition: 'all 0.2s ease',
                                                         color: 'white',
-                                                        letterSpacing: '0.5px',
-                                                        minWidth: '180px'
+                                                        minWidth: '160px',
+                                                        padding: '0.6rem 2rem'
                                                     }}
                                                     onMouseEnter={(e) => {
                                                         if (!isSearching) {
-                                                            e.currentTarget.style.background = 'linear-gradient(135deg, #e782ea 0%, #e4465b 100%)';
-                                                            e.currentTarget.style.transform = 'translateY(-3px)';
-                                                            e.currentTarget.style.boxShadow = '0 8px 20px rgba(245, 87, 108, 0.4)';
+                                                            e.currentTarget.style.background = '#bb2d3b';
                                                         }
                                                     }}
                                                     onMouseLeave={(e) => {
-                                                        e.currentTarget.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
-                                                        e.currentTarget.style.transform = 'translateY(0)';
-                                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+                                                        e.currentTarget.style.background = '#dc3545';
                                                     }}
                                                 >
-                                                    <span style={{fontSize: '1.3rem'}}>🗑️</span> Limpiar Todo
+                                                    <span className="material-icons" style={{fontSize: '1.3rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>delete</span> Limpiar Todo
                                                 </Button>
                                             )}
                                         </div>
@@ -492,7 +472,7 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                     <Card.Body className="py-3 px-4">
                         <div className="d-flex align-items-center justify-content-between mb-2">
                             <span className="fw-bold text-primary" style={{fontSize: '1rem'}}>
-                                🔍 {activeFilterCount} filtro{activeFilterCount !== 1 ? 's' : ''} activo{activeFilterCount !== 1 ? 's' : ''}:
+                                <span className="material-icons" style={{fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.2rem'}}>search</span> {activeFilterCount} filtro{activeFilterCount !== 1 ? 's' : ''} activo{activeFilterCount !== 1 ? 's' : ''}:
                             </span>
                             <Button
                                 variant="link"
@@ -502,7 +482,7 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                 disabled={isSearching}
                                 style={{textDecoration: 'none', padding: '0.25rem 0.75rem'}}
                             >
-                                🗑️ Limpiar todo
+                                <span className="material-icons" style={{fontSize: '1rem', verticalAlign: 'middle', marginRight: '0.2rem'}}>delete</span> Limpiar todo
                             </Button>
                         </div>
                         <div className="d-flex align-items-center gap-2 flex-wrap">
@@ -514,7 +494,7 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                     onClick={() => handleRemoveFilter('searchText')}
                                     title="Clic para remover este filtro"
                                 >
-                                    🔎 "{searchText}"
+                                    <span className="material-icons" style={{fontSize: '1rem', verticalAlign: 'middle', marginRight: '0.2rem'}}>search</span> "{searchText}"
                                     <span 
                                         style={{
                                             marginLeft: '0.5rem',
@@ -535,7 +515,7 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                     onClick={() => handleRemoveFilter('salaId')}
                                     title="Clic para remover este filtro"
                                 >
-                                    🏫 {salas?.find(s => s.id == advancedFilters.salaId)?.nombre}
+                                    <span className="material-icons" style={{fontSize: '1rem', verticalAlign: 'middle', marginRight: '0.2rem'}}>meeting_room</span> {salas?.find(s => s.id == advancedFilters.salaId)?.nombre}
                                     <span 
                                         style={{
                                             marginLeft: '0.5rem',
@@ -557,7 +537,7 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                     onClick={() => handleRemoveFilter('turno')}
                                     title="Clic para remover este filtro"
                                 >
-                                    🕐 {advancedFilters.turno}
+                                    <span className="material-icons" style={{fontSize: '1rem', verticalAlign: 'middle', marginRight: '0.2rem'}}>schedule</span> {advancedFilters.turno}
                                     <span 
                                         style={{
                                             marginLeft: '0.5rem',
@@ -578,7 +558,7 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                     onClick={() => handleRemoveFilter('ciudad')}
                                     title="Clic para remover este filtro"
                                 >
-                                    📍 {advancedFilters.ciudad}
+                                    <span className="material-icons" style={{fontSize: '1rem', verticalAlign: 'middle', marginRight: '0.2rem'}}>location_city</span> {advancedFilters.ciudad}
                                     <span 
                                         style={{
                                             marginLeft: '0.5rem',
@@ -599,7 +579,7 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                     onClick={() => handleRemoveFilter('provincia')}
                                     title="Clic para remover este filtro"
                                 >
-                                    🗺️ {advancedFilters.provincia}
+                                    <span className="material-icons" style={{fontSize: '1rem', verticalAlign: 'middle', marginRight: '0.2rem'}}>map</span> {advancedFilters.provincia}
                                     <span 
                                         style={{
                                             marginLeft: '0.5rem',
@@ -620,7 +600,7 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                     onClick={() => handleRemoveFilter('edadMin')}
                                     title="Clic para remover este filtro"
                                 >
-                                    👶 {advancedFilters.edadMin}+ años
+                                    <span className="material-icons" style={{fontSize: '1rem', verticalAlign: 'middle', marginRight: '0.2rem'}}>child_care</span> {advancedFilters.edadMin}+ años
                                     <span 
                                         style={{
                                             marginLeft: '0.5rem',
@@ -641,7 +621,7 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                     onClick={() => handleRemoveFilter('edadMax')}
                                     title="Clic para remover este filtro"
                                 >
-                                    🧒 hasta {advancedFilters.edadMax} años
+                                    <span className="material-icons" style={{fontSize: '1rem', verticalAlign: 'middle', marginRight: '0.2rem'}}>escalator_warning</span> hasta {advancedFilters.edadMax} años
                                     <span 
                                         style={{
                                             marginLeft: '0.5rem',

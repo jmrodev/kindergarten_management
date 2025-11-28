@@ -22,7 +22,7 @@ const StudentDetail = ({ student, show, onHide }) => {
         <Modal show={show} onHide={onHide} size="lg" centered>
             <Modal.Header closeButton className="bg-primary text-white">
                 <Modal.Title>
-                    👶 {student.nombre} {student.apellidoPaterno}
+                    <span className="material-icons">person</span> {student.nombre} {student.apellidoPaterno}
                     {student.alias && <Badge bg="light" text="dark" className="ms-2">"{student.alias}"</Badge>}
                 </Modal.Title>
             </Modal.Header>

@@ -39,7 +39,15 @@ const useAlumnos = () => {
 
     const addAlumno = async (alumnoData) => {
         try {
-            const newAlumno = await alumnoService.createAlumno(alumnoData);
+            let newAlumno;
+            
+            // Si tiene guardians, usar el método especial
+            if (alumnoData.guardians && alumnoData.guardians.length > 0) {
+                newAlumno = await alumnoService.createAlumnoWithGuardians(alumnoData);
+            } else {
+                newAlumno = await alumnoService.createAlumno(alumnoData);
+            }
+            
             // Refrescar la lista completa desde el servidor
             await fetchAlumnos();
             return newAlumno;

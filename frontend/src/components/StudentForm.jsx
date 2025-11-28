@@ -1,6 +1,6 @@
 // frontend/src/components/StudentForm.jsx
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Modal, Row, Col } from 'react-bootstrap';
+import { Form, Button, Modal, Row, Col, Alert, Tabs, Tab } from 'react-bootstrap';
 import useSalas from '../hooks/useSalas';
 import { formatDateForInput } from '../utils/dataConverters';
 import { 
@@ -8,6 +8,7 @@ import {
     sanitizeInput, 
     validateSecurity 
 } from '../utils';
+import GuardiansManager from './GuardiansManager';
 
 const StudentForm = ({ show, initialData = {}, onSubmit, onCancel }) => {
     const { salas } = useSalas();
@@ -46,11 +47,21 @@ const StudentForm = ({ show, initialData = {}, onSubmit, onCancel }) => {
     });
 
     const [formData, setFormData] = useState(getInitialFormData());
+    const [guardians, setGuardians] = useState([]);
+    const [emergencyContact, setEmergencyContact] = useState(null);
+    const [activeTab, setActiveTab] = useState('datos');
 
     // Actualizar el formulario cuando initialData cambie (para el modo edición)
     useEffect(() => {
         if (initialData.id) {
             setFormData(getInitialFormData());
+            // TODO: Cargar responsables del alumno desde la API
+            // guardianService.getByStudent(initialData.id).then(setGuardians);
+        } else {
+            // Limpiar al crear nuevo
+            setGuardians([]);
+            setEmergencyContact(null);
+            setActiveTab('datos');
         }
     }, [initialData.id]);
 
@@ -156,7 +167,28 @@ const StudentForm = ({ show, initialData = {}, onSubmit, onCancel }) => {
         // Validación final antes de enviar
         const hasErrors = Object.keys(errors).length > 0;
         if (hasErrors) {
-            // No usar alert, simplemente no enviar
+            return;
+        }
+
+        // Validar que haya al menos un responsable
+        if (guardians.length === 0) {
+            alert('Debe agregar al menos un responsable para el alumno');
+            setActiveTab('responsables');
+            return;
+        }
+
+        // Validar que haya al menos uno autorizado para retiro
+        const hasAuthorizedPickup = guardians.some(g => g.autorizadoRetiro || g.authorizedPickupRelation);
+        if (!hasAuthorizedPickup) {
+            alert('Debe haber al menos un responsable autorizado para retirar al alumno');
+            setActiveTab('responsables');
+            return;
+        }
+
+        // Validar contacto de emergencia
+        if (!emergencyContact || !emergencyContact.nombreCompleto || !emergencyContact.telefono) {
+            alert('Debe completar el contacto de emergencia');
+            setActiveTab('responsables');
             return;
         }
         
@@ -177,13 +209,13 @@ const StudentForm = ({ show, initialData = {}, onSubmit, onCancel }) => {
                 provincia: sanitizeInput(formData.direccion.provincia),
                 codigoPostal: sanitizeInput(formData.direccion.codigoPostal)
             } : null,
-            contactoEmergencia: formData.contactoEmergencia ? {
-                id: formData.contactoEmergencia.id,
-                nombreCompleto: sanitizeInput(formData.contactoEmergencia.nombreCompleto),
-                relacion: sanitizeInput(formData.contactoEmergencia.relacion),
-                telefono: sanitizeInput(formData.contactoEmergencia.telefono)
+            contactoEmergencia: emergencyContact ? {
+                nombreCompleto: sanitizeInput(emergencyContact.nombreCompleto),
+                relacion: sanitizeInput(emergencyContact.relacion),
+                telefono: sanitizeInput(emergencyContact.telefono)
             } : null,
-            sala: formData.sala || null
+            sala: formData.sala || null,
+            guardians: guardians // Agregar responsables
         };
         
         onSubmit(sanitizedData);
@@ -191,14 +223,45 @@ const StudentForm = ({ show, initialData = {}, onSubmit, onCancel }) => {
 
     return (
         <Modal show={show} onHide={onCancel} size="lg" backdrop="static" keyboard={false} centered>
-            <Modal.Header closeButton className="bg-primary text-white">
-                <Modal.Title>
-                    {initialData.id ? '✏️ Editar Alumno' : '➕ Registrar Nuevo Alumno'}
+            <Modal.Header closeButton style={{ 
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                borderBottom: 'none'
+            }}>
+                <Modal.Title className="text-white d-flex align-items-center gap-2">
+                    <span className="material-icons" style={{fontSize: '1.5rem', verticalAlign: 'middle'}}>
+                        {initialData.id ? 'edit' : 'person_add'}
+                    </span>
+                    {initialData.id ? 'Editar Alumno' : 'Registrar Nuevo Alumno'}
                 </Modal.Title>
             </Modal.Header>
-            <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-                <Form onSubmit={handleSubmit} id="studentForm">
-                    <h6 className="mb-3 text-primary border-bottom pb-2">📋 Datos Personales</h6>
+            <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto', padding: '1rem' }}>
+                <Tabs
+                    activeKey={activeTab}
+                    onSelect={(k) => setActiveTab(k)}
+                    className="mb-3"
+                    variant="pills"
+                >
+                    <Tab 
+                        eventKey="datos" 
+                        title={
+                            <span>
+                                <span className="material-icons" style={{fontSize: '1rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>
+                                    person
+                                </span>
+                                Datos del Alumno
+                            </span>
+                        }
+                    >
+                        <Form onSubmit={handleSubmit} id="studentForm">
+                            <h6 className="mb-3 d-flex align-items-center gap-2" style={{ 
+                                color: '#667eea', 
+                                borderBottom: '2px solid #e0e7ff',
+                                paddingBottom: '0.75rem',
+                                fontWeight: '600'
+                            }}>
+                                <span className="material-icons" style={{fontSize: '1.2rem', verticalAlign: 'middle'}}>badge</span>
+                                Datos Personales
+                            </h6>
                     <Row className="mb-3">
                         <Col md={4}>
                             <Form.Group controlId="formNombre">
@@ -363,7 +426,15 @@ const StudentForm = ({ show, initialData = {}, onSubmit, onCancel }) => {
                         </Col>
                     </Row>
 
-                    <h6 className="mb-3 mt-4 text-primary border-bottom pb-2">🏠 Dirección</h6>
+                    <h6 className="mb-3 mt-4 d-flex align-items-center gap-2" style={{ 
+                        color: '#667eea', 
+                        borderBottom: '2px solid #e0e7ff',
+                        paddingBottom: '0.75rem',
+                        fontWeight: '600'
+                    }}>
+                        <span className="material-icons" style={{fontSize: '1.2rem', verticalAlign: 'middle'}}>home</span>
+                        Dirección
+                    </h6>
                     <Row className="mb-3">
                         <Col md={6}>
                             <Form.Group controlId="formCalle">
@@ -459,7 +530,15 @@ const StudentForm = ({ show, initialData = {}, onSubmit, onCancel }) => {
                         </Col>
                     </Row>
 
-                    <h6 className="mb-3 mt-4 text-primary border-bottom pb-2">🚨 Contacto de Emergencia</h6>
+                    <h6 className="mb-3 mt-4 d-flex align-items-center gap-2" style={{ 
+                        color: '#667eea', 
+                        borderBottom: '2px solid #e0e7ff',
+                        paddingBottom: '0.75rem',
+                        fontWeight: '600'
+                    }}>
+                        <span className="material-icons" style={{fontSize: '1.2rem', verticalAlign: 'middle'}}>emergency</span>
+                        Contacto de Emergencia
+                    </h6>
                     <Row className="mb-3">
                         <Col md={4}>
                             <Form.Group controlId="formContactoNombre">
@@ -517,14 +596,66 @@ const StudentForm = ({ show, initialData = {}, onSubmit, onCancel }) => {
                             </Form.Group>
                         </Col>
                     </Row>
-                </Form>
+                        </Form>
+                    </Tab>
+
+                    <Tab 
+                        eventKey="responsables" 
+                        title={
+                            <span>
+                                <span className="material-icons" style={{fontSize: '1rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>
+                                    family_restroom
+                                </span>
+                                Responsables
+                                {guardians.length > 0 && (
+                                    <span className="badge bg-success ms-2">{guardians.length}</span>
+                                )}
+                            </span>
+                        }
+                    >
+                        <GuardiansManager
+                            initialGuardians={guardians}
+                            initialEmergencyContact={emergencyContact}
+                            onGuardiansChange={setGuardians}
+                            onEmergencyContactChange={setEmergencyContact}
+                            mode="local"
+                            canEdit={true}
+                        />
+                    </Tab>
+                </Tabs>
             </Modal.Body>
-            <Modal.Footer className="bg-light">
-                <Button variant="secondary" onClick={onCancel}>
-                    ❌ Cancelar
+            <Modal.Footer style={{ 
+                background: '#f8f9fa',
+                borderTop: '1px solid #e9ecef',
+                padding: '1.25rem'
+            }}>
+                <Button 
+                    variant="outline-secondary" 
+                    onClick={onCancel}
+                    style={{
+                        borderWidth: '1.5px',
+                        fontWeight: '500',
+                        padding: '0.5rem 1.5rem'
+                    }}
+                >
+                    <span className="material-icons" style={{fontSize: '1.1rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>close</span>
+                    Cancelar
                 </Button>
-                <Button variant="primary" type="submit" form="studentForm">
-                    {initialData.id ? '💾 Guardar Cambios' : '✅ Registrar Alumno'}
+                <Button 
+                    variant="primary" 
+                    type="submit" 
+                    form="studentForm"
+                    style={{
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        border: 'none',
+                        fontWeight: '500',
+                        padding: '0.5rem 1.5rem'
+                    }}
+                >
+                    <span className="material-icons" style={{fontSize: '1.1rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>
+                        {initialData.id ? 'save' : 'check_circle'}
+                    </span>
+                    {initialData.id ? 'Guardar Cambios' : 'Registrar Alumno'}
                 </Button>
             </Modal.Footer>
         </Modal>
