@@ -59,6 +59,16 @@ ADD COLUMN workplace VARCHAR(200) AFTER email_optional,
 ADD COLUMN work_phone VARCHAR(20) AFTER workplace;
 
 -- ============================================================================
+-- 2.1. AGREGAR CAMPOS A TABLA staff (para autenticación)
+-- ============================================================================
+
+ALTER TABLE staff
+ADD COLUMN email VARCHAR(255) UNIQUE AFTER maternal_surname,
+ADD COLUMN password_hash VARCHAR(255) AFTER email,
+ADD COLUMN is_active BOOLEAN DEFAULT TRUE AFTER password_hash,
+ADD COLUMN last_login TIMESTAMP AFTER is_active;
+
+-- ============================================================================
 -- 3. CREAR TABLA DE RELACIÓN student_guardian
 -- ============================================================================
 
