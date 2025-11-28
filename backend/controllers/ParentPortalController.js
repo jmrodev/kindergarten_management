@@ -7,6 +7,7 @@ const Guardian = require('../models/Guardian');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { sanitizeObject, sanitizeWhitespace } = require('../utils/sanitization'); // Import sanitization utilities
 
 // Configuración de multer para subida de archivos
 const storage = multer.diskStorage({
@@ -113,12 +114,15 @@ class ParentPortalController {
             const userId = req.user.id;
             const { data, currentStep } = req.body;
 
+            // Sanitize data before saving as draft
+            const sanitizedData = sanitizeObject(data, sanitizeWhitespace);
+
             conn = await pool.getConnection();
             await conn.query(
                 `INSERT INTO parent_registration_drafts (user_id, form_data, current_step, updated_at)
                  VALUES (?, ?, ?, NOW())
                  ON DUPLICATE KEY UPDATE form_data = ?, current_step = ?, updated_at = NOW()`,
-                [userId, JSON.stringify(data), currentStep, JSON.stringify(data), currentStep]
+                [userId, JSON.stringify(sanitizedData), currentStep, JSON.stringify(sanitizedData), currentStep]
             );
 
             res.json({ success: true, message: 'Draft saved' });
@@ -150,6 +154,9 @@ class ParentPortalController {
         try {
             await conn.beginTransaction();
 
+            // Sanitize all string inputs from req.body
+            const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
+
             const {
                 // Datos alumno
                 nombre, segundoNombre, tercerNombre, alias,
@@ -173,7 +180,7 @@ class ParentPortalController {
                 autorizacionFotos, autorizacionSalidas, autorizacionAtencionMedica,
                 // Documentos (rutas ya subidas)
                 documents
-            } = req.body;
+            } = sanitizedBody;
 
             // 1. Crear dirección
             const addressResult = await conn.query(

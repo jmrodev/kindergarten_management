@@ -1,6 +1,7 @@
 // backend/controllers/EnrollmentController.js
 const { pool } = require('../db');
-const { serializeBigInt } = require('../utils/serialization');
+const { AppError } = require('../middleware/errorHandler'); // Import AppError
+const { sanitizeObject, sanitizeWhitespace } = require('../utils/sanitization'); // Import sanitization utilities
 
 class EnrollmentController {
     // Crear inscripción completa
@@ -10,6 +11,9 @@ class EnrollmentController {
         try {
             await connection.beginTransaction();
             
+            // Sanitize all string inputs from req.body
+            const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
+
             const {
                 // Datos del alumno
                 student,
@@ -20,7 +24,7 @@ class EnrollmentController {
                 // Sala y turno
                 classroomId,
                 shift
-            } = req.body;
+            } = sanitizedBody;
             
             // 1. Crear dirección del alumno
             const [addressResult] = await connection.query(
@@ -198,17 +202,13 @@ class EnrollmentController {
             res.status(201).json({
                 success: true,
                 message: 'Inscripción creada exitosamente',
-                data: serializeBigInt(enrollmentData[0])
+                data: enrollmentData[0]
             });
             
         } catch (error) {
             await connection.rollback();
             console.error('Error al crear inscripción:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Error al crear inscripción',
-                error: error.message
-            });
+            throw new AppError('Error al crear inscripción', 500);
         } finally {
             connection.release();
         }
@@ -217,7 +217,9 @@ class EnrollmentController {
     // Obtener todas las inscripciones
     async getAllEnrollments(req, res) {
         try {
-            const { status, year, classroomId, shift } = req.query;
+            // Sanitize query parameters
+            const sanitizedQuery = sanitizeObject(req.query, sanitizeWhitespace);
+            const { status, year, classroomId, shift } = sanitizedQuery;
             
             let query = `
                 SELECT 
@@ -263,16 +265,12 @@ class EnrollmentController {
             res.status(200).json({
                 success: true,
                 count: enrollments.length,
-                data: serializeBigInt(enrollments)
+                data: enrollments
             });
             
         } catch (error) {
             console.error('Error al obtener inscripciones:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Error al obtener inscripciones',
-                error: error.message
-            });
+            throw new AppError('Error al obtener inscripciones', 500);
         }
     }
     
@@ -297,10 +295,7 @@ class EnrollmentController {
             );
             
             if (enrollment.length === 0) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Inscripción no encontrada'
-                });
+                throw new AppError('Inscripción no encontrada', 404);
             }
             
             // Obtener responsables
@@ -319,18 +314,14 @@ class EnrollmentController {
             res.status(200).json({
                 success: true,
                 data: {
-                    student: serializeBigInt(enrollment[0]),
-                    guardians: serializeBigInt(guardians)
+                    student: enrollment[0],
+                    guardians: guardians
                 }
             });
             
         } catch (error) {
             console.error('Error al obtener inscripción:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Error al obtener inscripción',
-                error: error.message
-            });
+            throw new AppError('Error al obtener inscripción', 500);
         }
     }
     
@@ -342,7 +333,9 @@ class EnrollmentController {
             await connection.beginTransaction();
             
             const { studentId } = req.params;
-            const { student, guardian, emergencyContact } = req.body;
+            // Sanitize all string inputs from req.body
+            const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
+            const { student, guardian, emergencyContact } = sanitizedBody;
             
             // Actualizar datos del alumno
             if (student) {
@@ -401,11 +394,7 @@ class EnrollmentController {
         } catch (error) {
             await connection.rollback();
             console.error('Error al actualizar inscripción:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Error al actualizar inscripción',
-                error: error.message
-            });
+            throw new AppError('Error al actualizar inscripción', 500);
         } finally {
             connection.release();
         }
@@ -415,14 +404,13 @@ class EnrollmentController {
     async updateEnrollmentStatus(req, res) {
         try {
             const { studentId } = req.params;
-            const { status, reason } = req.body;
+            // Sanitize status and reason
+            const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
+            const { status, reason } = sanitizedBody;
             
             const validStatuses = ['inscripto', 'activo', 'inactivo', 'egresado'];
             if (!validStatuses.includes(status)) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Estado inválido'
-                });
+                throw new AppError('Estado inválido', 400);
             }
             
             // Obtener estado actual
@@ -432,10 +420,7 @@ class EnrollmentController {
             );
             
             if (current.length === 0) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Alumno no encontrado'
-                });
+                throw new AppError('Alumno no encontrado', 404);
             }
             
             const oldStatus = current[0].status;
@@ -463,18 +448,16 @@ class EnrollmentController {
             
         } catch (error) {
             console.error('Error al actualizar estado:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Error al actualizar estado',
-                error: error.message
-            });
+            throw new AppError('Error al actualizar estado', 500);
         }
     }
     
     // Obtener estadísticas de inscripciones
     async getEnrollmentStats(req, res) {
         try {
-            const { year } = req.query;
+            // Sanitize query parameters
+            const sanitizedQuery = sanitizeObject(req.query, sanitizeWhitespace);
+            const { year } = sanitizedQuery;
             const currentYear = year || new Date().getFullYear();
             
             const [stats] = await pool.query(
@@ -495,16 +478,12 @@ class EnrollmentController {
             res.status(200).json({
                 success: true,
                 year: currentYear,
-                stats: stats && stats.length > 0 ? serializeBigInt(stats[0]) : null
+                stats: stats && stats.length > 0 ? stats[0] : null
             });
             
         } catch (error) {
             console.error('Error al obtener estadísticas:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Error al obtener estadísticas',
-                error: error.message
-            });
+            throw new AppError('Error al obtener estadísticas', 500);
         }
     }
     
@@ -534,16 +513,12 @@ class EnrollmentController {
             res.status(200).json({
                 success: true,
                 count: incomplete.length,
-                data: serializeBigInt(incomplete)
+                data: incomplete
             });
             
         } catch (error) {
             console.error('Error al obtener inscripciones incompletas:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Error al obtener inscripciones incompletas',
-                error: error.message
-            });
+            throw new AppError('Error al obtener inscripciones incompletas', 500);
         }
     }
 }

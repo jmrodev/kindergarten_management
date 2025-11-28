@@ -13,16 +13,13 @@ const permissionsRoutes = require('./routes/permissions');
 const guardianRoutes = require('./routes/guardianRoutes');
 const parentPortalRoutes = require('./routes/parentPortalRoutes');
 const enrollmentRoutes = require('./routes/enrollmentRoutes');
+const { AppError, errorHandler } = require('./middleware/errorHandler'); // Import AppError and errorHandler
 const { passport, isGoogleConfigured } = require('./config/passport');
+const { jsonSerializer } = require('./utils/serialization'); // Import jsonSerializer
 const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// Fix for BigInt serialization in JSON
-BigInt.prototype.toJSON = function() {
-    return this.toString();
-};
 
 // Database connection pool
 const pool = mariadb.createPool({
@@ -44,6 +41,7 @@ pool.getConnection()
     })
     .catch(err => {
         console.error('Error connecting to MariaDB:', err);
+        process.exit(1); // Exit if DB connection fails on startup
     });
 
 // Middleware
@@ -52,6 +50,7 @@ app.use(cors({
     credentials: true
 })); // Enable CORS with credentials
 app.use(bodyParser.json()); // Parse JSON request bodies
+app.use(jsonSerializer); // Use custom JSON serializer for BigInt handling
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Servir archivos estáticos
 // Solo habilitar sesiones si Google OAuth está configurado
 if (isGoogleConfigured) {
@@ -82,11 +81,13 @@ if (isGoogleConfigured) {
     app.use('/api/parent-portal', parentPortalRoutes); // Parent portal (Google OAuth)
 }
 
-// Basic error handling (can be expanded)
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
+// Handle undefined routes (404)
+app.all('*', (req, res, next) => {
+    next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
+
+// Global error handling middleware
+app.use(errorHandler);
 
 // Start the server
 app.listen(PORT, () => {
