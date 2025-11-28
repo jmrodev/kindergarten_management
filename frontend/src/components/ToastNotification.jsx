@@ -2,7 +2,7 @@
 import React from 'react';
 import { Toast, ToastContainer } from 'react-bootstrap';
 
-const ToastNotification = ({ show, onClose, message, variant = 'success' }) => {
+const ToastNotification = ({ show, onClose, message, variant = 'success', title }) => {
     const getBgClass = () => {
         switch (variant) {
             case 'success': return 'bg-success text-white';
@@ -23,7 +23,7 @@ const ToastNotification = ({ show, onClose, message, variant = 'success' }) => {
         }
     };
 
-    const getTitle = () => {
+    const getGeneratedTitle = () => {
         switch (variant) {
             case 'success': return 'Éxito';
             case 'danger': return 'Error';
@@ -46,7 +46,7 @@ const ToastNotification = ({ show, onClose, message, variant = 'success' }) => {
                 <Toast.Header>
                     <strong className="me-auto">
                         <span className="me-2">{getIcon()}</span>
-                        {getTitle()}
+                        {title || getGeneratedTitle()}
                     </strong>
                 </Toast.Header>
                 <Toast.Body>{message}</Toast.Body>

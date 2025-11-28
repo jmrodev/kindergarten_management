@@ -1,4 +1,3 @@
-// frontend/src/App-router-v6.jsx
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Container, ButtonGroup, Button } from 'react-bootstrap';
@@ -13,6 +12,7 @@ import ConfirmModal from './components/ConfirmModal';
 import ToastNotification from './components/ToastNotification';
 import OcupacionModal from './components/OcupacionModal';
 import alumnoService from './services/alumnoService';
+import useToast from './hooks/useToast'; // Import useToast
 
 // Importar componentes de páginas
 import AlumnosPage from './pages/AlumnosPage';
@@ -26,7 +26,7 @@ function AppContent() {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, logout } = useAuth();
-    const [message, setMessage] = useState(null);
+    const { toastConfig, showSuccess, showError, hideToast } = useToast(); // Use the useToast hook
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [showOcupacionModal, setShowOcupacionModal] = useState(false);
@@ -56,13 +56,13 @@ function AppContent() {
         try {
             if (editingStudent) {
                 await updateAlumno(editingStudent.id, studentData);
-                setMessage({ type: 'success', text: 'Alumno actualizado correctamente' });
+                showSuccess('Éxito', 'Alumno actualizado correctamente');
             } else {
                 await addAlumno(studentData);
-                setMessage({ type: 'success', text: 'Alumno registrado correctamente' });
+                showSuccess('Éxito', 'Alumno registrado correctamente');
             }
         } catch (error) {
-            setMessage({ type: 'danger', text: `Error: ${error.message}` });
+            showError('Error', `Error: ${error.message}`);
         }
     };
 
@@ -78,10 +78,10 @@ function AppContent() {
             try {
                 await deleteAlumno(id);
                 setShowConfirmModal(false);
-                setMessage({ type: 'success', text: 'Alumno eliminado correctamente' });
+                showSuccess('Éxito', 'Alumno eliminado correctamente');
             } catch (error) {
                 setShowConfirmModal(false);
-                setMessage({ type: 'danger', text: `Error al eliminar: ${error.message}` });
+                showError('Error', `Error al eliminar: ${error.message}`);
             }
         });
         setShowConfirmModal(true);
@@ -92,13 +92,13 @@ function AppContent() {
         try {
             if (editingClassroom) {
                 await updateSala(editingClassroom.id, classroomData);
-                setMessage({ type: 'success', text: 'Sala actualizada correctamente' });
+                showSuccess('Éxito', 'Sala actualizada correctamente');
             } else {
                 await addSala(classroomData);
-                setMessage({ type: 'success', text: 'Sala registrada correctamente' });
+                showSuccess('Éxito', 'Sala registrada correctamente');
             }
         } catch (error) {
-            setMessage({ type: 'danger', text: `Error: ${error.message}` });
+            showError('Error', `Error: ${error.message}`);
         }
     };
 
@@ -114,10 +114,10 @@ function AppContent() {
             try {
                 await deleteSala(id);
                 setShowConfirmModal(false);
-                setMessage({ type: 'success', text: 'Sala eliminada correctamente' });
+                showSuccess('Éxito', 'Sala eliminada correctamente');
             } catch (error) {
                 setShowConfirmModal(false);
-                setMessage({ type: 'danger', text: `Error al eliminar: ${error.message}` });
+                showError('Error', `Error al eliminar: ${error.message}`);
             }
         });
         setShowConfirmModal(true);
@@ -127,7 +127,7 @@ function AppContent() {
         try {
             await searchAlumnos(filters);
         } catch (error) {
-            setMessage({ type: 'danger', text: `Error en la búsqueda: ${error.message}` });
+            showError('Error', `Error en la búsqueda: ${error.message}`);
         }
     };
 
@@ -135,18 +135,18 @@ function AppContent() {
         try {
             await fetchAlumnos();
         } catch (error) {
-            setMessage({ type: 'danger', text: `Error al cargar alumnos: ${error.message}` });
+            showError('Error', `Error al cargar alumnos: ${error.message}`);
         }
     };
 
     const handleAssignStudent = async (studentId, classroomId) => {
         try {
             await alumnoService.assignClassroom(studentId, classroomId);
-            setMessage({ type: 'success', text: 'Alumno asignado correctamente a la sala' });
+            showSuccess('Éxito', 'Alumno asignado correctamente a la sala');
             await fetchAlumnos();
             await fetchSalas();
         } catch (error) {
-            setMessage({ type: 'danger', text: `Error al asignar alumno: ${error.message}` });
+            showError('Error', `Error al asignar alumno: ${error.message}`);
         }
     };
 
@@ -339,7 +339,7 @@ function AppContent() {
                     >
                         <span className="material-icons" style={{fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>family_restroom</span> Responsables
                     </Button>
-                    {(user.role === 'admin' || user.role === 'directivo') && (
+                    {(user.role === 'Administrator' || user.role === 'Directivo') && ( // Updated role names
                         <Button 
                             variant={isActive('/configuracion') ? 'primary' : 'outline-primary'}
                             onClick={() => navigate('/configuracion')}
@@ -400,7 +400,8 @@ function AppContent() {
                                     onFilter={handleFilter}
                                     onClearFilter={handleClearFilter}
                                     onSubmit={handleStudentSubmit}
-                                    setMessage={setMessage}
+                                    showSuccess={showSuccess} // Pass showSuccess
+                                    showError={showError}     // Pass showError
                                 />
                             </ProtectedRoute>
                         } 
@@ -417,7 +418,8 @@ function AppContent() {
                                     onDelete={handleDeleteClassroom}
                                     onSubmit={handleClassroomSubmit}
                                     onAssignStudent={handleAssignStudent}
-                                    setMessage={setMessage}
+                                    showSuccess={showSuccess} // Pass showSuccess
+                                    showError={showError}     // Pass showError
                                 />
                             </ProtectedRoute>
                         } 
@@ -426,7 +428,7 @@ function AppContent() {
                         path="/personal" 
                         element={
                             <ProtectedRoute>
-                                <PersonalPage darkMode={darkMode} />
+                                <PersonalPage darkMode={darkMode} showSuccess={showSuccess} showError={showError} />
                             </ProtectedRoute>
                         } 
                     />
@@ -434,7 +436,7 @@ function AppContent() {
                         path="/configuracion" 
                         element={
                             <ProtectedRoute>
-                                <ConfiguracionPage darkMode={darkMode} />
+                                <ConfiguracionPage darkMode={darkMode} showSuccess={showSuccess} showError={showError} />
                             </ProtectedRoute>
                         } 
                     />
@@ -442,7 +444,7 @@ function AppContent() {
                         path="/responsables" 
                         element={
                             <ProtectedRoute>
-                                <GuardiansPage />
+                                <GuardiansPage showSuccess={showSuccess} showError={showError} />
                             </ProtectedRoute>
                         } 
                     />
@@ -464,6 +466,7 @@ function AppContent() {
                         logout();
                         navigate('/login');
                         setShowLogoutModal(false);
+                        showSuccess('Sesión cerrada', 'Has cerrado sesión correctamente.');
                     }}
                     title="Cerrar Sesión"
                     message="¿Está seguro que desea cerrar sesión?"
@@ -471,10 +474,11 @@ function AppContent() {
                 />
 
                 <ToastNotification
-                    show={!!message}
-                    onClose={() => setMessage(null)}
-                    message={message?.text}
-                    variant={message?.type}
+                    show={toastConfig.show}
+                    onClose={hideToast}
+                    message={toastConfig.message}
+                    variant={toastConfig.variant}
+                    title={toastConfig.title} // Pass the title from toastConfig
                 />
 
                 <OcupacionModal
