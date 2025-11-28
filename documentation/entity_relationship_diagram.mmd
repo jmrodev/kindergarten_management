@@ -10,15 +10,23 @@ erDiagram
 
     emergency_contact {
         BIGINT id PK
+        BIGINT student_id FK "Permite múltiples contactos por alumno"
         TEXT full_name
         TEXT relationship
+        INT priority
         TEXT phone
+        TEXT alternative_phone
+        BOOLEAN is_authorized_pickup
     }
 
     classroom {
         BIGINT id PK
         TEXT name
         INT capacity
+        TEXT shift ENUM("Mañana", "Tarde", "Completo")
+        INT academic_year
+        INT age_group
+        BOOLEAN is_active
     }
 
     access_level {
@@ -39,6 +47,10 @@ erDiagram
         TEXT middle_name_optional
         TEXT paternal_surname
         TEXT maternal_surname
+        TEXT email UNIQUE
+        TEXT password_hash
+        BOOLEAN is_active
+        TIMESTAMP last_login
         TEXT preferred_surname
         BIGINT address_id FK
         TEXT phone
@@ -55,11 +67,30 @@ erDiagram
         TEXT paternal_surname
         TEXT maternal_surname
         TEXT nickname_optional
+        TEXT dni UNIQUE
         DATE birth_date
         BIGINT address_id FK
-        BIGINT emergency_contact_id FK
+        BIGINT emergency_contact_id FK "Contacto de emergencia principal"
         BIGINT classroom_id FK
         TEXT shift
+        TEXT status ENUM("inscripto", "activo", "inactivo", "egresado")
+        DATE enrollment_date
+        DATE withdrawal_date
+        TEXT health_insurance
+        TEXT affiliate_number
+        TEXT allergies
+        TEXT medications
+        TEXT medical_observations
+        TEXT blood_type
+        TEXT pediatrician_name
+        TEXT pediatrician_phone
+        BOOLEAN photo_authorization
+        BOOLEAN trip_authorization
+        BOOLEAN medical_attention_authorization
+        BOOLEAN has_siblings_in_school
+        TEXT special_needs
+        TEXT vaccination_status ENUM("completo", "incompleto", "pendiente", "no_informado")
+        TEXT observations
     }
 
     guardian {
@@ -69,12 +100,75 @@ erDiagram
         TEXT paternal_surname
         TEXT maternal_surname
         TEXT preferred_surname
-        TEXT relationship
+        TEXT dni UNIQUE
         BIGINT address_id FK
         TEXT phone
         TEXT email_optional
+        TEXT workplace
+        TEXT work_phone
         BOOLEAN authorized_pickup
         BOOLEAN authorized_change
+    }
+
+    student_guardian {
+        BIGINT student_id PK,FK
+        BIGINT guardian_id PK,FK
+        TEXT relationship_type ENUM("madre", "padre", "tutor", "abuelo", "abuela", "tio", "tia", "otro")
+        BOOLEAN is_primary
+        BOOLEAN custody_rights
+        BOOLEAN financial_responsible
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+
+    student_documents {
+        BIGINT id PK
+        BIGINT student_id FK
+        TEXT document_type ENUM("dni", "certificado_nacimiento", "certificado_vacunas", "certificado_medico", "autorizacion_firmada", "foto", "otro")
+        TEXT file_name
+        TEXT file_path
+        INT file_size
+        TEXT mime_type
+        BIGINT uploaded_by
+        TIMESTAMP upload_date
+        DATE expiration_date
+        TEXT notes
+        BOOLEAN is_verified
+        BIGINT verified_by
+        TIMESTAMP verified_at
+    }
+
+    student_status_history {
+        BIGINT id PK
+        BIGINT student_id FK
+        TEXT old_status ENUM("inscripto", "activo", "inactivo", "egresado")
+        TEXT new_status ENUM("inscripto", "activo", "inactivo", "egresado")
+        TIMESTAMP change_date
+        TEXT reason
+        BIGINT changed_by
+    }
+
+    parent_portal_users {
+        BIGINT id PK
+        TEXT google_id UNIQUE
+        TEXT email
+        TEXT name
+        TIMESTAMP created_at
+    }
+
+    parent_registration_drafts {
+        BIGINT id PK
+        BIGINT user_id FK
+        JSON form_data
+        INT current_step
+        TIMESTAMP updated_at
+    }
+
+    parent_portal_submissions {
+        BIGINT id PK
+        BIGINT user_id FK
+        BIGINT student_id FK
+        TIMESTAMP submitted_at
     }
 
     attendance {
@@ -113,7 +207,7 @@ erDiagram
         BIGINT guardian_id PK,FK
     }
 
-    conversation_staff {
+conversation_staff {
         BIGINT conversation_id PK,FK
         BIGINT staff_id PK,FK
     }
@@ -137,23 +231,40 @@ erDiagram
     }
 
     student ||--o{ address : "has a"
-    student ||--o{ emergency_contact : "has an"
+    student ||--o{ emergency_contact : "has a principal"
     student ||--|{ classroom : "belongs to"
+    student ||--o{ student_guardian : "has"
+    student ||--o{ student_documents : "has"
+    student ||--o{ student_status_history : "has"
+
     guardian ||--o{ address : "has a"
+    guardian ||--o{ student_guardian : "is a"
+
     staff ||--o{ address : "has a"
     staff }|--o{ classroom : "assigned to"
     staff }|--o{ role : "has a"
+
     role }|--o{ access_level : "has an"
+
+    parent_portal_users ||--o{ parent_registration_drafts : "has"
+    parent_portal_users ||--o{ parent_portal_submissions : "made"
+    parent_portal_submissions ||--o{ student : "for"
+
     attendance ||--|{ student : "records"
     attendance ||--|{ classroom : "in"
+
     calendar }|--o{ classroom : "associated with"
+
     activity }|--o{ staff : "in charge of"
+
     conversation }o--o{ classroom : "associated with"
     conversation_guardian ||--|{ conversation : "participates in"
     conversation_guardian }o--o{ guardian : "is a"
     conversation_staff ||--|{ conversation : "participates in"
     conversation_staff }o--o{ staff : "is a"
+
     guardian_message ||--|{ conversation : "part of"
     guardian_message }o--o{ guardian : "sent by"
+
     staff_message ||--|{ conversation : "part of"
     staff_message }o--o{ staff : "sent by"
