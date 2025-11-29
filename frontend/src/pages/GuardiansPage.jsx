@@ -104,19 +104,14 @@ const GuardiansPage = ({ showSuccess, showError }) => { // Accept showSuccess an
     const confirmDelete = async () => {
         if (!relationshipToDelete) return;
         
-        console.log('Eliminando relación:', relationshipToDelete);
-        
         try {
-            const result = await guardianService.removeFromStudent(
+            await guardianService.removeFromStudent(
                 relationshipToDelete.student_id, 
                 relationshipToDelete.guardian_id
             );
-            console.log('Resultado eliminación:', result);
             showSuccess('Éxito', 'Relación eliminada correctamente'); // Use showSuccess
             await loadRelationships(searchTerm);
         } catch (error) {
-            console.error('Error completo al eliminar relación:', error);
-            console.error('Response:', error.response);
             if (error.response?.status === 409) {
                 showError('Advertencia', error.response?.data?.message || 'No se puede eliminar: es el único responsable del alumno'); // Use showError
             } else if (error.response?.data?.message) {

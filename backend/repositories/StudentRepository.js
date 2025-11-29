@@ -343,9 +343,6 @@ class StudentRepository {
                 // Only delete if no other student is using this contact
                 if (contactUsage.count === 0) {
                     await conn.query("DELETE FROM emergency_contact WHERE id = ?", [emergencyContactId]);
-                    console.log(`Emergency contact ${emergencyContactId} deleted (not used by other students)`);
-                } else {
-                    console.log(`Emergency contact ${emergencyContactId} kept (used by ${contactUsage.count} other student(s))`);
                 }
             }
 
@@ -359,9 +356,6 @@ class StudentRepository {
                 // Only delete if no other student is using this address
                 if (addressUsage.count === 0) {
                     await conn.query("DELETE FROM address WHERE id = ?", [addressId]);
-                    console.log(`Address ${addressId} deleted (not used by other students)`);
-                } else {
-                    console.log(`Address ${addressId} kept (used by ${addressUsage.count} other student(s))`);
                 }
             }
 
