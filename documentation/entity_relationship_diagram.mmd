@@ -115,8 +115,11 @@ erDiagram
         BIGINT guardian_id PK,FK
         TEXT relationship_type ENUM("madre", "padre", "tutor", "abuelo", "abuela", "tio", "tia", "otro")
         BOOLEAN is_primary
+        BOOLEAN authorized_pickup
+        BOOLEAN authorized_diaper_change
         BOOLEAN custody_rights
         BOOLEAN financial_responsible
+        TEXT notes
         TIMESTAMP created_at
         TIMESTAMP updated_at
     }

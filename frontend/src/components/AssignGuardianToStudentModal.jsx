@@ -1,6 +1,6 @@
 // frontend/src/components/AssignGuardianToStudentModal.jsx
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Button, Row, Col, ListGroup, Badge, InputGroup } from 'react-bootstrap';
+import { Modal, Form, Button, Row, Col, ListGroup, Badge, InputGroup, Alert } from 'react-bootstrap';
 import alumnoService from '../services/alumnoService';
 import guardianService from '../services/guardianService';
 
@@ -14,8 +14,10 @@ const AssignGuardianToStudentModal = ({ show, guardian, onSuccess, onCancel, sho
         esPrincipal: false,
         autorizadoRetiro: true,
         autorizadoPañales: false,
+        noContacto: false,
         notas: ''
     });
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         if (show && guardian) {
@@ -39,6 +41,7 @@ const AssignGuardianToStudentModal = ({ show, guardian, onSuccess, onCancel, sho
             esPrincipal: false,
             autorizadoRetiro: true,
             autorizadoPañales: false,
+            noContacto: false,
             notas: ''
         });
     };
@@ -80,15 +83,32 @@ const AssignGuardianToStudentModal = ({ show, guardian, onSuccess, onCancel, sho
 
     const handleRelationChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setRelationData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value
-        }));
+
+        setRelationData(prev => {
+            let newData = { ...prev, [name]: type === 'checkbox' ? checked : value };
+
+            // Si se marca como no contacto, desmarcar otras autorizaciones
+            if (name === 'noContacto' && checked) {
+                newData = {
+                    ...newData,
+                    autorizadoRetiro: false,
+                    autorizadoPañales: false,
+                    esPrincipal: false
+                };
+            }
+
+            // Si se marca alguna autorización, desmarcar no contacto
+            if ((name === 'autorizadoRetiro' || name === 'autorizadoPañales' || name === 'esPrincipal') && checked) {
+                newData.noContacto = false;
+            }
+
+            return newData;
+        });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!selectedStudent) {
             showError('Validación', 'Debe seleccionar un alumno'); // Use showError
             return;
@@ -100,19 +120,32 @@ const AssignGuardianToStudentModal = ({ show, guardian, onSuccess, onCancel, sho
         }
 
         setLoading(true);
+        setError(null); // Clear any previous errors
 
         try {
+            // Si es no contacto, agregarlo a las notas
+            const updatedRelationData = { ...relationData };
+            if (relationData.noContacto) {
+                if (updatedRelationData.notas) {
+                    updatedRelationData.notas += ' - No contacto (restringido)';
+                } else {
+                    updatedRelationData.notas = 'No contacto (restringido)';
+                }
+            }
+
             await guardianService.assignToStudent(
                 selectedStudent.id,
                 guardian.id,
-                relationData
+                updatedRelationData
             );
-            
+
             onSuccess?.();
             resetForm();
         } catch (err) {
             console.error('Error asignando responsable:', err);
-            showError('Error', err.response?.data?.message || 'Error al asignar responsable al alumno'); // Use showError
+            const errorMessage = err.response?.data?.message || 'Error al asignar responsable al alumno';
+            setError(errorMessage); // Set local error
+            showError('Error', errorMessage); // Also show via parent error handler
         } finally {
             setLoading(false);
         }
@@ -307,6 +340,15 @@ const AssignGuardianToStudentModal = ({ show, guardian, onSuccess, onCancel, sho
                                             label="Autorizado cambio de pañales"
                                             checked={relationData.autorizadoPañales}
                                             onChange={handleRelationChange}
+                                        />
+                                        {/* Opción para responsable restringido (no contacto) */}
+                                        <Form.Check
+                                            type="checkbox"
+                                            name="noContacto"
+                                            label="No contacto (restringido)"
+                                            checked={relationData.noContacto || false}
+                                            onChange={handleRelationChange}
+                                            className="text-danger"
                                         />
                                     </Form.Group>
                                 </Col>

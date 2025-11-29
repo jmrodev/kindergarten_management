@@ -9,8 +9,9 @@ import {
     validateSecurity 
 } from '../utils';
 import GuardiansManager from './GuardiansManager';
+import EnhancedGuardianAssignmentModal from './EnhancedGuardianAssignmentModal';
 
-const StudentForm = ({ show, initialData = {}, onSubmit, onCancel }) => {
+const StudentForm = ({ show, initialData = {}, onSubmit, onCancel, showError, showSuccess }) => {
     const { salas } = useSalas();
 
     const [errors, setErrors] = useState({});
@@ -50,6 +51,9 @@ const StudentForm = ({ show, initialData = {}, onSubmit, onCancel }) => {
     const [guardians, setGuardians] = useState([]);
     const [emergencyContact, setEmergencyContact] = useState(null);
     const [activeTab, setActiveTab] = useState('datos');
+
+    // Estado para el modal de asignación de guardianes
+    const [showEnhancedGuardianModal, setShowEnhancedGuardianModal] = useState(false);
 
     // Actualizar el formulario cuando initialData cambie (para el modo edición)
     useEffect(() => {
@@ -547,6 +551,29 @@ const StudentForm = ({ show, initialData = {}, onSubmit, onCancel }) => {
                             </span>
                         }
                     >
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h6 className="mb-0">
+                                <span className="material-icons" style={{fontSize: '1rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>
+                                    family_restroom
+                                </span>
+                                Responsables
+                                {guardians.length > 0 && (
+                                    <span className="badge bg-success ms-2">{guardians.length}</span>
+                                )}
+                            </h6>
+                            {initialData.id && (
+                                <Button
+                                    variant="outline-primary"
+                                    size="sm"
+                                    onClick={() => setShowEnhancedGuardianModal(true)}
+                                >
+                                    <span className="material-icons" style={{ fontSize: '0.9rem', verticalAlign: 'middle' }}>
+                                        person_add
+                                    </span>
+                                    {' '}Agregar Responsable
+                                </Button>
+                            )}
+                        </div>
                         <GuardiansManager
                             initialGuardians={guardians}
                             initialEmergencyContact={emergencyContact}
@@ -592,6 +619,22 @@ const StudentForm = ({ show, initialData = {}, onSubmit, onCancel }) => {
                     {initialData.id ? 'Guardar Cambios' : 'Registrar Alumno'}
                 </Button>
             </Modal.Footer>
+
+            {/* Modal de Asignación Mejorada de Responsables */}
+            {initialData.id && (
+                <EnhancedGuardianAssignmentModal
+                    show={showEnhancedGuardianModal}
+                    student={initialData}
+                    onSuccess={() => {
+                        setShowEnhancedGuardianModal(false);
+                        // Opcional: recargar responsables si es necesario
+                        // guardianService.getByStudent(initialData.id).then(setGuardians);
+                    }}
+                    onCancel={() => setShowEnhancedGuardianModal(false)}
+                    showError={showError}
+                    showSuccess={showSuccess}
+                />
+            )}
         </Modal>
     );
 };

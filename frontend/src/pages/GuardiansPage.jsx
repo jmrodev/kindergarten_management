@@ -175,6 +175,62 @@ const GuardiansPage = ({ showSuccess, showError }) => { // Accept showSuccess an
         return edad;
     };
 
+    // Función para obtener color más oscuro
+    const darkerColor = (color, percent) => {
+        // Convertir color hexadecimal a RGB
+        let R = parseInt(color.substring(1, 3), 16);
+        let G = parseInt(color.substring(3, 5), 16);
+        let B = parseInt(color.substring(5, 7), 16);
+
+        // Ajustar el porcentaje
+        R = Math.floor(R * (100 - percent) / 100);
+        G = Math.floor(G * (100 - percent) / 100);
+        B = Math.floor(B * (100 - percent) / 100);
+
+        // Convertir de nuevo a hexadecimal
+        R = Math.min(255, Math.max(0, R)).toString(16).padStart(2, '0');
+        G = Math.min(255, Math.max(0, G)).toString(16).padStart(2, '0');
+        B = Math.min(255, Math.max(0, B)).toString(16).padStart(2, '0');
+
+        return `#${R}${G}${B}`;
+    };
+
+    // Función para determinar tipo de responsable
+    const getGuardianType = (relationship, authorizedPickup, authorizedDiaperChange, isPrimary, notes) => {
+        // Verificar si es responsable restringido (no contacto)
+        if (notes && (notes.toLowerCase().includes('alerta') || notes.toLowerCase().includes('restringido') || notes.toLowerCase().includes('no contacto'))) {
+            return { type: 'no-contact', label: '.Restricto', color: '#dc3545' }; // Rojo
+        }
+
+        // Responsable directo (primario)
+        if (isPrimary) {
+            return { type: 'direct', label: 'Responsable Directo', color: '#f59e0b' }; // Amarillo
+        }
+
+        // Responsable que solo puede retirar
+        if (authorizedPickup && !authorizedDiaperChange) {
+            return { type: 'pickup', label: 'Retiro', color: '#10b981' }; // Verde
+        }
+
+        // Responsable que solo puede cambiar pañales
+        if (!authorizedPickup && authorizedDiaperChange) {
+            return { type: 'diaper', label: 'Cambio de Pañales', color: '#3b82f6' }; // Azul
+        }
+
+        // Responsable que puede retirar y cambiar pañales
+        if (authorizedPickup && authorizedDiaperChange) {
+            return { type: 'both', label: 'Retiro y Cambio', color: '#8b5cf6' }; // Morado
+        }
+
+        // Responsable solo de contacto
+        if (!authorizedPickup && !authorizedDiaperChange) {
+            return { type: 'contact', label: 'Contacto', color: '#6b7280' }; // Gris
+        }
+
+        // Por defecto
+        return { type: 'other', label: relationship, color: '#6b7280' }; // Gris
+    };
+
     // Agrupar relaciones por responsable
     const groupedByGuardian = relationships.reduce((acc, rel) => {
         const key = rel.guardian_id;
@@ -335,39 +391,101 @@ const GuardiansPage = ({ showSuccess, showError }) => { // Accept showSuccess an
                                         <div className="d-flex justify-content-between align-items-start">
                                             <div className="flex-grow-1">
                                         <div className="d-flex align-items-center mb-1">
-                                            <strong>
-                                                {getRelationIcon(student.relationship)} {student.nombre} {student.apellidoPaterno}
-                                            </strong>
-                                            {student.isPrimary && (
-                                                <Badge style={{ 
-                                                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                                                    color: 'white'
-                                                }} className="ms-2">⭐</Badge>
-                                            )}
+                                            {(() => {
+                                                const guardianType = getGuardianType(
+                                                    student.relationship,
+                                                    student.authorizedPickup,
+                                                    student.authorizedDiaperChange,
+                                                    student.isPrimary,
+                                                    student.notes
+                                                );
+                                                return (
+                                                    <div className="d-flex align-items-center gap-2">
+                                                        {guardianType.type === 'no-contact' ? (
+                                                            <span className="material-icons text-danger" title="Restringido - No contacto">
+                                                                block
+                                                            </span>
+                                                        ) : (
+                                                            <span>{getRelationIcon(student.relationship)}</span>
+                                                        )}
+                                                        <strong
+                                                            className={guardianType.type === 'no-contact' ? 'text-danger text-decoration-line-through' : ''}
+                                                            title={guardianType.type === 'no-contact' ? 'Resposable restringido - contacto prohibido' : ''}
+                                                        >
+                                                            {student.nombre} {student.apellidoPaterno}
+                                                        </strong>
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
                                         <small style={{ color: 'var(--bs-body-color)', opacity: 0.8 }}>
-                                            <Badge style={{ 
-                                                background: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
-                                                color: 'white'
-                                            }}>{student.relationship}</Badge>
+                                            {(() => {
+                                                const guardianType = getGuardianType(
+                                                    student.relationship,
+                                                    student.authorizedPickup,
+                                                    student.authorizedDiaperChange,
+                                                    student.isPrimary,
+                                                    student.notes
+                                                );
+                                                return guardianType.type === 'no-contact' ? (
+                                                    <Badge style={{
+                                                        background: 'linear-gradient(135deg, #dc3545 0%, #a71e2a 100%)',
+                                                        color: 'white'
+                                                    }}>⚠ {student.relationship}</Badge>
+                                                ) : (
+                                                    <Badge style={{
+                                                        background: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
+                                                        color: 'white'
+                                                    }}>{student.relationship}</Badge>
+                                                );
+                                            })()}
                                             {' • '}{calcularEdad(student.fechaNacimiento)} años
                                             {' • '}{student.turno}
                                             {student.sala && <> • {student.sala}</>}
                                         </small>
-                                        <div className="d-flex gap-1 mt-1">
-                                            {student.authorizedPickup && (
-                                                <Badge style={{ 
-                                                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                                    color: 'white'
-                                                }}>✓ Retiro</Badge>
-                                            )}
-                                            {student.authorizedDiaperChange && (
-                                                <Badge style={{ 
-                                                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                                                    color: 'white'
-                                                }}>🍼 Pañales</Badge>
-                                            )}
+                                        {/* Tipo de responsable con indicadores visuales */}
+                                        <div className="mt-1">
+                                            {(() => {
+                                                const guardianType = getGuardianType(
+                                                    student.relationship,
+                                                    student.authorizedPickup,
+                                                    student.authorizedDiaperChange,
+                                                    student.isPrimary,
+                                                    student.notes
+                                                );
+                                                return (
+                                                    <span className="d-inline-block">
+                                                        <Badge style={{
+                                                            background: `linear-gradient(135deg, ${guardianType.color} 0%, ${darkerColor(guardianType.color, 20)} 100%)`,
+                                                            color: 'white',
+                                                            border: student.isPrimary ? `2px solid ${darkerColor(guardianType.color, 30)}` : 'none',
+                                                            boxShadow: student.isPrimary ? `0 0 8px ${guardianType.color}40` : 'none'
+                                                        }}>
+                                                            {student.isPrimary ? '⭐ ' : ''}
+                                                            {guardianType.label}
+                                                        </Badge>
+                                                    </span>
+                                                );
+                                            })()}
                                         </div>
+                                        {/* Mostrar autorizaciones secundarias si no están incluidas en el tipo principal */}
+                                        {/* No mostrar autorizaciones para guardianes no-contact (restringidos) */}
+                                        {getGuardianType(student.relationship, student.authorizedPickup, student.authorizedDiaperChange, student.isPrimary, student.notes).type !== 'no-contact' && (
+                                            <div className="d-flex gap-1 mt-1 flex-wrap">
+                                                {student.authorizedPickup &&
+                                                    !student.isPrimary &&
+                                                    getGuardianType(student.relationship, student.authorizedPickup, student.authorizedDiaperChange, student.isPrimary, student.notes).type !== 'pickup' &&
+                                                    getGuardianType(student.relationship, student.authorizedPickup, student.authorizedDiaperChange, student.isPrimary, student.notes).type !== 'both' && (
+                                                    <Badge bg="success" className="text-xs">✓ Retiro</Badge>
+                                                )}
+                                                {student.authorizedDiaperChange &&
+                                                    !student.isPrimary &&
+                                                    getGuardianType(student.relationship, student.authorizedPickup, student.authorizedDiaperChange, student.isPrimary, student.notes).type !== 'diaper' &&
+                                                    getGuardianType(student.relationship, student.authorizedPickup, student.authorizedDiaperChange, student.isPrimary, student.notes).type !== 'both' && (
+                                                    <Badge bg="info" className="text-xs">🍼 Pañales</Badge>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                     {showDeleteButton && (
                                         <Button
