@@ -54,6 +54,7 @@ CREATE TABLE staff (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     first_name TEXT,
     middle_name_optional TEXT,
+    third_name_optional TEXT,
     paternal_surname TEXT,
     maternal_surname TEXT,
     dni TEXT UNIQUE,
@@ -268,6 +269,19 @@ CREATE TABLE system_module (
     display_order INT
 );
 
+-- Initial Data for system_module
+INSERT INTO system_module (module_name, module_key, description, is_active, display_order) VALUES
+('Dashboard', 'dashboard', 'Visión general del sistema', TRUE, 1),
+('Alumnos', 'alumnos', 'Gestión de información de alumnos', TRUE, 2),
+('Salas', 'salas', 'Gestión de salas y asignación de alumnos', TRUE, 3),
+('Personal', 'personal', 'Gestión de información del personal', TRUE, 4),
+('Responsables', 'responsables', 'Gestión de tutores y responsables', TRUE, 5),
+('Asistencia', 'asistencia', 'Registro y gestión de asistencia', TRUE, 6),
+('Reportes', 'reportes', 'Generación de informes y estadísticas', TRUE, 7),
+('Mensajería', 'mensajeria', 'Comunicación interna con padres y personal', TRUE, 8),
+('Configuración', 'configuracion', 'Configuración de permisos y roles', TRUE, 9),
+('Roles', 'roles', 'Gestión de roles del sistema', TRUE, 10);
+
 -- Table: permission_action
 CREATE TABLE permission_action (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -275,6 +289,19 @@ CREATE TABLE permission_action (
     action_key TEXT UNIQUE,
     description TEXT
 );
+
+-- Initial Data for permission_action
+INSERT INTO permission_action (action_name, action_key, description) VALUES
+('Ver', 'ver', 'Permite visualizar información'),
+('Crear', 'crear', 'Permite crear nuevos registros'),
+('Editar', 'editar', 'Permite modificar registros existentes'),
+('Eliminar', 'eliminar', 'Permite eliminar registros'),
+('Registrar', 'registrar', 'Permite registrar asistencia u otros eventos'),
+('Reportes', 'reportes', 'Permite generar reportes'),
+('Exportar', 'exportar', 'Permite exportar datos'),
+('Enviar', 'enviar', 'Permite enviar mensajes'),
+('Gestionar', 'gestionar', 'Permite gestionar configuraciones o elementos'),
+('Modificar', 'modificar', 'Permite modificar configuraciones');
 
 -- Table: role_permission
 CREATE TABLE role_permission (
@@ -383,9 +410,33 @@ CREATE TABLE staff_message (
 INSERT INTO access_level (access_name, description) VALUES ('Full Access', 'Grants full administrative privileges across the system.');
 SET @admin_access_level_id = LAST_INSERT_ID();
 
+-- Insert an access level for Director
+INSERT INTO access_level (access_name, description) VALUES ('Director Access', 'Grants administrative privileges for managing staff, classrooms, and overall school operations.');
+SET @director_access_level_id = LAST_INSERT_ID();
+
+-- Insert an access level for Teacher
+INSERT INTO access_level (access_name, description) VALUES ('Teacher Access', 'Grants privileges for managing assigned students, attendance, and classroom activities.');
+SET @teacher_access_level_id = LAST_INSERT_ID();
+
+-- Insert an access level for Secretary
+INSERT INTO access_level (access_name, description) VALUES ('Secretary Access', 'Grants privileges for managing student enrollments, guardian information, and general administrative tasks.');
+SET @secretary_access_level_id = LAST_INSERT_ID();
+
 -- Insert the Administrator role
 INSERT INTO role (role_name, access_level_id) VALUES ('Administrator', @admin_access_level_id);
 SET @admin_role_id = LAST_INSERT_ID();
+
+-- Insert the Director role
+INSERT INTO role (role_name, access_level_id) VALUES ('Director', @director_access_level_id);
+SET @director_role_id = LAST_INSERT_ID();
+
+-- Insert the Teacher role
+INSERT INTO role (role_name, access_level_id) VALUES ('Teacher', @teacher_access_level_id);
+SET @teacher_role_id = LAST_INSERT_ID();
+
+-- Insert the Secretary role
+INSERT INTO role (role_name, access_level_id) VALUES ('Secretary', @secretary_access_level_id);
+SET @secretary_role_id = LAST_INSERT_ID();
 
 -- Insert a dummy address for the admin user
 INSERT INTO address (street, number, city, provincia, postal_code_optional) VALUES ('Admin Street', '123', 'Admin City', 'Admin Province', '12345');
@@ -399,3 +450,53 @@ INSERT INTO staff (
     'Admin', 'User', 'admin@kindergarten.com', '$2b$10$1LlL9Li2/zWwTPse6RQdO.2Zoa400EqHo1AA9pSgzAR8AaYWSvLTW', TRUE,
     @admin_address_id, NULL, @admin_role_id, NOW()
 );
+
+-- Grant all permissions to the Administrator role
+INSERT INTO role_permission (role_id, module_id, action_id, is_granted, updated_by)
+SELECT
+    @admin_role_id,
+    sm.id,
+    pa.id,
+    TRUE,
+    (SELECT id FROM staff WHERE email = 'admin@kindergarten.com')
+FROM system_module sm
+CROSS JOIN permission_action pa;
+
+-- Grant all permissions to the Director role
+INSERT INTO role_permission (role_id, module_id, action_id, is_granted, updated_by)
+SELECT
+    @director_role_id,
+    sm.id,
+    pa.id,
+    TRUE,
+    (SELECT id FROM staff WHERE email = 'admin@kindergarten.com') -- Assuming admin user is the one updating
+FROM system_module sm
+CROSS JOIN permission_action pa
+WHERE sm.module_key NOT IN ('roles'); -- Directors don't manage roles themselves
+
+-- Grant specific permissions to the Teacher role
+INSERT INTO role_permission (role_id, module_id, action_id, is_granted, updated_by)
+SELECT
+    @teacher_role_id,
+    sm.id,
+    pa.id,
+    TRUE,
+    (SELECT id FROM staff WHERE email = 'admin@kindergarten.com')
+FROM system_module sm
+CROSS JOIN permission_action pa
+WHERE sm.module_key IN ('dashboard', 'alumnos', 'salas', 'asistencia', 'mensajeria')
+  AND pa.action_key IN ('ver', 'registrar', 'editar', 'enviar');
+
+-- Grant specific permissions to the Secretary role
+INSERT INTO role_permission (role_id, module_id, action_id, is_granted, updated_by)
+SELECT
+    @secretary_role_id,
+    sm.id,
+    pa.id,
+    TRUE,
+    (SELECT id FROM staff WHERE email = 'admin@kindergarten.com')
+FROM system_module sm
+CROSS JOIN permission_action pa
+WHERE sm.module_key IN ('dashboard', 'alumnos', 'responsables', 'reportes', 'mensajeria')
+  AND pa.action_key IN ('ver', 'crear', 'editar', 'exportar', 'enviar');
+
