@@ -192,7 +192,7 @@ const ParentPortalPage = () => {
                     }
                 }
             } catch (verifyError) {
-                console.log('No se pudo verificar ID, pero la inscripción fue exitosa');
+                // No action needed, enrollment was successful
             }
             
             // Limpiar formulario
