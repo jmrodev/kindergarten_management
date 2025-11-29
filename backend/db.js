@@ -1,22 +1,21 @@
-// backend/db.js
+require('dotenv').config(); // Load environment variables from .env file
+
 const mariadb = require('mariadb');
 
 const pool = mariadb.createPool({
-    host: 'localhost',
-    user: 'root', // Replaced with provided username
-    password: 'jmro1975', // Replaced with provided password
-    database: 'kindergarten_db',
-    connectionLimit: 5,
-    bigIntAsNumber: true
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'kindergarten_user',
+    password: process.env.DB_PASSWORD || 'kindergarten_password',
+    database: process.env.DB_NAME || 'kindergarten_db',
+    connectionLimit: 5 // Adjust as needed
 });
 
 async function getConnection() {
     try {
         const conn = await pool.getConnection();
-        console.log("Connected to MariaDB!");
         return conn;
     } catch (err) {
-        console.error("Error connecting to MariaDB:", err);
+        console.error("Error getting database connection:", err);
         throw err;
     }
 }

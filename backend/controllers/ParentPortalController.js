@@ -1,4 +1,4 @@
-const { pool } = require('../db');
+// const { pool } = require('../db'); // This is incorrect, pool is not exported directly.
 const StudentRepository = require('../repositories/StudentRepository');
 const Student = require('../models/Student');
 const Address = require('../models/Address');
@@ -71,6 +71,7 @@ class ParentPortalController {
     async getDraft(req, res) {
         let conn;
         try {
+            const pool = req.app.get('pool');
             const userId = req.user.id;
             conn = await pool.getConnection();
             const rows = await conn.query(
@@ -111,6 +112,7 @@ class ParentPortalController {
     async saveDraft(req, res) {
         let conn;
         try {
+            const pool = req.app.get('pool');
             const userId = req.user.id;
             const { data, currentStep } = req.body;
 
@@ -137,6 +139,7 @@ class ParentPortalController {
     async deleteDraft(req, res) {
         let conn;
         try {
+            const pool = req.app.get('pool');
             const userId = req.user.id;
             conn = await pool.getConnection();
             await conn.query('DELETE FROM parent_registration_drafts WHERE user_id = ?', [userId]);
@@ -150,9 +153,17 @@ class ParentPortalController {
     }
 
     async submitRegistration(req, res) {
+        const pool = req.app.get('pool');
         const conn = await pool.getConnection();
         try {
             await conn.beginTransaction();
+
+            // Get Tutor role ID
+            const tutorRole = await conn.query("SELECT id FROM role WHERE role_name = 'Tutor'");
+            if (tutorRole.length === 0) {
+                throw new Error("Tutor role not found. Please initialize the database correctly.");
+            }
+            const tutorRoleId = tutorRole[0].id;
 
             // Sanitize all string inputs from req.body
             const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
@@ -203,9 +214,9 @@ class ParentPortalController {
             const studentResult = await conn.query(
                 `INSERT INTO student (
                     first_name, middle_name_optional, third_name_optional, nickname_optional,
-                    paternal_surname, maternal_surname, dni, birth_date, address_id, 
+                    paternal_surname, maternal_surname, dni, birth_date, address_id,
                     emergency_contact_id, shift, status, enrollment_date,
-                    health_insurance, affiliate_number, allergies, medications, 
+                    health_insurance, affiliate_number, allergies, medications,
                     medical_observations, blood_type, pediatrician_name, pediatrician_phone,
                     photo_authorization, trip_authorization, medical_attention_authorization,
                     has_siblings_in_school, special_needs, vaccination_status, observations
@@ -213,9 +224,9 @@ class ParentPortalController {
                 [
                     nombre, segundoNombre || null, tercerNombre || null, alias || null,
                     apellidoPaterno, apellidoMaterno, dni || null, fechaNacimiento, addressId,
-                    emergencyContactId, turno, 'inscripto', new Date(),
+                    emergencyContactId, turno, 'pendiente', new Date(),
                     obraSocial || null, numeroAfiliado || null, alergias || null, medicacion || null,
-                    observacionesMedicas || null, grupoSanguineo || null, pediatraNombre || null, 
+                    observacionesMedicas || null, grupoSanguineo || null, pediatraNombre || null,
                     pediatraTelefono || null, autorizacionFotos || false, autorizacionSalidas || false,
                     autorizacionAtencionMedica || false, tieneHermanos || false, necesidadesEspeciales || null,
                     estadoVacunacion || 'no_informado', salaPreferida || null
@@ -228,13 +239,16 @@ class ParentPortalController {
                 `INSERT INTO guardian (
                     first_name, middle_name_optional, paternal_surname, maternal_surname,
                     preferred_surname, dni, address_id, phone, email_optional,
-                    workplace, work_phone, authorized_pickup, authorized_change
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    workplace, work_phone, authorized_pickup, authorized_change,
+                    parent_portal_user_id, role_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     nombrePadre, segundoNombrePadre || null, apellidoPaternoPadre,
                     apellidoMaternoPadre, apellidoPreferidoPadre || null, dniPadre || null,
                     addressId, telefonoPadre, emailPadre || null, lugarTrabajo || null,
-                    telefonoTrabajo || null, autorizadoRetiro !== false, autorizadoCambio !== false
+                    telefonoTrabajo || null, autorizadoRetiro !== false, autorizadoCambio !== false,
+                    req.user.id,
+                    tutorRoleId
                 ]
             );
             const guardianId = guardianResult.insertId;
@@ -242,7 +256,7 @@ class ParentPortalController {
             // 5. Relacionar tutor con alumno
             await conn.query(
                 `INSERT INTO student_guardian (
-                    student_id, guardian_id, relationship, is_primary, 
+                    student_id, guardian_id, relationship_type, is_primary,
                     custody_rights, financial_responsible
                 ) VALUES (?, ?, ?, ?, ?, ?)`,
                 [studentId, guardianId, relacionConAlumno || 'padre', true, true, true]
@@ -273,10 +287,10 @@ class ParentPortalController {
                 }
             }
 
-            // 7. Registrar el envío
+            // 7. Registrar el envío con estado pending_review
             await conn.query(
-                `INSERT INTO parent_portal_submissions (user_id, student_id, submitted_at)
-                 VALUES (?, ?, NOW())`,
+                `INSERT INTO parent_portal_submissions (user_id, student_id, submitted_at, status)
+                 VALUES (?, ?, NOW(), 'pending_review')`,
                 [req.user.id, studentId]
             );
 
@@ -295,6 +309,40 @@ class ParentPortalController {
             });
         } finally {
             conn.release();
+        }
+    }
+
+    async getEnrollmentStatus(req, res) {
+        let conn;
+        try {
+            const pool = req.app.get('pool');
+            conn = await pool.getConnection();
+
+            // Find Tutor role ID
+            const tutorRole = await conn.query("SELECT id FROM role WHERE role_name = 'Tutor'");
+            if (tutorRole.length === 0) {
+                return res.json({ enrollmentOpen: false, message: 'Tutor role not found. System configuration error.' });
+            }
+            const tutorRoleId = tutorRole[0].id;
+
+            // Check if Tutor role has 'crear' permission for 'alumnos' module
+            const permissions = await conn.query(
+                `SELECT rp.is_granted
+                 FROM role_permission rp
+                 JOIN system_module sm ON rp.module_id = sm.id
+                 JOIN permission_action pa ON rp.action_id = pa.id
+                 WHERE rp.role_id = ? AND sm.module_key = 'alumnos' AND pa.action_key = 'crear'`,
+                [tutorRoleId]
+            );
+
+            const enrollmentOpen = permissions.length > 0 && permissions[0].is_granted;
+            res.json({ enrollmentOpen });
+
+        } catch (error) {
+            console.error('Error getting enrollment status:', error);
+            res.status(500).json({ error: 'Error getting enrollment status', details: error.message });
+        } finally {
+            if (conn) conn.release();
         }
     }
 

@@ -43,15 +43,15 @@ const authorizeRole = (allowedRoles) => {
 
 // Generar token
 const generateToken = (user) => {
-    const payload = {
-        id: user.id,
+    const serializablePayload = {
+        id: user.id ? user.id.toString() : null, // Convert BigInt to string
         email: user.email,
         role: user.role,
         firstName: user.first_name,
         lastName: user.paternal_surname
     };
 
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    return jwt.sign(serializablePayload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 };
 
 module.exports = {

@@ -13,6 +13,9 @@ const permissionsRoutes = require('./routes/permissions');
 const guardianRoutes = require('./routes/guardianRoutes');
 const parentPortalRoutes = require('./routes/parentPortalRoutes');
 const enrollmentRoutes = require('./routes/enrollmentRoutes');
+const enrollmentManagementRoutes = require('./routes/enrollmentManagementRoutes');
+const lotteryRoutes = require('./routes/lotteryRoutes');
+const roleRoutes = require('./routes/roleRoutes');
 const { AppError, errorHandler } = require('./middleware/errorHandler'); // Import AppError and errorHandler
 const { passport, isGoogleConfigured } = require('./config/passport');
 const { jsonSerializer } = require('./utils/serialization'); // Import jsonSerializer
@@ -72,9 +75,12 @@ app.use('/api/auth', authRoutes); // Auth routes (public)
 app.use('/api/students', studentRoutes); // Protected in next step
 app.use('/api/classrooms', classroomRoutes); // Protected in next step
 app.use('/api/staff', staffRoutes); // Staff management
+app.use('/api/roles', roleRoutes); // Role management
 app.use('/api/permissions', permissionsRoutes); // Permissions management (admin/directivo only)
 app.use('/api/guardians', guardianRoutes); // Guardian/tutor management
 app.use('/api/enrollments', enrollmentRoutes); // Enrollment management
+app.use('/api/enrollment-management', enrollmentManagementRoutes); // Enrollment management for admin review
+app.use('/api/lottery', lotteryRoutes); // Lottery list management
 
 // Solo habilitar rutas del portal si Google OAuth está configurado
 if (isGoogleConfigured) {

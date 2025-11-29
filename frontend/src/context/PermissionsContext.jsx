@@ -8,24 +8,27 @@ const PermissionsContext = createContext();
 export const PermissionsProvider = ({ children }) => {
     const { user } = useAuth();
     const [userPermissions, setUserPermissions] = useState({});
+    const [allPermissionsData, setAllPermissionsData] = useState([]); // New state to store all permissions
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (user?.role) {
-            loadUserPermissions(user.role);
+        if (user) { // Load permissions for any authenticated user
+            loadPermissions();
         } else {
             setUserPermissions({});
+            setAllPermissionsData([]);
             setLoading(false);
         }
     }, [user]);
 
-    const loadUserPermissions = async (role) => {
+    const loadPermissions = async () => {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
             
             if (!token) {
                 setUserPermissions({});
+                setAllPermissionsData([]);
                 setLoading(false);
                 return;
             }
@@ -34,62 +37,78 @@ export const PermissionsProvider = ({ children }) => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             
-            // Filtrar solo los permisos del rol actual del usuario
-            const rolePerms = {};
-            res.data.forEach(perm => {
-                if (perm.role_name === role && perm.has_permission) {
-                    if (!rolePerms[perm.module_key]) {
-                        rolePerms[perm.module_key] = [];
+            setAllPermissionsData(res.data); // Store all permissions fetched
+            
+            // Filter permissions only if the current user has a specific role
+            if (user?.role) {
+                const rolePerms = {};
+                res.data.forEach(perm => {
+                    if (perm.role_name === user.role && perm.has_permission) {
+                        if (!rolePerms[perm.module_key]) {
+                            rolePerms[perm.module_key] = [];
+                        }
+                        rolePerms[perm.module_key].push(perm.action_key);
                     }
-                    rolePerms[perm.module_key].push(perm.action_key);
-                }
-            });
-            
-            setUserPermissions(rolePerms);
-            
-            // Guardar en localStorage como caché
-            localStorage.setItem('userPermissions', JSON.stringify(rolePerms));
+                });
+                setUserPermissions(rolePerms);
+                localStorage.setItem('userPermissions', JSON.stringify(rolePerms));
+            } else {
+                // For users without a role (like parents), userPermissions will be empty
+                setUserPermissions({});
+                localStorage.removeItem('userPermissions');
+            }
         } catch (error) {
-            console.error('Error loading user permissions:', error);
-            
-            // Intentar cargar desde caché si hay error
+            console.error('Error loading permissions:', error);
             const cached = localStorage.getItem('userPermissions');
-            if (cached) {
+            if (cached && user?.role) { // Only load from cache if it's relevant for the user
                 setUserPermissions(JSON.parse(cached));
             }
+            setAllPermissionsData([]);
         } finally {
             setLoading(false);
         }
     };
 
-    // Verificar si el usuario tiene un permiso específico
+    // Verify if the user has a specific permission
     const can = (module, action) => {
         return userPermissions[module]?.includes(action) || false;
     };
 
-    // Verificar si el usuario tiene TODOS los permisos especificados
+    // New function to check permissions for any given role
+    const canRole = (targetRoleName, module, action) => {
+        const foundPermission = allPermissionsData.find(perm =>
+            perm.role_name === targetRoleName &&
+            perm.module_key === module &&
+            perm.action_key === action &&
+            perm.has_permission
+        );
+        return !!foundPermission;
+    };
+
+    // Verify if the user has ALL specified permissions
     const canAll = (permissions) => {
         return permissions.every(({ module, action }) => can(module, action));
     };
 
-    // Verificar si el usuario tiene AL MENOS UNO de los permisos especificados
+    // Verify if the user has AT LEAST ONE of the specified permissions
     const canAny = (permissions) => {
         return permissions.some(({ module, action }) => can(module, action));
     };
 
-    // Verificar si el usuario tiene acceso a un módulo completo
+    // Verify if the user has access to a complete module
     const canAccessModule = (module) => {
         return userPermissions[module] && userPermissions[module].length > 0;
     };
 
-    // Obtener todas las acciones disponibles para un módulo
+    // Get all available actions for a module
     const getModuleActions = (module) => {
         return userPermissions[module] || [];
     };
 
-    // Limpiar permisos (útil para logout)
+    // Clear permissions (useful for logout)
     const clearPermissions = () => {
         setUserPermissions({});
+        setAllPermissionsData([]); // Clear allPermissionsData on logout
         localStorage.removeItem('userPermissions');
     };
 
@@ -102,7 +121,8 @@ export const PermissionsProvider = ({ children }) => {
         canAccessModule,
         getModuleActions,
         clearPermissions,
-        reloadPermissions: () => user?.role && loadUserPermissions(user.role)
+        reloadPermissions: loadPermissions, // Renamed function
+        canRole // Expose new function
     };
 
     return (

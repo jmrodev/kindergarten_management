@@ -5,6 +5,7 @@ import StudentList from '../components/StudentList';
 import StudentForm from '../components/StudentForm';
 import StudentDetail from '../components/StudentDetail';
 import StudentFilter from '../components/StudentFilter';
+import { usePermissions } from '../context/PermissionsContext'; // Import usePermissions
 
 const AlumnosPage = ({ 
     alumnos, 
@@ -14,14 +15,15 @@ const AlumnosPage = ({
     onDelete,
     onFilter,
     onClearFilter,
-    onSubmit,
-    message,
-    setMessage
+    onSubmit
 }) => {
+    const { can } = usePermissions(); // Use the usePermissions hook
     const [showStudentForm, setShowStudentForm] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [editingStudent, setEditingStudent] = useState(null);
     const [activeTab, setActiveTab] = useState('todos');
+
+    const canCreateAlumnos = can('alumnos', 'crear'); // Check permission for creating alumnos
 
     // Agrupar alumnos por sala y turno
     const groupedBySalaTurno = useMemo(() => {
@@ -71,21 +73,23 @@ const AlumnosPage = ({
                     </span>
                     Alumnos
                 </h2>
-                <Button 
-                    onClick={() => {
-                        setShowStudentForm(true);
-                        setEditingStudent(null);
-                        setSelectedStudent(null);
-                    }}
-                    style={{
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        border: 'none',
-                        boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)'
-                    }}
-                >
-                    <span className="material-icons" style={{fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>add</span>
-                    Nuevo Alumno
-                </Button>
+                {canCreateAlumnos && ( // Conditionally render button
+                    <Button 
+                        onClick={() => {
+                            setShowStudentForm(true);
+                            setEditingStudent(null);
+                            setSelectedStudent(null);
+                        }}
+                        style={{
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            border: 'none',
+                            boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)'
+                        }}
+                    >
+                        <span className="material-icons" style={{fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>add</span>
+                        Nuevo Alumno
+                    </Button>
+                )}
             </div>
 
             <StudentFilter 

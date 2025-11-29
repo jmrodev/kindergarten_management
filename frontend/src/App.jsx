@@ -21,6 +21,9 @@ import PersonalPage from './pages/PersonalPage';
 import ConfiguracionPage from './pages/ConfiguracionPage';
 import GuardiansPage from './pages/GuardiansPage';
 import ParentPortalPage from './pages/ParentPortalPage';
+import RoleManagementPage from './pages/RoleManagementPage';
+import EnrollmentsManagementPage from './pages/EnrollmentsManagementPage';
+import LotteryManagementPage from './pages/LotteryManagementPage';
 
 function AppContent() {
     const navigate = useNavigate();
@@ -357,140 +360,216 @@ function AppContent() {
                             <span className="material-icons" style={{fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>settings</span> Configuración
                         </Button>
                     )}
-                </ButtonGroup>
-                )}
-
-                <Routes>
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/parent-portal" element={<ParentPortalPage />} />
-                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                    <Route 
-                        path="/dashboard" 
-                        element={
-                            <ProtectedRoute>
-                                <Dashboard 
-                                        alumnos={alumnos} 
-                                    salas={salas}
-                                    onNavigate={(view) => {
-                                        const routeMap = {
-                                            'students': '/alumnos',
-                                            'classrooms': '/salas',
-                                            'responsables': '/responsables',
-                                            'alumnos': '/alumnos',
-                                            'salas': '/salas',
-                                            'personal': '/personal',
-                                            'configuracion': '/configuracion'
-                                        };
-                                        navigate(routeMap[view] || `/${view}`);
-                                    }}
-                                    onShowOcupacion={() => setShowOcupacionModal(true)}
-                                />
-                            </ProtectedRoute>
-                        } 
-                    />
-                    <Route 
-                        path="/alumnos" 
-                        element={
-                            <ProtectedRoute>
-                                <AlumnosPage 
-                                    alumnos={alumnos}
-                                    loading={loadingAlumnos}
-                                    salas={salas}
-                                    onDelete={handleDeleteStudent}
-                                    onFilter={handleFilter}
-                                    onClearFilter={handleClearFilter}
-                                    onSubmit={handleStudentSubmit}
-                                    showSuccess={showSuccess} // Pass showSuccess
-                                    showError={showError}     // Pass showError
-                                />
-                            </ProtectedRoute>
-                        } 
-                    />
-                    <Route 
-                        path="/salas" 
-                        element={
-                            <ProtectedRoute>
-                                <SalasPage 
-                                    salas={salas}
-                                    alumnos={alumnos}
-                                    loading={loadingSalas}
-                                    loadingAlumnos={loadingAlumnos}
-                                    onDelete={handleDeleteClassroom}
-                                    onSubmit={handleClassroomSubmit}
-                                    onAssignStudent={handleAssignStudent}
-                                    showSuccess={showSuccess} // Pass showSuccess
-                                    showError={showError}     // Pass showError
-                                />
-                            </ProtectedRoute>
-                        } 
-                    />
-                    <Route 
-                        path="/personal" 
-                        element={
-                            <ProtectedRoute>
-                                <PersonalPage darkMode={darkMode} showSuccess={showSuccess} showError={showError} />
-                            </ProtectedRoute>
-                        } 
-                    />
-                    <Route 
-                        path="/configuracion" 
-                        element={
-                            <ProtectedRoute>
-                                <ConfiguracionPage darkMode={darkMode} showSuccess={showSuccess} showError={showError} />
-                            </ProtectedRoute>
-                        } 
-                    />
-                    <Route 
-                        path="/responsables" 
-                        element={
-                            <ProtectedRoute>
-                                <GuardiansPage showSuccess={showSuccess} showError={showError} />
-                            </ProtectedRoute>
-                        } 
-                    />
-                </Routes>
-
-                <ConfirmModal
-                    show={showConfirmModal}
-                    onHide={() => setShowConfirmModal(false)}
-                    onConfirm={confirmAction}
-                    title={confirmData.title}
-                    message={confirmData.message}
-                    variant="danger"
-                />
+                    {(user.role === 'Administrator' || user.role === 'Directivo') && (
+                        <Button
+                            variant={isActive('/roles') ? 'primary' : 'outline-primary'}
+                            onClick={() => navigate('/roles')}
+                            className="py-2"
+                            style={{
+                                transition: 'all 0.2s ease',
+                                borderWidth: '1.5px',
+                                fontWeight: '500',
+                                fontSize: '0.95rem',
+                                background: isActive('/roles') ? '#667eea' : 'transparent',
+                                borderColor: '#667eea',
+                                color: isActive('/roles') ? 'white' : '#667eea'
+                            }}
+                        >
+                                                        <span className="material-icons" style={{fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>assignment_ind</span> Gestión de Roles
+                                                    </Button>
+                                                )}
+                    {(user.role === 'Administrator' || user.role === 'Directivo' || user.role === 'Secretary') && (
+                        <Button
+                            variant={isActive('/enrollment-management') ? 'primary' : 'outline-primary'}
+                            onClick={() => navigate('/enrollment-management')}
+                            className="py-2"
+                            style={{
+                                transition: 'all 0.2s ease',
+                                borderWidth: '1.5px',
+                                fontWeight: '500',
+                                fontSize: '0.95rem',
+                                background: isActive('/enrollment-management') ? '#667eea' : 'transparent',
+                                borderColor: '#667eea',
+                                color: isActive('/enrollment-management') ? 'white' : '#667eea'
+                            }}
+                        >
+                            <span className="material-icons" style={{ fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.3rem' }}>assignment</span> Control de Inscripciones
+                        </Button>
+                    )}
+                    {(user.role === 'Administrator' || user.role === 'Directivo' || user.role === 'Secretary') && (
+                        <Button
+                            variant={isActive('/lottery') ? 'primary' : 'outline-primary'}
+                            onClick={() => navigate('/lottery')}
+                            className="py-2"
+                            style={{
+                                transition: 'all 0.2s ease',
+                                borderWidth: '1.5px',
+                                fontWeight: '500',
+                                fontSize: '0.95rem',
+                                background: isActive('/lottery') ? '#667eea' : 'transparent',
+                                borderColor: '#667eea',
+                                color: isActive('/lottery') ? 'white' : '#667eea'
+                            }}
+                        >
+                            <span className="material-icons" style={{ fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.3rem' }}>shuffle</span> Lista de Sorteo
+                        </Button>
+                    )}
+                                        </ButtonGroup>
+                                        )}                
+                                <Routes>
+                                    <Route path="/login" element={<LoginPage />} />
+                                    <Route path="/parent-portal" element={<ParentPortalPage />} />
+                                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                                    <Route
+                                        path="/dashboard"
+                                        element={
+                                            <ProtectedRoute>
+                                                <Dashboard
+                                                        alumnos={alumnos}
+                                                    salas={salas}
+                                                    onNavigate={(view) => {
+                                                        const routeMap = {
+                                                            'students': '/alumnos',
+                                                            'classrooms': '/salas',
+                                                            'responsables': '/responsables',
+                                                            'alumnos': '/alumnos',
+                                                            'salas': '/salas',
+                                                            'personal': '/personal',
+                                                            'configuracion': '/configuracion'
+                                                        };
+                                                        navigate(routeMap[view] || `/${view}`);
+                                                    }}
+                                                    onShowOcupacion={() => setShowOcupacionModal(true)}
+                                                />
+                                            </ProtectedRoute>
+                                        }
+                                    />
+                                    <Route
+                                        path="/alumnos"
+                                        element={
+                                            <ProtectedRoute>
+                                                <AlumnosPage
+                                                    alumnos={alumnos}
+                                                    loading={loadingAlumnos}
+                                                    salas={salas}
+                                                    onDelete={handleDeleteStudent}
+                                                    onFilter={handleFilter}
+                                                    onClearFilter={handleClearFilter}
+                                                    onSubmit={handleStudentSubmit}
+                                                    showSuccess={showSuccess} // Pass showSuccess
+                                                    showError={showError}     // Pass showError
+                                                />
+                                            </ProtectedRoute>
+                                        }
+                                    />
+                                    <Route
+                                        path="/salas"
+                                        element={
+                                            <ProtectedRoute>
+                                                <SalasPage
+                                                    salas={salas}
+                                                    alumnos={alumnos}
+                                                    loading={loadingSalas}
+                                                    loadingAlumnos={loadingAlumnos}
+                                                    onDelete={handleDeleteClassroom}
+                                                    onSubmit={handleClassroomSubmit}
+                                                    onAssignStudent={handleAssignStudent}
+                                                    showSuccess={showSuccess} // Pass showSuccess
+                                                    showError={showError}     // Pass showError
+                                                />
+                                            </ProtectedRoute>
+                                        }
+                                    />
+                                    <Route
+                                        path="/personal"
+                                        element={
+                                            <ProtectedRoute>
+                                                <PersonalPage darkMode={darkMode} showSuccess={showSuccess} showError={showError} />
+                                            </ProtectedRoute>
+                                        }
+                                    />
+                                    <Route
+                                        path="/configuracion"
+                                        element={
+                                            <ProtectedRoute>
+                                                <ConfiguracionPage darkMode={darkMode} showSuccess={showSuccess} showError={showError} />
+                                            </ProtectedRoute>
+                                        }
+                                    />
+                                                        <Route
+                                                            path="/responsables"
+                                                            element={
+                                                                <ProtectedRoute>
+                                                                    <GuardiansPage showSuccess={showSuccess} showError={showError} />
+                                                                </ProtectedRoute>
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="/roles"
+                                                            element={
+                                                                <ProtectedRoute>
+                                                                    <RoleManagementPage />
+                                                                </ProtectedRoute>
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="/enrollment-management"
+                                                            element={
+                                                                <ProtectedRoute>
+                                                                    <EnrollmentsManagementPage darkMode={darkMode} />
+                                                                </ProtectedRoute>
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="/lottery"
+                                                            element={
+                                                                <ProtectedRoute>
+                                                                    <LotteryManagementPage darkMode={darkMode} />
+                                                                </ProtectedRoute>
+                                                            }
+                                                        />
+                                                    </Routes>
                 
-                <ConfirmModal
-                    show={showLogoutModal}
-                    onHide={() => setShowLogoutModal(false)}
-                    onConfirm={() => {
-                        logout();
-                        navigate('/login');
-                        setShowLogoutModal(false);
-                        showSuccess('Sesión cerrada', 'Has cerrado sesión correctamente.');
-                    }}
-                    title="Cerrar Sesión"
-                    message="¿Está seguro que desea cerrar sesión?"
-                    variant="danger"
-                />
-
-                <ToastNotification
-                    show={toastConfig.show}
-                    onClose={hideToast}
-                    message={toastConfig.message}
-                    variant={toastConfig.variant}
-                    title={toastConfig.title} // Pass the title from toastConfig
-                />
-
-                <OcupacionModal
-                    show={showOcupacionModal}
-                    onHide={() => setShowOcupacionModal(false)}
-                    salas={salas}
-                />
-            </Container>
-        </>
-    );
+                                <ConfirmModal
+                                    show={showConfirmModal}
+                                    onHide={() => setShowConfirmModal(false)}
+                                    onConfirm={confirmAction}
+                                    title={confirmData.title}
+                                    message={confirmData.message}
+                                    variant="danger"
+                                />
+                
+                                <ConfirmModal
+                                    show={showLogoutModal}
+                                    onHide={() => setShowLogoutModal(false)}
+                                    onConfirm={() => {
+                                        logout();
+                                        navigate('/login');
+                                        setShowLogoutModal(false);
+                                        showSuccess('Sesión cerrada', 'Has cerrado sesión correctamente.');
+                                    }}
+                                    title="Cerrar Sesión"
+                                    message="¿Está seguro que desea cerrar sesión?"
+                                    variant="danger"
+                                />
+                
+                                <ToastNotification
+                                    show={toastConfig.show}
+                                    onClose={hideToast}
+                                    message={toastConfig.message}
+                                    variant={toastConfig.variant}
+                                    title={toastConfig.title} // Pass the title from toastConfig
+                                />
+                
+                                <OcupacionModal
+                                    show={showOcupacionModal}
+                                    onHide={() => setShowOcupacionModal(false)}
+                                    salas={salas}
+                                />
+                            </Container>
+                        </>
+                    );
 }
-
 function App() {
     return (
         <BrowserRouter>
@@ -502,5 +581,4 @@ function App() {
         </BrowserRouter>
     );
 }
-
 export default App;

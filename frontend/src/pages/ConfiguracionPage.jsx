@@ -1,21 +1,31 @@
-// frontend/src/pages/ConfiguracionPage.jsx
-import { useState, useEffect } from 'react';
-import { Container, Card, Row, Col, Table, Badge, Spinner } from 'react-bootstrap';
+import { useState, useEffect, useCallback } from 'react';
+import { Container, Card, Row, Col, Table, Badge, Spinner, Alert, Form } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ROLE_TRANSLATIONS } from '../utils/constants'; // Import from constants.js
+import { usePermissions } from '../context/PermissionsContext'; // Import usePermissions
 
 const API_URL = 'http://localhost:3000/api';
 
 function ConfiguracionPage({ darkMode, showSuccess, showError }) { // Accept showSuccess and showError
     const { user } = useAuth();
+    const { canRole } = usePermissions(); // Use canRole from PermissionsContext
     const navigate = useNavigate();
     const [permissions, setPermissions] = useState({});
     const [modules, setModules] = useState([]);
     const [actions, setActions] = useState([]);
     const [roles, setRoles] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const [tutorRoleId, setTutorRoleId] = useState(null); // State for Tutor role ID
+    const [alumnosModuleId, setAlumnosModuleId] = useState(null); // State for Alumnos module ID
+    const [crearActionId, setCrearActionId] = useState(null); // State for Crear action ID
+    const [isParentPortalEnabled, setIsParentPortalEnabled] = useState(false); // State for the toggle
+
+    const hasPermission = useCallback((role, module, action) => {
+        return permissions[role]?.[module]?.includes(action) || false;
+    }, [permissions]);
 
     useEffect(() => {
         if (!user || (user.role !== 'Administrator' && user.role !== 'Directivo')) { // Updated role names
@@ -24,6 +34,24 @@ function ConfiguracionPage({ darkMode, showSuccess, showError }) { // Accept sho
         }
         loadPermissions();
     }, [user, navigate]);
+
+    useEffect(() => {
+        // Once roles, modules, and actions are loaded, find the IDs
+        if (roles.length > 0 && modules.length > 0 && actions.length > 0 && permissions) {
+            const tutorRole = roles.find(r => r.role_name === 'Tutor');
+            const alumnosModule = modules.find(m => m.module_key === 'alumnos');
+            const crearAction = actions.find(a => a.action_key === 'crear');
+
+            if (tutorRole) setTutorRoleId(tutorRole.id);
+            if (alumnosModule) setAlumnosModuleId(alumnosModule.id);
+            if (crearAction) setCrearActionId(crearAction.id);
+
+            // Set initial state of the toggle
+            if (tutorRole && alumnosModule && crearAction) {
+                setIsParentPortalEnabled(hasPermission(tutorRole.role_name, alumnosModule.module_key, crearAction.action_key));
+            }
+        }
+    }, [roles, modules, actions, permissions, hasPermission]);
 
     const loadPermissions = async () => {
         try {
@@ -73,8 +101,8 @@ function ConfiguracionPage({ darkMode, showSuccess, showError }) { // Accept sho
     const isPermissionLocked = (roleName, moduleKey) => {
         // Permisos bloqueados que no se pueden modificar
         const lockedPermissions = {
-            Administrator: ['personal', 'configuracion'], // Updated role names
-            Directivo: ['personal', 'configuracion']     // Updated role names
+            Administrator: ['personal', 'configuracion', 'roles'], // Added 'roles'
+            Directivo: ['personal', 'configuracion', 'roles']     // Added 'roles'
         };
         
         return lockedPermissions[roleName]?.includes(moduleKey) || false;
@@ -83,7 +111,7 @@ function ConfiguracionPage({ darkMode, showSuccess, showError }) { // Accept sho
     const togglePermission = async (roleId, roleName, moduleId, moduleKey, actionId, actionKey) => {
         // Verificar si el permiso está bloqueado
         if (isPermissionLocked(roleName, moduleKey)) {
-            showError('Advertencia', 'Los permisos de Personal y Configuración para Administrador/Directivo están protegidos y no pueden modificarse'); // Use showError
+            showError('Advertencia', 'Los permisos de Personal, Configuración y Roles para Administrador/Directivo están protegidos y no pueden modificarse'); // Updated message
             return;
         }
 
@@ -118,8 +146,22 @@ function ConfiguracionPage({ darkMode, showSuccess, showError }) { // Accept sho
         }
     };
 
-    const hasPermission = (role, module, action) => {
-        return permissions[role]?.[module]?.includes(action) || false;
+    const toggleParentPortalEnrollment = async () => {
+        if (!tutorRoleId || !alumnosModuleId || !crearActionId) {
+            showError('Error', 'No se encontró la configuración necesaria para el rol de Tutor o los permisos de alumnos.');
+            return;
+        }
+
+        // The togglePermission function already handles the state update via the useEffect
+        // that watches for changes in the 'permissions' state.
+        await togglePermission(
+            tutorRoleId,
+            'Tutor', // role_name
+            alumnosModuleId,
+            'alumnos', // module_key
+            crearActionId,
+            'crear' // action_key
+        );
     };
 
     const getRoleBadgeVariant = (role) => {
@@ -128,21 +170,23 @@ function ConfiguracionPage({ darkMode, showSuccess, showError }) { // Accept sho
             Directivo: 'warning',
             Secretary: 'info',
             Teacher: 'success',
-            Guardian: 'secondary'
+            Tutor: 'primary'
         };
         return variants[role] || 'secondary';
     };
 
     const getActionsByModule = (moduleKey) => {
         const moduleActions = {
-            alumnos: ['ver', 'crear', 'editar', 'eliminar'],
+            dashboard: ['ver'],
+            alumnos: ['ver', 'crear', 'editar', 'eliminar', 'registrar'],
             salas: ['ver', 'crear', 'editar', 'eliminar'],
             personal: ['ver', 'crear', 'editar', 'eliminar'],
-            tutores: ['ver', 'crear', 'editar', 'eliminar'],
+            responsables: ['ver', 'crear', 'editar', 'eliminar'],
             asistencia: ['ver', 'registrar', 'editar', 'reportes'],
             reportes: ['ver', 'exportar'],
             mensajeria: ['ver', 'enviar', 'gestionar'],
-            configuracion: ['ver', 'modificar']
+            configuracion: ['ver', 'modificar'],
+            roles: ['ver', 'crear', 'editar', 'eliminar']
         };
         
         return actions.filter(a => moduleActions[moduleKey]?.includes(a.action_key));
@@ -189,6 +233,53 @@ function ConfiguracionPage({ darkMode, showSuccess, showError }) { // Accept sho
                 Haz clic en los iconos ✓ o ✗ para cambiar permisos.
             </Alert>
 
+            {/* Nuevo card para el control del Portal de Padres */}
+            {user.role === 'Administrator' && ( // Only Administrator can toggle global settings
+                <Card className="mb-4" style={{
+                    background: darkMode ? '#1f2937' : '#fff',
+                    border: `1px solid ${darkMode ? '#374151' : '#dee2e6'}`,
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}>
+                    <Card.Header style={{
+                        background: darkMode ? '#374151' : '#f8f9fa',
+                        borderBottom: `1px solid ${darkMode ? '#4b5563' : '#dee2e6'}`,
+                        fontWeight: 'bold'
+                    }}>
+                        <span className="material-icons" style={{ fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.5rem' }}>
+                            how_to_reg
+                        </span>
+                        Configuración del Portal de Padres
+                    </Card.Header>
+                    <Card.Body>
+                        <Form.Check
+                            type="switch"
+                            id="parentPortalEnrollmentSwitch"
+                            label={isParentPortalEnabled ? "Inscripciones Abiertas" : "Inscripciones Cerradas"}
+                            checked={isParentPortalEnabled}
+                            onChange={toggleParentPortalEnrollment}
+                            disabled={loading} // Disable while loading permissions
+                            style={{ fontSize: '1.1rem' }}
+                        />
+                        <small className="text-muted mt-2 d-block">
+                            Controla si los padres pueden enviar nuevas inscripciones a través del Portal de Padres.
+                        </small>
+                        <div className="mt-3">
+                            <a
+                                href="/parent-portal"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn btn-outline-primary btn-sm"
+                            >
+                                <span className="material-icons" style={{ fontSize: '1rem', verticalAlign: 'middle', marginRight: '0.25rem' }}>
+                                    open_in_new
+                                </span>
+                                Probar Portal de Padres
+                            </a>
+                        </div>
+                    </Card.Body>
+                </Card>
+            )}
+
             <Row className="g-4">
                 {modules.map(module => (
                     <Col xs={12} key={module.id}>
@@ -229,7 +320,7 @@ function ConfiguracionPage({ darkMode, showSuccess, showError }) { // Accept sho
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {roles.map(role => (
+                                        {roles.filter(role => role.role_name !== 'Tutor').map(role => ( // Filter out Tutor role
                                             <tr key={role.id}>
                                                 <td style={{ 
                                                     border: `1px solid ${darkMode ? '#4b5563' : '#dee2e6'}`,

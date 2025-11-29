@@ -53,6 +53,14 @@ router.post('/login', async (req, res, next) => {
         // Generar token
         const token = generateToken(user);
 
+        console.log('[Login] User object sent to frontend:', {
+            id: user.id,
+            email: user.email,
+            firstName: user.first_name,
+            lastName: user.paternal_surname,
+            role: user.role
+        });
+
         res.json({
             token,
             user: {

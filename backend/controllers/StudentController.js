@@ -35,11 +35,11 @@ class StudentController {
                 contactoEmergencia.telefono
             );
             
-            const newClassroom = new Classroom(
-                sala.id, 
-                sala.nombre || sala.name, 
+            const newClassroom = sala && sala.id ? new Classroom(
+                sala.id,
+                sala.nombre || sala.name,
                 sala.capacidad || sala.capacity
-            );
+            ) : null;
 
             const newStudent = new Student(
                 null, nombre, segundoNombre, tercerNombre, alias,
@@ -134,7 +134,7 @@ class StudentController {
             // Reconstruct model objects. IDs are crucial for update.
             const updatedAddress = new Address(direccion.id, direccion.calle, direccion.numero, direccion.ciudad, direccion.provincia, direccion.codigoPostal);
             const updatedEmergencyContact = new EmergencyContact(contactoEmergencia.id, contactoEmergencia.nombreCompleto, contactoEmergencia.relacion, contactoEmergencia.telefono);
-            const updatedClassroom = new Classroom(sala.id, sala.name, sala.capacity); // Assuming sala already exists and we get its ID
+            const updatedClassroom = sala && sala.id ? new Classroom(sala.id, sala.name, sala.capacity) : null; // Handle null classroom
 
             const updatedStudent = new Student(
                 id, nombre, segundoNombre, tercerNombre, alias,

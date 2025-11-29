@@ -89,9 +89,10 @@ router.post('/toggle', authenticateToken, requireDirectionRole, async (req, res,
             const { role_name, module_key } = permCheck[0];
             
             // Bloquear modificación de permisos críticos para admin/directivo
-            if ((role_name === 'Administrator' || role_name === 'Directivo') && // Updated role names
-                (module_key === 'personal' || module_key === 'configuracion')) {
-                return next(new AppError('Los permisos de Personal y Configuración para Administrador/Directivo están protegidos', 403));
+            if ((role_name === 'Administrator' || role_name === 'Directivo') && 
+                (module_key === 'personal' || module_key === 'configuracion' || module_key === 'roles')) { // Added 'roles' module
+                console.warn(`Intento de modificar permiso protegido para ${role_name} en ${module_key}.`);
+                return next(new AppError('Los permisos de Personal, Configuración y Roles para Administrador/Directivo están protegidos', 403));
             }
         }
 
@@ -103,8 +104,10 @@ router.post('/toggle', authenticateToken, requireDirectionRole, async (req, res,
 
         const previousValue = previous.length > 0 ? previous[0].is_granted : null;
 
+        console.log(`[Permissions Toggle] Attempting to set roleId: ${roleId}, moduleId: ${moduleId}, actionId: ${actionId}, isGranted: ${isGranted}, userId: ${userId}`);
+
         // Insertar o actualizar permiso
-        await pool.query(`
+        const updateResult = await pool.query(`
             INSERT INTO role_permission (role_id, module_id, action_id, is_granted, updated_by)
             VALUES (?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
@@ -112,6 +115,8 @@ router.post('/toggle', authenticateToken, requireDirectionRole, async (req, res,
                 updated_by = VALUES(updated_by),
                 updated_at = CURRENT_TIMESTAMP
         `, [roleId, moduleId, actionId, isGranted, userId]);
+
+        console.log('[Permissions Toggle] Update/Insert result:', updateResult);
 
         // Registrar en auditoría
         await pool.query(`

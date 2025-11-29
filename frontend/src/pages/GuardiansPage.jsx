@@ -1,6 +1,6 @@
 // frontend/src/pages/GuardiansPage.jsx
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Button, Card, Badge, Spinner, Form, InputGroup, ListGroup, Nav, Modal } from 'react-bootstrap';
+import { Container, Row, Col, Button, Card, Badge, Spinner, Form, InputGroup, ListGroup, Nav, Modal, Alert } from 'react-bootstrap';
 import guardianService from '../services/guardianService';
 import GuardianForm from '../components/GuardianForm';
 import AssignGuardianToStudentModal from '../components/AssignGuardianToStudentModal';

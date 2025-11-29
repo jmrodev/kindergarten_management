@@ -276,7 +276,7 @@ function StaffForm({ show, onHide, onSave, staff, roles, classrooms = [], darkMo
                                     <option value="">Sin sala asignada</option>
                                     {classrooms.map(classroom => (
                                         <option key={classroom.id} value={classroom.id}>
-                                            {classroom.name}
+                                            {classroom.nombre || classroom.name}
                                         </option>
                                     ))}
                                 </Form.Select>

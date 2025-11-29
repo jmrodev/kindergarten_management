@@ -45,8 +45,8 @@ const ClassroomForm = ({ show, initialData = {}, onSubmit, onCancel, showError }
             });
             
             // Filtrar solo maestros activos
-            const maestrosFiltrados = response.data.filter(staff => 
-                staff.role_name === 'maestro' && staff.is_active
+            const maestrosFiltrados = response.data.filter(staff =>
+                (staff.role_name === 'maestro' || staff.role_name === 'Teacher') && staff.is_active
             );
             setMaestros(maestrosFiltrados);
         } catch (error) {

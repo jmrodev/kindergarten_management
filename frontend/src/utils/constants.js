@@ -5,5 +5,5 @@ export const ROLE_TRANSLATIONS = {
     'Directivo': 'Director/a',
     'Secretary': 'Secretaria',
     'Teacher': 'Maestro/a',
-    'Guardian': 'Padre/Tutor'
+    'Tutor': 'Tutor'
 };

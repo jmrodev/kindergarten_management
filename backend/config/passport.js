@@ -7,7 +7,8 @@ const isGoogleConfigured = process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CL
 
 if (isGoogleConfigured) {
     passport.serializeUser((user, done) => {
-        done(null, user.id);
+        // Convert BigInt to string for session serialization
+        done(null, user.id.toString());
     });
 
     passport.deserializeUser(async (id, done) => {
@@ -18,7 +19,7 @@ if (isGoogleConfigured) {
             if (rows.length > 0) {
                 done(null, rows[0]);
             } else {
-                done(new Error('User not found'), null);
+                done(null, null);
             }
         } catch (error) {
             done(error, null);

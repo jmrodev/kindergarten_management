@@ -26,22 +26,22 @@ class ClassroomRepository {
         try {
             conn = await getConnection();
             const rows = await conn.query(`
-                SELECT 
-                    c.id, 
-                    c.name, 
+                SELECT
+                    c.id,
+                    c.name,
                     c.capacity,
                     c.shift,
                     COUNT(DISTINCT s.id) as assigned_students,
                     GROUP_CONCAT(DISTINCT CONCAT(st.first_name, ' ', st.paternal_surname) SEPARATOR ', ') as teachers,
                     COUNT(DISTINCT st.id) as teachers_count,
-                    (SELECT st2.id 
-                     FROM staff st2 
-                     WHERE st2.classroom_id = c.id 
-                     AND st2.role_id IN (SELECT id FROM role WHERE role_name = 'maestro')
+                    (SELECT st2.id
+                     FROM staff st2
+                     WHERE st2.classroom_id = c.id
+                     AND st2.role_id IN (SELECT id FROM role WHERE role_name = 'Teacher')
                      LIMIT 1) as teacher_id
                 FROM classroom c
                 LEFT JOIN student s ON c.id = s.classroom_id
-                LEFT JOIN staff st ON c.id = st.classroom_id AND st.role_id IN (SELECT id FROM role WHERE role_name = 'maestro')
+                LEFT JOIN staff st ON c.id = st.classroom_id AND st.role_id IN (SELECT id FROM role WHERE role_name = 'Teacher')
                 GROUP BY c.id, c.name, c.capacity, c.shift
                 ORDER BY c.shift, c.name
             `);
@@ -66,21 +66,21 @@ class ClassroomRepository {
         try {
             conn = await getConnection();
             const rows = await conn.query(`
-                SELECT 
-                    c.id, 
-                    c.name, 
+                SELECT
+                    c.id,
+                    c.name,
                     c.capacity,
                     c.shift,
                     COUNT(DISTINCT s.id) as assigned_students,
                     GROUP_CONCAT(DISTINCT CONCAT(st.first_name, ' ', st.paternal_surname) SEPARATOR ', ') as teachers,
                     COUNT(DISTINCT st.id) as teachers_count,
-                    (SELECT GROUP_CONCAT(st2.id) 
-                     FROM staff st2 
-                     WHERE st2.classroom_id = c.id 
-                     AND st2.role_id IN (SELECT id FROM role WHERE role_name = 'maestro')) as teacher_ids
+                    (SELECT GROUP_CONCAT(st2.id)
+                     FROM staff st2
+                     WHERE st2.classroom_id = c.id
+                     AND st2.role_id IN (SELECT id FROM role WHERE role_name = 'Teacher')) as teacher_ids
                 FROM classroom c
                 LEFT JOIN student s ON c.id = s.classroom_id
-                LEFT JOIN staff st ON c.id = st.classroom_id AND st.role_id IN (SELECT id FROM role WHERE role_name = 'maestro')
+                LEFT JOIN staff st ON c.id = st.classroom_id AND st.role_id IN (SELECT id FROM role WHERE role_name = 'Teacher')
                 WHERE c.id = ?
                 GROUP BY c.id, c.name, c.capacity, c.shift
             `, [id]);
@@ -159,15 +159,15 @@ class ClassroomRepository {
             // Si teacherId es vacío o null, desasignar maestros de esta sala
             if (!teacherId || teacherId === '') {
                 await conn.query(
-                    "UPDATE staff SET classroom_id = NULL WHERE classroom_id = ? AND role_id IN (SELECT id FROM role WHERE role_name = 'maestro')",
+                    "UPDATE staff SET classroom_id = NULL WHERE classroom_id = ? AND role_id IN (SELECT id FROM role WHERE role_name = 'Teacher')",
                     [classroomId]
                 );
                 return true;
             }
-            
+
             // Primero desasignar cualquier maestro anterior de esta sala
             await conn.query(
-                "UPDATE staff SET classroom_id = NULL WHERE classroom_id = ? AND role_id IN (SELECT id FROM role WHERE role_name = 'maestro')",
+                "UPDATE staff SET classroom_id = NULL WHERE classroom_id = ? AND role_id IN (SELECT id FROM role WHERE role_name = 'Teacher')",
                 [classroomId]
             );
             

@@ -123,7 +123,7 @@ const LoginPage = () => {
                                 <span className="material-icons" style={{ fontSize: '0.8rem', verticalAlign: 'middle' }}>
                                     info
                                 </span>
-                                {' '}Usuario por defecto: <strong>admin@jardin.com</strong> / <strong>12345678</strong>
+                                {' '}Usuario por defecto: <strong>admin@kindergarten.com</strong> / <strong>12345678</strong>
                             </small>
                         </div>
                     </Card.Body>

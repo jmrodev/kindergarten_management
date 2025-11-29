@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 const ParentPortalController = require('../controllers/ParentPortalController');
+const { authorizeParent } = require('../middleware/parentAuth');
 
 // Google OAuth routes
 router.get('/auth/google', passport.authenticate('google', {
@@ -27,7 +28,14 @@ router.delete('/draft', ParentPortalController.ensureAuthenticated, ParentPortal
 router.post('/upload-document', ParentPortalController.ensureAuthenticated, ParentPortalController.uploadDocument);
 
 // Submit complete registration
-router.post('/submit', ParentPortalController.ensureAuthenticated, ParentPortalController.submitRegistration);
+router.post('/submit',
+    ParentPortalController.ensureAuthenticated,
+    authorizeParent('alumnos', 'crear'),
+    ParentPortalController.submitRegistration
+);
+
+// Get enrollment status (unprotected, for frontend display)
+router.get('/enrollment-status', ParentPortalController.getEnrollmentStatus);
 
 // Logout
 router.get('/logout', (req, res) => {

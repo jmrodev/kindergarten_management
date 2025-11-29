@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Table, Button, Badge, Form, InputGroup } from 'react-bootstrap';
 import staffService from '../services/staffService';
+import classroomService from '../services/classroomService';
 import StaffForm from './StaffForm';
 import StaffDetail from './StaffDetail';
 import ConfirmModal from './ConfirmModal';
@@ -17,10 +18,12 @@ function StaffList({ darkMode, showSuccess, showError }) { // Accept showSuccess
     const [filterRole, setFilterRole] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
     const [roles, setRoles] = useState([]);
+    const [classrooms, setClassrooms] = useState([]);
 
     useEffect(() => {
         loadStaff();
         loadRoles();
+        loadClassrooms();
     }, []);
 
     useEffect(() => {
@@ -43,6 +46,16 @@ function StaffList({ darkMode, showSuccess, showError }) { // Accept showSuccess
         } catch (error) {
             console.error('Error loading roles:', error);
             showError('Error', 'Error al cargar roles'); // Use showError prop
+        }
+    };
+
+    const loadClassrooms = async () => {
+        try {
+            const response = await classroomService.getAllClassrooms();
+            setClassrooms(response.data);
+        } catch (error) {
+            console.error('Error loading classrooms:', error);
+            // Don't show error for classrooms as it's not critical for staff management
         }
     };
 
@@ -299,6 +312,7 @@ function StaffList({ darkMode, showSuccess, showError }) { // Accept showSuccess
                     onSave={handleSave}
                     staff={selectedStaff}
                     roles={roles}
+                    classrooms={classrooms}
                     darkMode={darkMode}
                 />
             )}

@@ -55,7 +55,7 @@ class Student {
     isValid() {
         return this.firstName && this.maternalSurname && this.paternalSurname &&
                this.birthDate && this.address && this.address.isValid() &&
-               this.classroom && this.classroom.isValid() && this.shift;
+               this.shift; // Se remueve la validación estricta de classroom ya que puede ser null al crear
     }
 
     static fromDbRow(row, addressRow = null, emergencyContactRow = null, classroomRow = null) {

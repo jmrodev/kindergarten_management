@@ -191,7 +191,7 @@ const StudentForm = ({ show, initialData = {}, onSubmit, onCancel }) => {
             setActiveTab('responsables');
             return;
         }
-        
+
         // Sanitizar todos los campos antes de enviar
         const sanitizedData = {
             ...formData,
@@ -530,72 +530,6 @@ const StudentForm = ({ show, initialData = {}, onSubmit, onCancel }) => {
                         </Col>
                     </Row>
 
-                    <h6 className="mb-3 mt-4 d-flex align-items-center gap-2" style={{ 
-                        color: '#667eea', 
-                        borderBottom: '2px solid #e0e7ff',
-                        paddingBottom: '0.75rem',
-                        fontWeight: '600'
-                    }}>
-                        <span className="material-icons" style={{fontSize: '1.2rem', verticalAlign: 'middle'}}>emergency</span>
-                        Contacto de Emergencia
-                    </h6>
-                    <Row className="mb-3">
-                        <Col md={4}>
-                            <Form.Group controlId="formContactoNombre">
-                                <Form.Label>Nombre Completo *</Form.Label>
-                                <Form.Control 
-                                    type="text" 
-                                    value={formData.contactoEmergencia?.nombreCompleto || ''} 
-                                    onChange={(e) => handleNestedChange('contactoEmergencia', 'nombreCompleto', e.target.value)}
-                                    isInvalid={!!errors['contactoEmergencia.nombreCompleto']}
-                                    pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+"
-                                    title="Solo letras y espacios"
-                                    maxLength="200"
-                                    required 
-                                />
-                                <Form.Control.Feedback type="invalid">
-                                    {errors['contactoEmergencia.nombreCompleto'] || 'Este campo es obligatorio'}
-                                </Form.Control.Feedback>
-                            </Form.Group>
-                        </Col>
-                        <Col md={4}>
-                            <Form.Group controlId="formContactoRelacion">
-                                <Form.Label>Relación *</Form.Label>
-                                <Form.Control 
-                                    type="text" 
-                                    value={formData.contactoEmergencia?.relacion || ''} 
-                                    onChange={(e) => handleNestedChange('contactoEmergencia', 'relacion', e.target.value)} 
-                                    placeholder="Ej: Madre, Padre, Tutor"
-                                    isInvalid={!!errors['contactoEmergencia.relacion']}
-                                    pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+"
-                                    title="Solo letras y espacios"
-                                    maxLength="50"
-                                    required 
-                                />
-                                <Form.Control.Feedback type="invalid">
-                                    {errors['contactoEmergencia.relacion'] || 'Este campo es obligatorio'}
-                                </Form.Control.Feedback>
-                            </Form.Group>
-                        </Col>
-                        <Col md={4}>
-                            <Form.Group controlId="formContactoTelefono">
-                                <Form.Label>Teléfono *</Form.Label>
-                                <Form.Control 
-                                    type="tel" 
-                                    value={formData.contactoEmergencia?.telefono || ''} 
-                                    onChange={(e) => handleNestedChange('contactoEmergencia', 'telefono', e.target.value)}
-                                    isInvalid={!!errors['contactoEmergencia.telefono']}
-                                    pattern="[0-9\s()\-]+"
-                                    title="Solo números, espacios, guiones y paréntesis"
-                                    maxLength="20"
-                                    required 
-                                />
-                                <Form.Control.Feedback type="invalid">
-                                    {errors['contactoEmergencia.telefono'] || 'Este campo es obligatorio'}
-                                </Form.Control.Feedback>
-                            </Form.Group>
-                        </Col>
-                    </Row>
                         </Form>
                     </Tab>
 

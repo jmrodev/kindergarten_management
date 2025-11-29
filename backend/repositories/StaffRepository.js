@@ -1,4 +1,4 @@
-const pool = require('../db');
+const { pool } = require('../db');
 
 const StaffRepository = {
     async findAll() {
@@ -9,7 +9,6 @@ const StaffRepository = {
                     s.id,
                     s.first_name,
                     s.middle_name_optional,
-                    s.third_name_optional,
                     s.paternal_surname,
                     s.maternal_surname,
                     s.dni,
@@ -42,7 +41,6 @@ const StaffRepository = {
                     s.id,
                     s.first_name,
                     s.middle_name_optional,
-                    s.third_name_optional,
                     s.paternal_surname,
                     s.maternal_surname,
                     s.dni,
@@ -102,36 +100,35 @@ const StaffRepository = {
         const conn = await pool.getConnection();
         try {
             await conn.query(
-                `UPDATE staff SET
-                    first_name = ?,
-                    middle_name_optional = ?,
-                    third_name_optional = ?,
-                    paternal_surname = ?,
-                    maternal_surname = ?,
-                    dni = ?,
-                    phone = ?,
-                    email = ?,
-                    email_optional = ?,
-                    role_id = ?,
-                    classroom_id = ?,
-                    is_active = ?
-                WHERE id = ?`,
-                [
-                    staffData.first_name,
-                    staffData.middle_name_optional || null,
-                    staffData.third_name_optional || null,
-                    staffData.paternal_surname,
-                    staffData.maternal_surname || null,
-                    staffData.dni || null,
-                    staffData.phone || null,
-                    staffData.email || null,
-                    staffData.email_optional || null,
-                    staffData.role_id,
-                    staffData.classroom_id || null,
-                    staffData.is_active !== undefined ? staffData.is_active : true,
-                    id
-                ]
-            );
+                                        `UPDATE staff SET
+                                            first_name = ?,
+                                            middle_name_optional = ?,
+                                            third_name_optional = ?,
+                                            paternal_surname = ?,
+                                            maternal_surname = ?,
+                                            dni = ?,
+                                            phone = ?,
+                                            email = ?,
+                                            email_optional = ?,
+                                            role_id = ?,
+                                            classroom_id = ?,
+                                            is_active = ?
+                                        WHERE id = ?`,
+                                        [
+                                            staffData.first_name,
+                                            staffData.middle_name_optional || null,
+                                            staffData.third_name_optional || null,
+                                            staffData.paternal_surname,
+                                            staffData.maternal_surname || null,
+                                            staffData.dni || null,
+                                            staffData.phone || null,
+                                            staffData.email || null,
+                                            staffData.email_optional || null,
+                                            staffData.role_id,
+                                            staffData.classroom_id || null,
+                                            staffData.is_active !== undefined ? staffData.is_active : true,
+                                            id
+                                        ]            );
             return true;
         } finally {
             conn.release();

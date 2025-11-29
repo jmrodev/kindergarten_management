@@ -49,22 +49,40 @@ const StaffController = {
     async updateStaff(req, res) {
         try {
             const staff = await StaffRepository.findById(req.params.id);
-            
+
             if (!staff) {
                 throw new AppError('Personal no encontrado', 404);
             }
-            
+
             const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
-            
-            // Proteger cambio de rol para posiciones de dirección (admin y directivo)
-            const isDirectionRole = staff.role_name === 'admin' || staff.role_name === 'directivo';
+
+            // Proteger cambio de rol para posiciones de dirección (Administrator y Director)
+            const isDirectionRole = staff.role_name === 'Administrator' || staff.role_name === 'Director';
             if (isDirectionRole && sanitizedBody.role_id && sanitizedBody.role_id !== staff.role_id) {
                 throw new AppError('No se puede cambiar el rol de usuarios con posiciones de dirección', 403);
             }
-            
+
+            // Actualizar el staff con los datos proporcionados
             await StaffRepository.update(req.params.id, sanitizedBody);
-            const updatedStaff = await StaffRepository.findById(req.params.id);
-            res.json(updatedStaff);
+
+            // Verificar si el rol actualizado es 'Teacher' para manejar la asignación de sala
+            const updatedStaffAfterSave = await StaffRepository.findById(req.params.id);
+            const isTeacherRole = updatedStaffAfterSave.role_name === 'Teacher';
+
+            // Si se proporciona un classroom_id y el rol es 'Teacher', actualizar también la asignación en la sala
+            if (isTeacherRole) {
+                if (sanitizedBody.classroom_id) {
+                    // Si se está asignando a una sala, actualizar la sala para que apunte a este maestro
+                    const ClassroomRepository = require('../repositories/ClassroomRepository');
+                    await ClassroomRepository.assignTeacher(sanitizedBody.classroom_id, req.params.id);
+                } else if ((sanitizedBody.classroom_id === null || sanitizedBody.classroom_id === '' || sanitizedBody.classroom_id === 0) && staff.classroom_id) {
+                    // Si se está desasignando del maestro, también desasignar de la sala si estaba en una
+                    const ClassroomRepository = require('../repositories/ClassroomRepository');
+                    await ClassroomRepository.assignTeacher(staff.classroom_id, null);
+                }
+            }
+
+            res.json(updatedStaffAfterSave);
         } catch (error) {
             console.error('Error in updateStaff:', error);
             throw new AppError('Error al actualizar personal', 500);
@@ -79,9 +97,9 @@ const StaffController = {
                 throw new AppError('Personal no encontrado', 404);
             }
             
-            // Proteger roles de dirección (admin y directivo)
-            if (staff.role_name === 'admin' || staff.role_name === 'directivo') {
-                throw new AppError('No se puede eliminar usuarios con roles de dirección (Admin/Directivo)', 403);
+            // Proteger roles de dirección (Administrator y Director)
+            if (staff.role_name === 'Administrator' || staff.role_name === 'Director') {
+                throw new AppError('No se puede eliminar usuarios con roles de dirección (Admin/Director)', 403);
             }
             
             await StaffRepository.delete(req.params.id);

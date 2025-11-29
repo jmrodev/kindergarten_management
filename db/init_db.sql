@@ -74,6 +74,15 @@ CREATE TABLE staff (
     FOREIGN KEY (role_id) REFERENCES role(id)
 );
 
+-- Table: parent_portal_users (Independent)
+CREATE TABLE parent_portal_users (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    google_id TEXT UNIQUE,
+    email TEXT,
+    name TEXT,
+    created_at TIMESTAMP
+);
+
 -- Table: guardian (Depends on address)
 CREATE TABLE guardian (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -90,16 +99,11 @@ CREATE TABLE guardian (
     work_phone TEXT,
     authorized_pickup BOOLEAN,
     authorized_change BOOLEAN,
-    FOREIGN KEY (address_id) REFERENCES address(id)
-);
-
--- Table: parent_portal_users (Independent)
-CREATE TABLE parent_portal_users (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    google_id TEXT UNIQUE,
-    email TEXT,
-    name TEXT,
-    created_at TIMESTAMP
+    parent_portal_user_id BIGINT,
+    role_id BIGINT,
+    FOREIGN KEY (address_id) REFERENCES address(id),
+    FOREIGN KEY (parent_portal_user_id) REFERENCES parent_portal_users(id) ON DELETE SET NULL,
+    FOREIGN KEY (role_id) REFERENCES role(id) ON DELETE SET NULL
 );
 
 -- Table: student (Create without emergency_contact_id FK initially due to circular dependency)
@@ -117,7 +121,7 @@ CREATE TABLE student (
     emergency_contact_id BIGINT, -- This will be linked later
     classroom_id BIGINT,
     shift TEXT,
-    status ENUM('inscripto', 'activo', 'inactivo', 'egresado'),
+    status ENUM('preinscripto', 'pendiente', 'approved', 'sorteo', 'inscripto', 'activo', 'inactivo', 'egresado', 'rechazado'),
     enrollment_date DATE,
     withdrawal_date DATE,
     health_insurance TEXT,
@@ -192,15 +196,20 @@ CREATE TABLE student_documents (
     is_verified BOOLEAN,
     verified_by BIGINT,
     verified_at TIMESTAMP,
-    FOREIGN KEY (student_id) REFERENCES student(id)
+    delivery_verified BOOLEAN DEFAULT FALSE,
+    delivery_verified_by BIGINT,
+    delivery_verified_at TIMESTAMP NULL,
+    FOREIGN KEY (student_id) REFERENCES student(id),
+    FOREIGN KEY (verified_by) REFERENCES staff(id),
+    FOREIGN KEY (delivery_verified_by) REFERENCES staff(id)
 );
 
 -- Table: student_status_history (Depends on student)
 CREATE TABLE student_status_history (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     student_id BIGINT,
-    old_status ENUM('inscripto', 'activo', 'inactivo', 'egresado'),
-    new_status ENUM('inscripto', 'activo', 'inactivo', 'egresado'),
+    old_status ENUM('preinscripto', 'pendiente', 'approved', 'sorteo', 'inscripto', 'activo', 'inactivo', 'egresado', 'rechazado'),
+    new_status ENUM('preinscripto', 'pendiente', 'approved', 'sorteo', 'inscripto', 'activo', 'inactivo', 'egresado', 'rechazado'),
     change_date TIMESTAMP,
     reason TEXT,
     changed_by BIGINT,
@@ -217,14 +226,37 @@ CREATE TABLE parent_registration_drafts (
     FOREIGN KEY (user_id) REFERENCES parent_portal_users(id)
 );
 
+-- Table: pending_documentation (Depends on student, staff)
+CREATE TABLE pending_documentation (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    student_id BIGINT NOT NULL,
+    document_type TEXT NOT NULL,
+    required_by BIGINT, -- Staff member who required the document
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP NULL,
+    completed_by BIGINT NULL, -- Staff member who completed the document
+    FOREIGN KEY (student_id) REFERENCES student(id) ON DELETE CASCADE,
+    FOREIGN KEY (required_by) REFERENCES staff(id) ON DELETE SET NULL,
+    FOREIGN KEY (completed_by) REFERENCES staff(id) ON DELETE SET NULL
+);
+
 -- Table: parent_portal_submissions (Depends on parent_portal_users, student)
 CREATE TABLE parent_portal_submissions (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     user_id BIGINT,
     student_id BIGINT,
     submitted_at TIMESTAMP,
+    status ENUM('pending_review', 'approved', 'rejected') DEFAULT 'pending_review',
+    approved_at TIMESTAMP NULL,
+    approved_by BIGINT NULL,
+    rejected_at TIMESTAMP NULL,
+    rejected_by BIGINT NULL,
+    rejected_reason TEXT,
     FOREIGN KEY (user_id) REFERENCES parent_portal_users(id),
-    FOREIGN KEY (student_id) REFERENCES student(id)
+    FOREIGN KEY (student_id) REFERENCES student(id),
+    FOREIGN KEY (approved_by) REFERENCES staff(id),
+    FOREIGN KEY (rejected_by) REFERENCES staff(id)
 );
 
 -- Table: attendance (Depends on student, classroom)
@@ -438,6 +470,14 @@ SET @teacher_role_id = LAST_INSERT_ID();
 INSERT INTO role (role_name, access_level_id) VALUES ('Secretary', @secretary_access_level_id);
 SET @secretary_role_id = LAST_INSERT_ID();
 
+-- Insert an access level for Guardian/Tutor
+INSERT INTO access_level (access_name, description) VALUES ('Guardian Access', 'Grants privileges for parents/guardians to view and manage their children''s information.');
+SET @guardian_access_level_id = LAST_INSERT_ID();
+
+-- Insert the Guardian/Tutor role
+INSERT INTO role (role_name, access_level_id) VALUES ('Tutor', @guardian_access_level_id);
+SET @tutor_role_id = LAST_INSERT_ID();
+
 -- Insert a dummy address for the admin user
 INSERT INTO address (street, number, city, provincia, postal_code_optional) VALUES ('Admin Street', '123', 'Admin City', 'Admin Province', '12345');
 SET @admin_address_id = LAST_INSERT_ID();
@@ -447,7 +487,7 @@ INSERT INTO staff (
     first_name, paternal_surname, email, password_hash, is_active,
     address_id, classroom_id, role_id, last_login
 ) VALUES (
-    'Admin', 'User', 'admin@kindergarten.com', '$2b$10$1LlL9Li2/zWwTPse6RQdO.2Zoa400EqHo1AA9pSgzAR8AaYWSvLTW', TRUE,
+    'Admin', 'User', 'admin@kindergarten.com', '$2b$10$KztEjpwYr/rzl7OAKLRWf.Citp8esIqisRoqTOPEWJu.HYRTBcMZ6', TRUE,
     @admin_address_id, NULL, @admin_role_id, NOW()
 );
 
@@ -499,4 +539,163 @@ FROM system_module sm
 CROSS JOIN permission_action pa
 WHERE sm.module_key IN ('dashboard', 'alumnos', 'responsables', 'reportes', 'mensajeria')
   AND pa.action_key IN ('ver', 'crear', 'editar', 'exportar', 'enviar');
+
+-- Grant 'crear' on 'alumnos' to the Tutor role by default
+INSERT INTO role_permission (role_id, module_id, action_id, is_granted, updated_by)
+SELECT
+    @tutor_role_id,
+    (SELECT id FROM system_module WHERE module_key = 'alumnos'),
+    (SELECT id FROM permission_action WHERE action_key = 'crear'),
+    TRUE,
+    (SELECT id FROM staff WHERE email = 'admin@kindergarten.com');
+
+-- Create a simple view for the lottery list (students ready for lottery with just name and DNI as requested)
+CREATE OR REPLACE VIEW v_lottery_list_simple AS
+SELECT
+    s.id,
+    CONCAT(s.first_name, ' ', s.paternal_surname, IFNULL(CONCAT(' ', s.maternal_surname), '')) AS full_name,
+    s.dni
+FROM student s
+WHERE s.status = 'sorteo'
+ORDER BY s.enrollment_date ASC;
+
+-- Create a comprehensive view for the lottery list with additional information for admin staff
+CREATE OR REPLACE VIEW v_lottery_list AS
+SELECT
+    s.id,
+    CONCAT(s.first_name, ' ', s.paternal_surname, IFNULL(CONCAT(' ', s.maternal_surname), '')) AS full_name,
+    s.dni,
+    s.birth_date,
+    s.shift,
+    s.health_insurance,
+    s.has_siblings_in_school,
+    s.enrollment_date,
+    pps.submitted_at,
+    pps.approved_at,
+    s.status,
+    c.name AS classroom_name,
+    g.first_name AS guardian_first_name,
+    g.paternal_surname AS guardian_paternal_surname,
+    g.phone AS guardian_phone
+FROM student s
+LEFT JOIN parent_portal_submissions pps ON s.id = pps.student_id
+LEFT JOIN classroom c ON s.classroom_id = c.id
+LEFT JOIN student_guardian sg ON s.id = sg.student_id AND sg.is_primary = true
+LEFT JOIN guardian g ON sg.guardian_id = g.id
+WHERE s.status = 'sorteo'
+ORDER BY pps.approved_at ASC;
+
+-- Create a view for students with pending documentation that need to be completed
+CREATE OR REPLACE VIEW v_students_with_pending_docs AS
+SELECT
+    s.id,
+    CONCAT(s.first_name, ' ', s.paternal_surname, IFNULL(CONCAT(' ', s.maternal_surname), '')) AS full_name,
+    s.dni,
+    s.status,
+    s.classroom_id,
+    c.name AS classroom_name,
+    pd.document_type,
+    pd.notes,
+    pd.created_at AS required_date,
+    pd.completed_at,
+    CONCAT(completed_by.first_name, ' ', completed_by.paternal_surname) AS completed_by_name
+FROM student s
+LEFT JOIN pending_documentation pd ON s.id = pd.student_id AND pd.completed_at IS NULL
+LEFT JOIN classroom c ON s.classroom_id = c.id
+LEFT JOIN staff completed_by ON pd.completed_by = completed_by.id
+WHERE s.status IN ('inscripto', 'activo') AND pd.id IS NOT NULL
+ORDER BY s.id, pd.created_at ASC;
+
+-- Create an index for better performance on pending_documentation queries
+CREATE INDEX idx_pending_documentation_student_completed ON pending_documentation(student_id, completed_at);
+
+-- Create a simple view for the lottery list (students ready for lottery with just name and DNI as requested)
+CREATE OR REPLACE VIEW v_lottery_list_simple AS
+SELECT
+    s.id,
+    CONCAT(s.first_name, ' ', s.paternal_surname, IFNULL(CONCAT(' ', s.maternal_surname), '')) AS full_name,
+    s.dni
+FROM student s
+WHERE s.status = 'sorteo'
+ORDER BY s.enrollment_date ASC;
+
+-- Create a comprehensive view for the lottery list with additional information for admin staff
+CREATE OR REPLACE VIEW v_lottery_list AS
+SELECT
+    s.id,
+    CONCAT(s.first_name, ' ', s.paternal_surname, IFNULL(CONCAT(' ', s.maternal_surname), '')) AS full_name,
+    s.dni,
+    s.birth_date,
+    s.shift,
+    s.health_insurance,
+    s.has_siblings_in_school,
+    s.enrollment_date,
+    pps.submitted_at,
+    pps.approved_at,
+    s.status,
+    c.name AS classroom_name,
+    g.first_name AS guardian_first_name,
+    g.paternal_surname AS guardian_paternal_surname,
+    g.phone AS guardian_phone
+FROM student s
+LEFT JOIN parent_portal_submissions pps ON s.id = pps.student_id
+LEFT JOIN classroom c ON s.classroom_id = c.id
+LEFT JOIN student_guardian sg ON s.id = sg.student_id AND sg.is_primary = true
+LEFT JOIN guardian g ON sg.guardian_id = g.id
+WHERE s.status = 'sorteo'
+ORDER BY pps.approved_at ASC;
+
+-- Create a view for students with pending documentation that need to be completed
+CREATE OR REPLACE VIEW v_students_with_pending_docs AS
+SELECT
+    s.id,
+    CONCAT(s.first_name, ' ', s.paternal_surname, IFNULL(CONCAT(' ', s.maternal_surname), '')) AS full_name,
+    s.dni,
+    s.status,
+    s.classroom_id,
+    c.name AS classroom_name,
+    pd.document_type,
+    pd.notes,
+    pd.created_at AS required_date,
+    pd.completed_at,
+    CONCAT(completed_by.first_name, ' ', completed_by.paternal_surname) AS completed_by_name
+FROM student s
+LEFT JOIN pending_documentation pd ON s.id = pd.student_id AND pd.completed_at IS NULL
+LEFT JOIN classroom c ON s.classroom_id = c.id
+LEFT JOIN staff completed_by ON pd.completed_by = completed_by.id
+WHERE s.status IN ('inscripto', 'activo') AND pd.id IS NOT NULL
+ORDER BY s.id, pd.created_at ASC;
+
+-- Create a view for students in preinscripto status showing their document delivery status
+CREATE OR REPLACE VIEW v_preinscriptos_with_pending_docs AS
+SELECT
+    s.id,
+    CONCAT(s.first_name, ' ', s.paternal_surname, IFNULL(CONCAT(' ', s.maternal_surname), '')) AS full_name,
+    s.dni,
+    s.status,
+    sd.document_type,
+    sd.notes,
+    sd.upload_date,
+    sd.delivery_verified,
+    CONCAT(verified_by.first_name, ' ', verified_by.paternal_surname) AS delivery_verified_by_name
+FROM student s
+LEFT JOIN student_documents sd ON s.id = sd.student_id
+LEFT JOIN staff verified_by ON sd.delivery_verified_by = verified_by.id
+WHERE s.status = 'preinscripto'
+ORDER BY s.id, sd.upload_date ASC;
+
+-- Create a view to track students that have not delivered required documents but are still in preinscripto
+CREATE OR REPLACE VIEW v_students_pending_document_delivery AS
+SELECT
+    s.id,
+    CONCAT(s.first_name, ' ', s.paternal_surname, IFNULL(CONCAT(' ', s.maternal_surname), '')) AS full_name,
+    s.dni,
+    s.status,
+    COUNT(sd.id) AS total_documents,
+    SUM(CASE WHEN sd.delivery_verified = TRUE THEN 1 ELSE 0 END) AS verified_deliveries
+FROM student s
+LEFT JOIN student_documents sd ON s.id = sd.student_id
+WHERE s.status = 'preinscripto'
+GROUP BY s.id
+ORDER BY s.enrollment_date ASC;
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Form, Button, ProgressBar, Card, Alert, Row, Col, Modal } from 'react-bootstrap';
 import axios from 'axios';
+import { usePermissions } from '../context/PermissionsContext'; // Import usePermissions
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -14,7 +15,9 @@ const ParentPortalPage = () => {
     const [submitted, setSubmitted] = useState(false);
     const [enrollmentId, setEnrollmentId] = useState(null);
     const [studentName, setStudentName] = useState('');
-    
+    const [enrollmentOpen, setEnrollmentOpen] = useState(true);
+    const [checkingStatus, setCheckingStatus] = useState(true);
+
     const [formData, setFormData] = useState({
         nombre: '', segundoNombre: '', tercerNombre: '', alias: '',
         apellidoPaterno: '', apellidoMaterno: '', dni: '', fechaNacimiento: '',
@@ -31,13 +34,46 @@ const ParentPortalPage = () => {
         relacionConAlumno: 'madre', autorizadoRetiro: true, autorizadoCambio: true,
         autorizacionFotos: false, autorizacionSalidas: false, autorizacionAtencionMedica: false
     });
-    
+
+    const [availableClassrooms, setAvailableClassrooms] = useState([]);
     const [documents, setDocuments] = useState({
         dniAlumno: null, dniResponsable: null, certificadoNacimiento: null,
         carnetVacunas: null, certificadoMedico: null, constanciaObraSocial: null
     });
 
-    useEffect(() => { checkAuth(); }, []);
+    useEffect(() => {
+        const checkEnrollmentStatus = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/api/parent-portal/enrollment-status`);
+                setEnrollmentOpen(response.data.enrollmentOpen);
+
+                // Cargar salas disponibles si las inscripciones están abiertas
+                if (response.data.enrollmentOpen) {
+                    loadClassrooms();
+                }
+            } catch (error) {
+                console.error('Error checking enrollment status:', error);
+                setEnrollmentOpen(true);
+            } finally {
+                setCheckingStatus(false);
+            }
+        };
+
+        const loadClassrooms = async () => {
+            try {
+                // Usar el endpoint de salas sin autenticación, ya que el portal de padres no está completamente autenticado
+                const response = await axios.get(`${API_URL}/api/classrooms`);
+                setAvailableClassrooms(response.data || []);
+            } catch (error) {
+                console.error('Error loading classrooms for parent portal:', error);
+                // Si no se puede cargar, dejar listado vacío
+                setAvailableClassrooms([]);
+            }
+        };
+
+        checkEnrollmentStatus();
+        checkAuth();
+    }, []);
 
     const checkAuth = async () => {
         try {
@@ -366,28 +402,56 @@ const ParentPortalPage = () => {
                     {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
                     {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
+                    {!enrollmentOpen && !checkingStatus && (
+                        <Alert variant="danger" className="text-center">
+                            <span className="material-icons align-middle me-2">block</span>
+                            <strong>Las inscripciones están actualmente cerradas.</strong> No se pueden registrar nuevos alumnos en este momento.
+                        </Alert>
+                    )}
+
                     <Form>
                         {/* PASO 1 */}
                         {step === 1 && (
                             <>
                                 <h5 className="mb-4 text-center text-primary"><span className="material-icons align-middle me-2">child_care</span>Datos del Alumno</h5>
                                 <Row>
-                                    <Col md={6}><Form.Group className="mb-3"><Form.Label>Nombre *</Form.Label><Form.Control type="text" name="nombre" value={formData.nombre} onChange={handleChange} required size="lg" /></Form.Group></Col>
-                                    <Col md={6}><Form.Group className="mb-3"><Form.Label>Segundo Nombre</Form.Label><Form.Control type="text" name="segundoNombre" value={formData.segundoNombre} onChange={handleChange} size="lg" /></Form.Group></Col>
+                                    <Col md={6}><Form.Group className="mb-3"><Form.Label>Nombre *</Form.Label><Form.Control type="text" name="nombre" value={formData.nombre} onChange={handleChange} required size="lg" disabled={!enrollmentOpen && !checkingStatus} /></Form.Group></Col>
+                                    <Col md={6}><Form.Group className="mb-3"><Form.Label>Segundo Nombre</Form.Label><Form.Control type="text" name="segundoNombre" value={formData.segundoNombre} onChange={handleChange} size="lg" disabled={!enrollmentOpen && !checkingStatus} /></Form.Group></Col>
                                 </Row>
                                 <Row>
-                                    <Col md={6}><Form.Group className="mb-3"><Form.Label>Apellido Paterno *</Form.Label><Form.Control type="text" name="apellidoPaterno" value={formData.apellidoPaterno} onChange={handleChange} required size="lg" /></Form.Group></Col>
-                                    <Col md={6}><Form.Group className="mb-3"><Form.Label>Apellido Materno</Form.Label><Form.Control type="text" name="apellidoMaterno" value={formData.apellidoMaterno} onChange={handleChange} size="lg" /></Form.Group></Col>
+                                    <Col md={6}><Form.Group className="mb-3"><Form.Label>Apellido Paterno *</Form.Label><Form.Control type="text" name="apellidoPaterno" value={formData.apellidoPaterno} onChange={handleChange} required size="lg" disabled={!enrollmentOpen && !checkingStatus} /></Form.Group></Col>
+                                    <Col md={6}><Form.Group className="mb-3"><Form.Label>Apellido Materno</Form.Label><Form.Control type="text" name="apellidoMaterno" value={formData.apellidoMaterno} onChange={handleChange} size="lg" disabled={!enrollmentOpen && !checkingStatus} /></Form.Group></Col>
                                 </Row>
                                 <Row>
-                                    <Col md={6}><Form.Group className="mb-3"><Form.Label>DNI *</Form.Label><Form.Control type="text" name="dni" value={formData.dni} onChange={handleChange} required size="lg" placeholder="Sin puntos" /></Form.Group></Col>
-                                    <Col md={6}><Form.Group className="mb-3"><Form.Label>Fecha Nacimiento *</Form.Label><Form.Control type="date" name="fechaNacimiento" value={formData.fechaNacimiento} onChange={handleChange} required size="lg" /></Form.Group></Col>
+                                    <Col md={6}><Form.Group className="mb-3"><Form.Label>DNI *</Form.Label><Form.Control type="text" name="dni" value={formData.dni} onChange={handleChange} required size="lg" placeholder="Sin puntos" disabled={!enrollmentOpen && !checkingStatus} /></Form.Group></Col>
+                                    <Col md={6}><Form.Group className="mb-3"><Form.Label>Fecha Nacimiento *</Form.Label><Form.Control type="date" name="fechaNacimiento" value={formData.fechaNacimiento} onChange={handleChange} required size="lg" disabled={!enrollmentOpen && !checkingStatus} /></Form.Group></Col>
                                 </Row>
                                 <Row>
-                                    <Col md={6}><Form.Group className="mb-3"><Form.Label>Turno *</Form.Label><Form.Select name="turno" value={formData.turno} onChange={handleChange} required size="lg"><option value="Mañana">Mañana</option><option value="Tarde">Tarde</option></Form.Select></Form.Group></Col>
-                                    <Col md={6}><Form.Group className="mb-3"><Form.Label>Apodo</Form.Label><Form.Control type="text" name="alias" value={formData.alias} onChange={handleChange} size="lg" /></Form.Group></Col>
+                                    <Col md={6}><Form.Group className="mb-3"><Form.Label>Turno *</Form.Label><Form.Select name="turno" value={formData.turno} onChange={handleChange} required size="lg" disabled={!enrollmentOpen && !checkingStatus}><option value="Mañana">Mañana</option><option value="Tarde">Tarde</option></Form.Select></Form.Group></Col>
+                                    <Col md={6}>
+                                        <Form.Group className="mb-3">
+                                            <Form.Label>Sala Preferida</Form.Label>
+                                            <Form.Select
+                                                name="salaPreferida"
+                                                value={formData.salaPreferida}
+                                                onChange={handleChange}
+                                                size="lg"
+                                                disabled={!enrollmentOpen && !checkingStatus}
+                                            >
+                                                <option value="">Sin preferencia</option>
+                                                {availableClassrooms.map(sala => (
+                                                    <option key={sala.id} value={sala.id}>
+                                                        {sala.nombre || sala.name} - Capacidad: {sala.capacidad || sala.capacity}
+                                                    </option>
+                                                ))}
+                                            </Form.Select>
+                                        </Form.Group>
+                                    </Col>
                                 </Row>
-                                <Form.Group className="mb-3"><Form.Check type="checkbox" name="tieneHermanos" checked={formData.tieneHermanos} onChange={handleChange} label="Tiene hermanos en el jardín" /></Form.Group>
+                                <Row>
+                                    <Col md={6}><Form.Group className="mb-3"><Form.Label>Apodo</Form.Label><Form.Control type="text" name="alias" value={formData.alias} onChange={handleChange} size="lg" disabled={!enrollmentOpen && !checkingStatus} /></Form.Group></Col>
+                                    <Col md={6}><Form.Group className="mb-3"><Form.Check type="checkbox" name="tieneHermanos" checked={formData.tieneHermanos} onChange={handleChange} label="Tiene hermanos en el jardín" disabled={!enrollmentOpen && !checkingStatus} /></Form.Group></Col>
+                                </Row>
                             </>
                         )}
 
@@ -502,11 +566,28 @@ const ParentPortalPage = () => {
 
                         <div className="d-flex justify-content-between mt-4">
                             <Button variant="secondary" onClick={handleBack} disabled={step === 1 || saving} size="lg"><span className="material-icons align-middle me-2">arrow_back</span>Anterior</Button>
-                            <Button variant="primary" onClick={handleNext} disabled={saving} size="lg">{saving ? (<><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>{step === 6 ? 'Enviando...' : 'Guardando...'}</>) : (<>{step === 6 ? (<><span className="material-icons align-middle me-2">send</span>Enviar</>) : (<>Siguiente<span className="material-icons align-middle ms-2">arrow_forward</span></>)}</>)}</Button>
+                            <Button
+                                variant="primary"
+                                onClick={handleNext}
+                                disabled={saving || (!enrollmentOpen && !checkingStatus)}
+                                size="lg"
+                            >
+                                {saving ? (
+                                    <><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>{step === 6 ? 'Enviando...' : 'Guardando...'}</>
+                                ) : (
+                                    <>{step === 6 ? (<><span className="material-icons align-middle me-2">send</span>Enviar</>) : (<>Siguiente<span className="material-icons align-middle ms-2">arrow_forward</span></>)}</>
+                                )}
+                            </Button>
                         </div>
                     </Form>
                 </Card.Body>
             </Card>
+            {!enrollmentOpen && !checkingStatus && ( // Display message if registrations are closed
+                <Alert variant="warning" className="mt-3 text-center">
+                    <span className="material-icons align-middle me-2">info</span>
+                    Las inscripciones de alumnos no están disponibles actualmente. Por favor, intente más tarde.
+                </Alert>
+            )}
         </Container>
     );
 };
