@@ -260,6 +260,7 @@ CREATE TABLE parent_portal_submissions (
 );
 
 -- Table: attendance (Depends on student, classroom)
+-- Table: attendance (Depends on student, classroom, staff)
 CREATE TABLE attendance (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     student_id BIGINT,
@@ -267,28 +268,34 @@ CREATE TABLE attendance (
     status TEXT,
     leave_type_optional TEXT,
     classroom_id BIGINT,
+    staff_id BIGINT, -- Attendance for staff
     FOREIGN KEY (student_id) REFERENCES student(id),
-    FOREIGN KEY (classroom_id) REFERENCES classroom(id)
+    FOREIGN KEY (classroom_id) REFERENCES classroom(id),
+    FOREIGN KEY (staff_id) REFERENCES staff(id)
 );
 
--- Table: calendar (Depends on classroom)
+-- Table: calendar (Depends on classroom, staff)
 CREATE TABLE calendar (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     date DATE,
     description TEXT,
-    event_type TEXT,
+    event_type ENUM('inscripcion', 'inicio_clases', 'fin_clases', 'vacaciones', 'invierno', 'feriado', 'personal_activo', 'dia_maestro', 'arte', 'musica', 'gimnasia', 'ingles', 'expresion_corporal', 'salida', 'reunion_directivos_familia', 'reunion_apoyo_familia', 'reunion_personal', 'celebracion', 'evento_especial'),
     classroom_id BIGINT,
-    FOREIGN KEY (classroom_id) REFERENCES classroom(id)
+    staff_id BIGINT,
+    FOREIGN KEY (classroom_id) REFERENCES classroom(id),
+    FOREIGN KEY (staff_id) REFERENCES staff(id)
 );
 
--- Table: activity (Depends on staff)
+-- Table: activity (Depends on staff, classroom)
 CREATE TABLE activity (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     name TEXT,
     description_optional TEXT,
     schedule_optional TEXT,
     teacher_id BIGINT,
-    FOREIGN KEY (teacher_id) REFERENCES staff(id)
+    classroom_id BIGINT,
+    FOREIGN KEY (teacher_id) REFERENCES staff(id),
+    FOREIGN KEY (classroom_id) REFERENCES classroom(id)
 );
 
 -- Table: system_module
@@ -432,6 +439,58 @@ CREATE TABLE staff_message (
     is_read BOOLEAN,
     FOREIGN KEY (conversation_id) REFERENCES conversation(id),
     FOREIGN KEY (sender_staff_id) REFERENCES staff(id)
+);
+
+-- Table: meeting_minutes
+CREATE TABLE meeting_minutes (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    meeting_type ENUM('directivos_familia', 'apoyo_familia', 'personal'),
+    meeting_date DATE,
+    meeting_time TIME,
+    participants TEXT,
+    purpose TEXT,
+    conclusions TEXT,
+    responsible_staff_id BIGINT,
+    created_by BIGINT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by BIGINT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (responsible_staff_id) REFERENCES staff(id),
+    FOREIGN KEY (created_by) REFERENCES staff(id),
+    FOREIGN KEY (updated_by) REFERENCES staff(id)
+);
+
+-- Table: vaccination_records
+CREATE TABLE vaccination_records (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    student_id BIGINT,
+    vaccine_name TEXT,
+    vaccine_date DATE,
+    batch_number TEXT,
+    dose_number INT,
+    next_due_date DATE,
+    status ENUM('activo', 'faltante', 'completo', 'exento'),
+    administered_by TEXT,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES student(id)
+);
+
+-- Table: document_review
+CREATE TABLE document_review (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    document_type ENUM('alumno', 'padre', 'personal', 'acta', 'salida', 'permiso', 'otro'),
+    document_id BIGINT,  -- Referencia al ID del documento según el tipo
+    reviewer_id BIGINT,
+    review_date TIMESTAMP,
+    status ENUM('pendiente', 'verificado', 'rechazado'),
+    notes TEXT,
+    verified_delivery BOOLEAN DEFAULT FALSE,
+    delivery_verified_by BIGINT,
+    delivery_verified_at TIMESTAMP NULL,
+    FOREIGN KEY (reviewer_id) REFERENCES staff(id),
+    FOREIGN KEY (delivery_verified_by) REFERENCES staff(id)
 );
 
 --

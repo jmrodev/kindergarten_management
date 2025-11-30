@@ -16,6 +16,12 @@ const enrollmentRoutes = require('./routes/enrollmentRoutes');
 const enrollmentManagementRoutes = require('./routes/enrollmentManagementRoutes');
 const lotteryRoutes = require('./routes/lotteryRoutes');
 const roleRoutes = require('./routes/roleRoutes');
+const meetingMinutesRoutes = require('./routes/meetingMinutesRoutes');
+const vaccinationRecordRoutes = require('./routes/vaccinationRecordRoutes');
+const documentReviewRoutes = require('./routes/documentReviewRoutes');
+const attendanceRoutes = require('./routes/attendanceRoutes');
+const calendarRoutes = require('./routes/calendarRoutes');
+const activityRoutes = require('./routes/activityRoutes');
 const { AppError, errorHandler } = require('./middleware/errorHandler'); // Import AppError and errorHandler
 const { passport, isGoogleConfigured } = require('./config/passport');
 const { jsonSerializer } = require('./utils/serialization'); // Import jsonSerializer
@@ -81,6 +87,12 @@ app.use('/api/guardians', guardianRoutes); // Guardian/tutor management
 app.use('/api/enrollments', enrollmentRoutes); // Enrollment management
 app.use('/api/enrollment-management', enrollmentManagementRoutes); // Enrollment management for admin review
 app.use('/api/lottery', lotteryRoutes); // Lottery list management
+app.use('/api/meeting-minutes', meetingMinutesRoutes);
+app.use('/api/vaccination-records', vaccinationRecordRoutes);
+app.use('/api/document-review', documentReviewRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/calendar', calendarRoutes);
+app.use('/api/activities', activityRoutes);
 
 // Solo habilitar rutas del portal si Google OAuth está configurado
 if (isGoogleConfigured) {
