@@ -2,10 +2,10 @@
 const express = require('express');
 const router = express.Router();
 const GuardianController = require('../controllers/GuardianController');
-const { authenticateToken } = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 
 // Todas las rutas requieren autenticación
-router.use(authenticateToken);
+router.use(protect);
 
 // CRUD de Guardians
 router.get('/', GuardianController.getAllGuardians);

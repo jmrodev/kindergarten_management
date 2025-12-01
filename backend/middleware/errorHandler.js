@@ -19,7 +19,31 @@ class AppError extends Error {
  * Catches all errors passed to next(err) and sends an appropriate response.
  */
 const errorHandler = (err, req, res, next) => {
-    // Default to 500 Internal Server Error
+    // Handle specific database errors
+    if (err.errno) {
+        switch(err.errno) {
+            case 1062: // Duplicate entry
+                const field = err.message.match(/'([^']+)'/g) || ['field'];
+                err = new AppError(`Duplicate entry error for field: ${field[0]}`, 400);
+                break;
+            case 1452: // Cannot add or update child row: a foreign key constraint fails
+                err = new AppError('Foreign key constraint failed. Related record does not exist.', 400);
+                break;
+            case 1054: // Unknown column
+                err = new AppError('Invalid field in request. Please check field names.', 400);
+                break;
+            case 1052: // Column 'x' in field list is ambiguous
+                err = new AppError('Ambiguous column reference. Please check query.', 400);
+                break;
+            case 1146: // Table doesn't exist
+                err = new AppError('Requested table does not exist.', 500);
+                break;
+            default:
+                err = new AppError('Database error occurred.', 500);
+        }
+    }
+
+    // Default to 500 Internal Server Error if not already set
     err.statusCode = err.statusCode || 500;
     err.status = err.status || 'error';
 

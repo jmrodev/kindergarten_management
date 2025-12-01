@@ -1,159 +1,255 @@
-const { pool } = require('../db');
+// repositories/StaffRepository.js
+const { getConnection } = require('../db');
 
-const StaffRepository = {
-    async findAll() {
-        const conn = await pool.getConnection();
-        try {
-            const rows = await conn.query(`
-                SELECT 
-                    s.id,
-                    s.first_name,
-                    s.middle_name_optional,
-                    s.paternal_surname,
-                    s.maternal_surname,
-                    s.dni,
-                    s.phone,
-                    s.email,
-                    s.is_active,
-                    s.classroom_id,
-                    s.role_id,
-                    s.created_at,
-                    s.last_login,
-                    r.role_name,
-                    c.name as classroom_name,
-                    c.shift as classroom_shift
-                FROM staff s
-                LEFT JOIN role r ON s.role_id = r.id
-                LEFT JOIN classroom c ON s.classroom_id = c.id
-                ORDER BY s.paternal_surname, s.first_name
-            `);
-            return rows;
-        } finally {
-            conn.release();
-        }
-    },
+class StaffRepository {
+  static async getAll(options = {}) {
+    const conn = await getConnection();
+    try {
+      const { filters = {}, pagination = {} } = options;
+      let query = `
+        SELECT s.*, 
+               a.street, a.number, a.city, a.provincia,
+               c.name as classroom_name,
+               r.role_name,
+               al.access_name
+        FROM staff s
+        LEFT JOIN address a ON s.address_id = a.id
+        LEFT JOIN classroom c ON s.classroom_id = c.id
+        LEFT JOIN role r ON s.role_id = r.id
+        LEFT JOIN access_level al ON r.access_level_id = al.id
+        WHERE 1=1
+      `;
+      const params = [];
 
-    async findById(id) {
-        const conn = await pool.getConnection();
-        try {
-            const rows = await conn.query(`
-                SELECT 
-                    s.id,
-                    s.first_name,
-                    s.middle_name_optional,
-                    s.paternal_surname,
-                    s.maternal_surname,
-                    s.dni,
-                    s.phone,
-                    s.email,
-                    s.email_optional,
-                    s.is_active,
-                    s.classroom_id,
-                    s.role_id,
-                    s.created_at,
-                    s.last_login,
-                    r.role_name,
-                    c.name as classroom_name
-                FROM staff s
-                LEFT JOIN role r ON s.role_id = r.id
-                LEFT JOIN classroom c ON s.classroom_id = c.id
-                WHERE s.id = ?
-            `, [id]);
-            return rows[0] || null;
-        } finally {
-            conn.release();
-        }
-    },
+      // Apply filters
+      if (filters.isActive !== undefined) {
+        query += ' AND s.is_active = ?';
+        params.push(filters.isActive);
+      }
+      
+      if (filters.roleId) {
+        query += ' AND s.role_id = ?';
+        params.push(filters.roleId);
+      }
+      
+      if (filters.classroomId) {
+        query += ' AND s.classroom_id = ?';
+        params.push(filters.classroomId);
+      }
 
-    async create(staffData) {
-        const conn = await pool.getConnection();
-        try {
-            const result = await conn.query(
-                `INSERT INTO staff (
-                    first_name, middle_name_optional, third_name_optional,
-                    paternal_surname, maternal_surname, dni, phone, email, email_optional,
-                    password_hash, role_id, classroom_id, is_active
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    staffData.first_name,
-                    staffData.middle_name_optional || null,
-                    staffData.third_name_optional || null,
-                    staffData.paternal_surname,
-                    staffData.maternal_surname || null,
-                    staffData.dni || null,
-                    staffData.phone || null,
-                    staffData.email || null,
-                    staffData.email_optional || null,
-                    staffData.password_hash || null,
-                    staffData.role_id,
-                    staffData.classroom_id || null,
-                    staffData.is_active !== undefined ? staffData.is_active : true
-                ]
-            );
-            return result.insertId;
-        } finally {
-            conn.release();
-        }
-    },
+      // Apply pagination
+      if (pagination.limit && pagination.offset !== undefined) {
+        query += ' LIMIT ? OFFSET ?';
+        params.push(pagination.limit, pagination.offset);
+      } else if (pagination.limit) {
+        query += ' LIMIT ?';
+        params.push(pagination.limit);
+      }
 
-    async update(id, staffData) {
-        const conn = await pool.getConnection();
-        try {
-            await conn.query(
-                                        `UPDATE staff SET
-                                            first_name = ?,
-                                            middle_name_optional = ?,
-                                            third_name_optional = ?,
-                                            paternal_surname = ?,
-                                            maternal_surname = ?,
-                                            dni = ?,
-                                            phone = ?,
-                                            email = ?,
-                                            email_optional = ?,
-                                            role_id = ?,
-                                            classroom_id = ?,
-                                            is_active = ?
-                                        WHERE id = ?`,
-                                        [
-                                            staffData.first_name,
-                                            staffData.middle_name_optional || null,
-                                            staffData.third_name_optional || null,
-                                            staffData.paternal_surname,
-                                            staffData.maternal_surname || null,
-                                            staffData.dni || null,
-                                            staffData.phone || null,
-                                            staffData.email || null,
-                                            staffData.email_optional || null,
-                                            staffData.role_id,
-                                            staffData.classroom_id || null,
-                                            staffData.is_active !== undefined ? staffData.is_active : true,
-                                            id
-                                        ]            );
-            return true;
-        } finally {
-            conn.release();
-        }
-    },
+      query += ' ORDER BY s.paternal_surname, s.first_name';
 
-    async delete(id) {
-        const conn = await pool.getConnection();
-        try {
-            await conn.query('DELETE FROM staff WHERE id = ?', [id]);
-            return true;
-        } finally {
-            conn.release();
-        }
-    },
-
-    async getRoles() {
-        const conn = await pool.getConnection();
-        try {
-            const rows = await conn.query('SELECT id, role_name FROM role ORDER BY role_name');
-            return rows;
-        } finally {
-            conn.release();
-        }
+      const results = await conn.query(query, params);
+      return results;
+    } finally {
+      conn.release();
     }
-};
+  }
+
+  static async getById(id) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        `SELECT s.*, 
+         a.street, a.number, a.city, a.provincia,
+         c.name as classroom_name,
+         r.role_name,
+         al.access_name
+         FROM staff s
+         LEFT JOIN address a ON s.address_id = a.id
+         LEFT JOIN classroom c ON s.classroom_id = c.id
+         LEFT JOIN role r ON s.role_id = r.id
+         LEFT JOIN access_level al ON r.access_level_id = al.id
+         WHERE s.id = ?`,
+        [id]
+      );
+      return result[0];
+    } finally {
+      conn.release();
+    }
+  }
+
+  static async create(staffData) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        `INSERT INTO staff (first_name, middle_name_optional, third_name_optional, 
+         paternal_surname, maternal_surname, dni, email, password_hash, is_active, 
+         last_login, created_at, preferred_surname, address_id, phone, 
+         email_optional, classroom_id, role_id) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          staffData.first_name,
+          staffData.middle_name_optional,
+          staffData.third_name_optional,
+          staffData.paternal_surname,
+          staffData.maternal_surname,
+          staffData.dni,
+          staffData.email,
+          staffData.password_hash,
+          staffData.is_active !== undefined ? staffData.is_active : true,
+          staffData.last_login || null,
+          staffData.created_at || new Date(),
+          staffData.preferred_surname,
+          staffData.address_id,
+          staffData.phone,
+          staffData.email_optional,
+          staffData.classroom_id,
+          staffData.role_id
+        ]
+      );
+      return result.insertId;
+    } finally {
+      conn.release();
+    }
+  }
+
+  static async update(id, staffData) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        `UPDATE staff SET first_name = ?, middle_name_optional = ?, 
+         third_name_optional = ?, paternal_surname = ?, maternal_surname = ?, 
+         dni = ?, email = ?, password_hash = ?, is_active = ?, last_login = ?, 
+         preferred_surname = ?, address_id = ?, phone = ?, email_optional = ?, 
+         classroom_id = ?, role_id = ? WHERE id = ?`,
+        [
+          staffData.first_name,
+          staffData.middle_name_optional,
+          staffData.third_name_optional,
+          staffData.paternal_surname,
+          staffData.maternal_surname,
+          staffData.dni,
+          staffData.email,
+          staffData.password_hash,
+          staffData.is_active,
+          staffData.last_login,
+          staffData.preferred_surname,
+          staffData.address_id,
+          staffData.phone,
+          staffData.email_optional,
+          staffData.classroom_id,
+          staffData.role_id,
+          id
+        ]
+      );
+      return result.affectedRows > 0;
+    } finally {
+      conn.release();
+    }
+  }
+
+  static async delete(id) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query('DELETE FROM staff WHERE id = ?', [id]);
+      return result.affectedRows > 0;
+    } finally {
+      conn.release();
+    }
+  }
+
+  static async updatePassword(id, newPasswordHash) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        'UPDATE staff SET password_hash = ? WHERE id = ?',
+        [newPasswordHash, id]
+      );
+      return result.affectedRows > 0;
+    } finally {
+      conn.release();
+    }
+  }
+
+  static async updateLastLogin(id) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        'UPDATE staff SET last_login = ? WHERE id = ?',
+        [new Date(), id]
+      );
+      return result.affectedRows > 0;
+    } finally {
+      conn.release();
+    }
+  }
+
+  static async getByEmail(email) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        `SELECT s.*, 
+         a.street, a.number, a.city, a.provincia,
+         c.name as classroom_name,
+         r.role_name,
+         al.access_name
+         FROM staff s
+         LEFT JOIN address a ON s.address_id = a.id
+         LEFT JOIN classroom c ON s.classroom_id = c.id
+         LEFT JOIN role r ON s.role_id = r.id
+         LEFT JOIN access_level al ON r.access_level_id = al.id
+         WHERE s.email = ?`,
+        [email]
+      );
+      return result[0];
+    } finally {
+      conn.release();
+    }
+  }
+
+  static async count(filters = {}) {
+    const conn = await getConnection();
+    try {
+      let query = `
+        SELECT COUNT(*) as count
+        FROM staff s
+        LEFT JOIN classroom c ON s.classroom_id = c.id
+        LEFT JOIN role r ON s.role_id = r.id
+        WHERE 1=1
+      `;
+      const params = [];
+
+      if (filters.isActive !== undefined) {
+        query += ' AND s.is_active = ?';
+        params.push(filters.isActive);
+      }
+
+      if (filters.roleId) {
+        query += ' AND s.role_id = ?';
+        params.push(filters.roleId);
+      }
+
+      if (filters.classroomId) {
+        query += ' AND s.classroom_id = ?';
+        params.push(filters.classroomId);
+      }
+
+      const result = await conn.query(query, params);
+      return result[0].count;
+    } finally {
+      conn.release();
+    }
+  }
+
+  static async getRoles() {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query('SELECT id, role_name FROM role ORDER BY role_name');
+      return result;
+    } finally {
+      conn.release();
+    }
+  }
+}
 
 module.exports = StaffRepository;

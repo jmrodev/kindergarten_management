@@ -1,397 +1,293 @@
-// backend/repositories/AlumnoRepository.js
+// repositories/StudentRepository.js
 const { getConnection } = require('../db');
-const Student = require('../models/Student');
-const Address = require('../models/Address');
-const EmergencyContact = require('../models/EmergencyContact');
-const Classroom = require('../models/Classroom');
 
 class StudentRepository {
-    async create(student) {
-        let conn;
-        try {
-            conn = await getConnection();
-            await conn.beginTransaction();
+  static async getAll(options = {}) {
+    const conn = await getConnection();
+    try {
+      const { filters = {}, pagination = {} } = options;
+      let query = `
+        SELECT s.*, 
+               a.street, a.number, a.city, a.provincia,
+               ec.full_name as emergency_contact_name, ec.phone as emergency_contact_phone,
+               c.name as classroom_name
+        FROM student s
+        LEFT JOIN address a ON s.address_id = a.id
+        LEFT JOIN emergency_contact ec ON s.emergency_contact_id = ec.id
+        LEFT JOIN classroom c ON s.classroom_id = c.id
+        WHERE 1=1
+      `;
+      const params = [];
 
-            // 1. Create Address
-            const addressResult = await conn.query(
-                "INSERT INTO address (street, number, city, provincia, postal_code_optional) VALUES (?, ?, ?, ?, ?)",
-                [student.address.street, student.address.number, student.address.city, student.address.provincia, student.address.postalCodeOptional]
-            );
-            student.address.id = addressResult.insertId;
+      // Apply filters
+      if (filters.status) {
+        query += ' AND s.status = ?';
+        params.push(filters.status);
+      }
+      
+      if (filters.classroomId) {
+        query += ' AND s.classroom_id = ?';
+        params.push(filters.classroomId);
+      }
+      
+      if (filters.shift) {
+        query += ' AND s.shift = ?';
+        params.push(filters.shift);
+      }
 
-            // 2. Create EmergencyContact
-            const emergencyContactResult = await conn.query(
-                "INSERT INTO emergency_contact (full_name, relationship, phone) VALUES (?, ?, ?)",
-                [student.emergencyContact.fullName, student.emergencyContact.relationship, student.emergencyContact.phone]
-            );
-            student.emergencyContact.id = emergencyContactResult.insertId;
+      // Apply pagination
+      if (pagination.limit && pagination.offset !== undefined) {
+        query += ' LIMIT ? OFFSET ?';
+        params.push(pagination.limit, pagination.offset);
+      } else if (pagination.limit) {
+        query += ' LIMIT ?';
+        params.push(pagination.limit);
+      }
 
-            // 3. Create Student
-            const studentResult = await conn.query(
-                "INSERT INTO student (first_name, middle_name_optional, third_name_optional, paternal_surname, maternal_surname, nickname_optional, birth_date, address_id, emergency_contact_id, classroom_id, shift) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                [
-                    student.firstName, student.middleNameOptional, student.thirdNameOptional, 
-                    student.paternalSurname, student.maternalSurname, student.nicknameOptional, 
-                    student.birthDate,
-                    student.address.id, student.emergencyContact.id, student.classroom.id, student.shift
-                ]
-            );
-            student.id = studentResult.insertId;
+      query += ' ORDER BY s.paternal_surname, s.first_name';
 
-            await conn.commit();
-            return student;
-        } catch (err) {
-            if (conn) await conn.rollback();
-            console.error("Error creating student:", err);
-            throw err;
-        } finally {
-            if (conn) conn.release();
-        }
+      const results = await conn.query(query, params);
+      return results;
+    } finally {
+      conn.release();
     }
+  }
 
-    async findAll() {
-        let conn;
-        try {
-            conn = await getConnection();
-            const rows = await conn.query(`
-                SELECT
-                    a.id, a.first_name, a.middle_name_optional, a.third_name_optional, a.nickname_optional, 
-                    a.paternal_surname, a.maternal_surname, a.birth_date, a.shift, a.status,
-                    d.id AS direccion_id, d.street, d.number, d.city, d.provincia, d.postal_code_optional,
-                    ce.id AS contacto_emergencia_id, ce.full_name AS ce_full_name, ce.relationship AS ce_relacion, ce.phone AS ce_phone,
-                    s.id AS classroom_id, s.name AS classroom_name, s.capacity AS classroom_capacity
-                FROM student a
-                LEFT JOIN address d ON a.address_id = d.id
-                LEFT JOIN emergency_contact ce ON a.emergency_contact_id = ce.id
-                LEFT JOIN classroom s ON a.classroom_id = s.id
-            `);
-            return rows.map(row => {
-                const direccion = row.direccion_id ? Address.fromDbRow({
-                    id: row.direccion_id, street: row.street, number: row.number, city: row.city, provincia: row.provincia, postal_code_optional: row.postal_code_optional
-                }) : null;
-                const contactoEmergencia = row.contacto_emergencia_id ? EmergencyContact.fromDbRow({
-                    id: row.contacto_emergencia_id, full_name: row.ce_full_name, relationship: row.ce_relacion, phone: row.ce_phone
-                }) : null;
-                const sala = row.classroom_id ? Classroom.fromDbRow({
-                    id: row.classroom_id, name: row.classroom_name, capacity: row.classroom_capacity
-                }) : null;
-                return Student.fromDbRow(row, direccion, contactoEmergencia, sala);
-            });
-        } catch (err) {
-            console.error("Error finding all students:", err);
-            throw err;
-        } finally {
-            if (conn) conn.release();
-        }
+  static async getById(id) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        `SELECT s.*, 
+         a.street, a.number, a.city, a.provincia,
+         ec.full_name as emergency_contact_name, ec.relationship as emergency_contact_relationship,
+         ec.phone as emergency_contact_phone, ec.alternative_phone as emergency_contact_alt_phone,
+         ec.is_authorized_pickup as emergency_contact_authorized_pickup,
+         c.name as classroom_name
+         FROM student s
+         LEFT JOIN address a ON s.address_id = a.id
+         LEFT JOIN emergency_contact ec ON s.emergency_contact_id = ec.id
+         LEFT JOIN classroom c ON s.classroom_id = c.id
+         WHERE s.id = ?`,
+        [id]
+      );
+      return result[0];
+    } finally {
+      conn.release();
     }
+  }
 
-    async search(filters = {}) {
-        let conn;
-        try {
-            conn = await getConnection();
-            
-            let query = `
-                SELECT
-                    a.id, a.first_name, a.middle_name_optional, a.third_name_optional, a.nickname_optional, a.paternal_surname, a.maternal_surname, a.birth_date, a.shift,
-                    d.id AS direccion_id, d.street, d.number, d.city, d.provincia, d.postal_code_optional,
-                    ce.id AS contacto_emergencia_id, ce.full_name AS ce_full_name, ce.relationship AS ce_relacion, ce.phone AS ce_phone,
-                    s.id AS classroom_id, s.name AS classroom_name, s.capacity AS classroom_capacity
-                FROM student a
-                JOIN address d ON a.address_id = d.id
-                JOIN emergency_contact ce ON a.emergency_contact_id = ce.id
-                JOIN classroom s ON a.classroom_id = s.id
-                WHERE 1=1
-            `;
-            
-            const params = [];
-            
-            // Búsqueda general - busca en todos los campos de texto
-            if (filters.searchText) {
-                // Dividir los términos de búsqueda por espacios
-                const searchTerms = filters.searchText.trim().split(/\s+/);
-                
-                // Para cada término, buscar que aparezca en cualquier campo
-                searchTerms.forEach(term => {
-                    query += ` AND (
-                        a.first_name LIKE ? 
-                        OR a.middle_name_optional LIKE ? 
-                        OR a.third_name_optional LIKE ?
-                        OR a.paternal_surname LIKE ? 
-                        OR a.maternal_surname LIKE ?
-                        OR a.nickname_optional LIKE ?
-                        OR d.street LIKE ?
-                        OR d.city LIKE ?
-                        OR d.provincia LIKE ?
-                        OR d.postal_code_optional LIKE ?
-                        OR s.name LIKE ?
-                        OR ce.full_name LIKE ?
-                        OR ce.relationship LIKE ?
-                        OR ce.phone LIKE ?
-                    )`;
-                    const searchTerm = `%${term}%`;
-                    params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, 
-                               searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, 
-                               searchTerm, searchTerm);
-                });
-            }
-            
-            // Filtros específicos (se pueden combinar con búsqueda general)
-            
-            // Filtro por nombre específico
-            if (filters.nombre) {
-                query += ` AND (
-                    a.first_name LIKE ? 
-                    OR a.middle_name_optional LIKE ? 
-                    OR a.third_name_optional LIKE ?
-                    OR a.paternal_surname LIKE ? 
-                    OR a.maternal_surname LIKE ?
-                    OR a.nickname_optional LIKE ?
-                )`;
-                const searchTerm = `%${filters.nombre}%`;
-                params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
-            }
-            
-            // Filtro por sala
-            if (filters.salaId) {
-                query += ` AND a.classroom_id = ?`;
-                params.push(filters.salaId);
-            }
-            
-            // Filtro por turno
-            if (filters.turno) {
-                query += ` AND a.shift = ?`;
-                params.push(filters.turno);
-            }
-            
-            // Filtro por ciudad
-            if (filters.ciudad) {
-                query += ` AND d.city LIKE ?`;
-                params.push(`%${filters.ciudad}%`);
-            }
-            
-            // Filtro por provincia
-            if (filters.provincia) {
-                query += ` AND d.provincia LIKE ?`;
-                params.push(`%${filters.provincia}%`);
-            }
-            
-            // Filtro por calle
-            if (filters.calle) {
-                query += ` AND d.street LIKE ?`;
-                params.push(`%${filters.calle}%`);
-            }
-            
-            // Filtro por edad (año de nacimiento)
-            if (filters.yearNacimiento) {
-                query += ` AND YEAR(a.birth_date) = ?`;
-                params.push(filters.yearNacimiento);
-            }
-            
-            // Filtro por rango de edad
-            if (filters.edadMin || filters.edadMax) {
-                const currentYear = new Date().getFullYear();
-                
-                if (filters.edadMin) {
-                    const maxBirthYear = currentYear - filters.edadMin;
-                    query += ` AND YEAR(a.birth_date) <= ?`;
-                    params.push(maxBirthYear);
-                }
-                
-                if (filters.edadMax) {
-                    const minBirthYear = currentYear - filters.edadMax;
-                    query += ` AND YEAR(a.birth_date) >= ?`;
-                    params.push(minBirthYear);
-                }
-            }
-            
-            // Filtro por contacto de emergencia
-            if (filters.contactoEmergencia) {
-                query += ` AND (ce.full_name LIKE ? OR ce.phone LIKE ?)`;
-                const searchTerm = `%${filters.contactoEmergencia}%`;
-                params.push(searchTerm, searchTerm);
-            }
-            
-            // Ordenamiento
-            query += ` ORDER BY a.first_name, a.paternal_surname`;
-            
-            const rows = await conn.query(query, params);
-            
-            return rows.map(row => {
-                const direccion = Address.fromDbRow({
-                    id: row.direccion_id, street: row.street, number: row.number, city: row.city, provincia: row.provincia, postal_code_optional: row.postal_code_optional
-                });
-                const contactoEmergencia = EmergencyContact.fromDbRow({
-                    id: row.contacto_emergencia_id, full_name: row.ce_full_name, relationship: row.ce_relacion, phone: row.ce_phone
-                });
-                const sala = Classroom.fromDbRow({
-                    id: row.classroom_id, name: row.classroom_name, capacity: row.classroom_capacity
-                });
-                return Student.fromDbRow(row, direccion, contactoEmergencia, sala);
-            });
-        } catch (err) {
-            console.error("Error searching students:", err);
-            throw err;
-        } finally {
-            if (conn) conn.release();
-        }
+  static async create(studentData) {
+    const conn = await getConnection();
+    try {
+      // First create the emergency contact if provided
+      let emergencyContactId = null;
+      if (studentData.emergency_contact) {
+        const ecResult = await conn.query(
+          `INSERT INTO emergency_contact (student_id, full_name, relationship, 
+           priority, phone, alternative_phone, is_authorized_pickup) 
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            null, // student_id will be set after student creation
+            studentData.emergency_contact.full_name,
+            studentData.emergency_contact.relationship,
+            studentData.emergency_contact.priority || 1,
+            studentData.emergency_contact.phone,
+            studentData.emergency_contact.alternative_phone,
+            studentData.emergency_contact.is_authorized_pickup || false
+          ]
+        );
+        
+        emergencyContactId = ecResult.insertId;
+      }
+
+      // Then create the student
+      const result = await conn.query(
+        `INSERT INTO student (first_name, middle_name_optional, third_name_optional, 
+         paternal_surname, maternal_surname, nickname_optional, dni, birth_date, 
+         address_id, emergency_contact_id, classroom_id, shift, status, 
+         enrollment_date, withdrawal_date, health_insurance, affiliate_number, 
+         allergies, medications, medical_observations, blood_type, 
+         pediatrician_name, pediatrician_phone, photo_authorization, 
+         trip_authorization, medical_attention_authorization, 
+         has_siblings_in_school, special_needs, vaccination_status, observations) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          studentData.first_name,
+          studentData.middle_name_optional,
+          studentData.third_name_optional,
+          studentData.paternal_surname,
+          studentData.maternal_surname,
+          studentData.nickname_optional,
+          studentData.dni,
+          studentData.birth_date,
+          studentData.address_id,
+          emergencyContactId,
+          studentData.classroom_id,
+          studentData.shift,
+          studentData.status,
+          studentData.enrollment_date,
+          studentData.withdrawal_date,
+          studentData.health_insurance,
+          studentData.affiliate_number,
+          studentData.allergies,
+          studentData.medications,
+          studentData.medical_observations,
+          studentData.blood_type,
+          studentData.pediatrician_name,
+          studentData.pediatrician_phone,
+          studentData.photo_authorization || false,
+          studentData.trip_authorization || false,
+          studentData.medical_attention_authorization || false,
+          studentData.has_siblings_in_school || false,
+          studentData.special_needs,
+          studentData.vaccination_status || 'no_informado',
+          studentData.observations
+        ]
+      );
+      
+      const studentId = result.insertId;
+      
+      // Update emergency contact with the student ID if created
+      if (emergencyContactId) {
+        await conn.query(
+          `UPDATE emergency_contact SET student_id = ? WHERE id = ?`,
+          [studentId, emergencyContactId]
+        );
+      }
+      
+      return studentId;
+    } finally {
+      conn.release();
     }
+  }
 
-    async findById(id) {
-        let conn;
-        try {
-            conn = await getConnection();
-            const rows = await conn.query(`
-                SELECT
-                    a.id, a.first_name, a.middle_name_optional, a.third_name_optional, a.nickname_optional, a.paternal_surname, a.maternal_surname, a.birth_date, a.shift,
-                    d.id AS direccion_id, d.street, d.number, d.city, d.provincia, d.postal_code_optional,
-                    ce.id AS contacto_emergencia_id, ce.full_name AS ce_full_name, ce.relationship AS ce_relacion, ce.phone AS ce_phone,
-                    s.id AS classroom_id, s.name AS classroom_name, s.capacity AS classroom_capacity
-                FROM student a
-                JOIN address d ON a.address_id = d.id
-                JOIN emergency_contact ce ON a.emergency_contact_id = ce.id
-                JOIN classroom s ON a.classroom_id = s.id
-                WHERE a.id = ?
-            `, [id]);
-            if (rows.length === 0) return null;
+  static async update(id, studentData) {
+    const conn = await getConnection();
+    try {
+      // Update the student record
+      const result = await conn.query(
+        `UPDATE student SET first_name = ?, middle_name_optional = ?, 
+         third_name_optional = ?, paternal_surname = ?, maternal_surname = ?, 
+         nickname_optional = ?, dni = ?, birth_date = ?, address_id = ?, 
+         classroom_id = ?, shift = ?, status = ?, enrollment_date = ?, 
+         withdrawal_date = ?, health_insurance = ?, affiliate_number = ?, 
+         allergies = ?, medications = ?, medical_observations = ?, 
+         blood_type = ?, pediatrician_name = ?, pediatrician_phone = ?, 
+         photo_authorization = ?, trip_authorization = ?, 
+         medical_attention_authorization = ?, has_siblings_in_school = ?, 
+         special_needs = ?, vaccination_status = ?, observations = ? 
+         WHERE id = ?`,
+        [
+          studentData.first_name,
+          studentData.middle_name_optional,
+          studentData.third_name_optional,
+          studentData.paternal_surname,
+          studentData.maternal_surname,
+          studentData.nickname_optional,
+          studentData.dni,
+          studentData.birth_date,
+          studentData.address_id,
+          studentData.classroom_id,
+          studentData.shift,
+          studentData.status,
+          studentData.enrollment_date,
+          studentData.withdrawal_date,
+          studentData.health_insurance,
+          studentData.affiliate_number,
+          studentData.allergies,
+          studentData.medications,
+          studentData.medical_observations,
+          studentData.blood_type,
+          studentData.pediatrician_name,
+          studentData.pediatrician_phone,
+          studentData.photo_authorization,
+          studentData.trip_authorization,
+          studentData.medical_attention_authorization,
+          studentData.has_siblings_in_school,
+          studentData.special_needs,
+          studentData.vaccination_status,
+          studentData.observations,
+          id
+        ]
+      );
 
-            const row = rows[0];
-            const direccion = Address.fromDbRow({
-                id: row.direccion_id, street: row.street, number: row.number, city: row.city, provincia: row.provincia, postal_code_optional: row.postal_code_optional
-            });
-            const contactoEmergencia = EmergencyContact.fromDbRow({
-                id: row.contacto_emergencia_id, full_name: row.ce_full_name, relationship: row.ce_relacion, phone: row.ce_phone
-            });
-            const sala = Classroom.fromDbRow({
-                id: row.classroom_id, name: row.classroom_name, capacity: row.classroom_capacity
-            });
-            return Student.fromDbRow(row, direccion, contactoEmergencia, sala);
-        } catch (err) {
-            console.error(`Error finding student with id ${id}:`, err);
-            throw err;
-        } finally {
-            if (conn) conn.release();
-        }
+      // If emergency contact info was provided, update it too
+      if (studentData.emergency_contact && studentData.emergency_contact_id) {
+        await conn.query(
+          `UPDATE emergency_contact SET full_name = ?, relationship = ?, 
+           priority = ?, phone = ?, alternative_phone = ?, 
+           is_authorized_pickup = ? WHERE id = ?`,
+          [
+            studentData.emergency_contact.full_name,
+            studentData.emergency_contact.relationship,
+            studentData.emergency_contact.priority || 1,
+            studentData.emergency_contact.phone,
+            studentData.emergency_contact.alternative_phone,
+            studentData.emergency_contact.is_authorized_pickup || false,
+            studentData.emergency_contact_id
+          ]
+        );
+      }
+
+      return result.affectedRows > 0;
+    } finally {
+      conn.release();
     }
+  }
 
-    async update(student) {
-        let conn;
-        try {
-            conn = await getConnection();
-            await conn.beginTransaction();
+  static async delete(id) {
+    const conn = await getConnection();
+    try {
+      // First delete related records
+      await conn.query('DELETE FROM student_guardian WHERE student_id = ?', [id]);
+      await conn.query('DELETE FROM student_documents WHERE student_id = ?', [id]);
+      await conn.query('DELETE FROM student_status_history WHERE student_id = ?', [id]);
+      await conn.query('DELETE FROM pending_documentation WHERE student_id = ?', [id]);
+      await conn.query('DELETE FROM attendance WHERE student_id = ?', [id]);
+      await conn.query('DELETE FROM vaccination_records WHERE student_id = ?', [id]);
+      await conn.query('DELETE FROM parent_portal_submissions WHERE student_id = ?', [id]);
+      await conn.query('DELETE FROM emergency_contact WHERE student_id = ?', [id]);
 
-            // 1. Update Address
-            await conn.query(
-                "UPDATE address SET street = ?, number = ?, city = ?, provincia = ?, postal_code_optional = ? WHERE id = ?",
-                [student.address.street, student.address.number, student.address.city, student.address.provincia, student.address.postalCodeOptional, student.address.id]
-            );
-
-            // 2. Update EmergencyContact
-            await conn.query(
-                "UPDATE emergency_contact SET full_name = ?, relationship = ?, phone = ? WHERE id = ?",
-                [student.emergencyContact.fullName, student.emergencyContact.relationship, student.emergencyContact.phone, student.emergencyContact.id]
-            );
-
-            // 3. Update student
-            await conn.query(
-                "UPDATE student SET first_name = ?, middle_name_optional = ?, third_name_optional = ?, paternal_surname = ?, maternal_surname = ?, nickname_optional = ?, birth_date = ?, classroom_id = ?, shift = ? WHERE id = ?",
-                [
-                    student.firstName, student.middleNameOptional, student.thirdNameOptional, 
-                    student.paternalSurname, student.maternalSurname, student.nicknameOptional, 
-                    student.birthDate,
-                    student.classroom.id, student.shift, student.id
-                ]
-            );
-
-            await conn.commit();
-            
-            // Retornar el alumno actualizado con todas sus relaciones
-            return await this.findById(student.id);
-        } catch (err) {
-            if (conn) await conn.rollback();
-            console.error(`Error updating student with id ${student.id}:`, err);
-            throw err;
-        } finally {
-            if (conn) conn.release();
-        }
+      // Then delete the student
+      const result = await conn.query('DELETE FROM student WHERE id = ?', [id]);
+      return result.affectedRows > 0;
+    } finally {
+      conn.release();
     }
+  }
 
-    async delete(id) {
-        let conn;
-        try {
-            conn = await getConnection();
-            await conn.beginTransaction();
+  static async count(filters = {}) {
+    const conn = await getConnection();
+    try {
+      let query = `
+        SELECT COUNT(*) as count
+        FROM student s
+        LEFT JOIN classroom c ON s.classroom_id = c.id
+        WHERE 1=1
+      `;
+      const params = [];
 
-            // Get student to retrieve associated address_id and emergency_contact_id
-            const studentToDelete = await this.findById(id);
-            if (!studentToDelete) {
-                throw new Error("Student not found");
-            }
+      if (filters.status) {
+        query += ' AND s.status = ?';
+        params.push(filters.status);
+      }
+      
+      if (filters.classroomId) {
+        query += ' AND s.classroom_id = ?';
+        params.push(filters.classroomId);
+      }
+      
+      if (filters.shift) {
+        query += ' AND s.shift = ?';
+        params.push(filters.shift);
+      }
 
-            const addressId = studentToDelete.address?.id;
-            const emergencyContactId = studentToDelete.emergencyContact?.id;
-
-            // 1. Delete student first (due to foreign key constraints)
-            await conn.query("DELETE FROM student WHERE id = ?", [id]);
-
-            // 2. Check if EmergencyContact is used by other students
-            if (emergencyContactId) {
-                const [contactUsage] = await conn.query(
-                    "SELECT COUNT(*) as count FROM student WHERE emergency_contact_id = ?",
-                    [emergencyContactId]
-                );
-                
-                // Only delete if no other student is using this contact
-                if (contactUsage.count === 0) {
-                    await conn.query("DELETE FROM emergency_contact WHERE id = ?", [emergencyContactId]);
-                    console.log(`Emergency contact ${emergencyContactId} deleted (not used by other students)`);
-                } else {
-                    console.log(`Emergency contact ${emergencyContactId} kept (used by ${contactUsage.count} other student(s))`);
-                }
-            }
-
-            // 3. Check if Address is used by other students
-            if (addressId) {
-                const [addressUsage] = await conn.query(
-                    "SELECT COUNT(*) as count FROM student WHERE address_id = ?",
-                    [addressId]
-                );
-                
-                // Only delete if no other student is using this address
-                if (addressUsage.count === 0) {
-                    await conn.query("DELETE FROM address WHERE id = ?", [addressId]);
-                    console.log(`Address ${addressId} deleted (not used by other students)`);
-                } else {
-                    console.log(`Address ${addressId} kept (used by ${addressUsage.count} other student(s))`);
-                }
-            }
-
-            await conn.commit();
-            return true;
-        } catch (err) {
-            if (conn) await conn.rollback();
-            console.error(`Error deleting student with id ${id}:`, err);
-            throw err;
-        } finally {
-            if (conn) conn.release();
-        }
+      const result = await conn.query(query, params);
+      return result[0].count;
+    } finally {
+      conn.release();
     }
-
-    async assignClassroom(studentId, classroomId) {
-        let conn;
-        try {
-            conn = await getConnection();
-            const result = await conn.query(
-                "UPDATE student SET classroom_id = ? WHERE id = ?",
-                [classroomId, studentId]
-            );
-            return result.affectedRows > 0;
-        } catch (err) {
-            console.error(`Error assigning classroom ${classroomId} to student ${studentId}:`, err);
-            throw err;
-        } finally {
-            if (conn) conn.release();
-        }
-    }
+  }
 }
 
-module.exports = new StudentRepository();
+module.exports = StudentRepository;

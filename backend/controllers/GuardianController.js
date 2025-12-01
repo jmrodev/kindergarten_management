@@ -35,7 +35,7 @@ class GuardianController {
 
     async getAllGuardians(req, res) {
         try {
-            const guardians = await GuardianRepository.findAll();
+            const guardians = await GuardianRepository.getAll();
             res.status(200).json(guardians);
         } catch (error) {
             console.error('Error in getAllGuardians:', error);
@@ -46,7 +46,7 @@ class GuardianController {
     async getGuardianById(req, res) {
         try {
             const { id } = req.params;
-            const guardian = await GuardianRepository.findById(id);
+            const guardian = await GuardianRepository.getById(id);
             if (!guardian) {
                 throw new AppError('Guardian not found', 404);
             }

@@ -1,173 +1,284 @@
-// backend/models/Student.js
-const Address = require('./Address');
-const EmergencyContact = require('./EmergencyContact');
-const Classroom = require('./Classroom');
+// models/Student.js (updated with vaccination and document methods)
+const { getConnection } = require('../db');
 
 class Student {
-    constructor(
-        id, firstName, middleNameOptional, thirdNameOptional, nicknameOptional,
-        paternalSurname, maternalSurname, dni, birthDate,
-        address, emergencyContact, classroom, shift,
-        healthInsurance, affiliateNumber, allergies, medications, medicalObservations,
-        bloodType, pediatricianName, pediatricianPhone,
-        photoAuthorization, tripAuthorization, medicalAttentionAuthorization,
-        status, enrollmentDate, withdrawalDate,
-        hasSiblingsInSchool, specialNeeds, vaccinationStatus, observations
-    ) {
-        this.id = id;
-        this.firstName = firstName;
-        this.middleNameOptional = middleNameOptional;
-        this.thirdNameOptional = thirdNameOptional;
-        this.nicknameOptional = nicknameOptional;
-        this.paternalSurname = paternalSurname;
-        this.maternalSurname = maternalSurname;
-        this.dni = dni;
-        this.birthDate = birthDate;
-        this.address = address;
-        this.emergencyContact = emergencyContact;
-        this.classroom = classroom;
-        this.shift = shift;
-        // Medical info
-        this.healthInsurance = healthInsurance;
-        this.affiliateNumber = affiliateNumber;
-        this.allergies = allergies;
-        this.medications = medications;
-        this.medicalObservations = medicalObservations;
-        this.bloodType = bloodType;
-        this.pediatricianName = pediatricianName;
-        this.pediatricianPhone = pediatricianPhone;
-        // Authorizations
-        this.photoAuthorization = photoAuthorization;
-        this.tripAuthorization = tripAuthorization;
-        this.medicalAttentionAuthorization = medicalAttentionAuthorization;
-        // Status
-        this.status = status;
-        this.enrollmentDate = enrollmentDate;
-        this.withdrawalDate = withdrawalDate;
-        // Additional info
-        this.hasSiblingsInSchool = hasSiblingsInSchool;
-        this.specialNeeds = specialNeeds;
-        this.vaccinationStatus = vaccinationStatus;
-        this.observations = observations;
+  static async getAll(filters = {}) {
+    const conn = await getConnection();
+    try {
+      let query = `SELECT s.*,
+                   a.street, a.number, a.city, a.provincia,
+                   ec.full_name as emergency_contact_name, ec.phone as emergency_contact_phone,
+                   c.name as classroom_name
+                   FROM student s
+                   LEFT JOIN address a ON s.address_id = a.id
+                   LEFT JOIN emergency_contact ec ON s.emergency_contact_id = ec.id
+                   LEFT JOIN classroom c ON s.classroom_id = c.id
+                   WHERE 1=1`;
+      const params = [];
+
+      // Apply filters if provided
+      if (filters.status) {
+        query += ' AND s.status = ?';
+        params.push(filters.status);
+      }
+      
+      if (filters.classroomId) {
+        query += ' AND s.classroom_id = ?';
+        params.push(filters.classroomId);
+      }
+      
+      if (filters.shift) {
+        query += ' AND s.shift = ?';
+        params.push(filters.shift);
+      }
+
+      query += ' ORDER BY s.paternal_surname, s.first_name';
+
+      const result = await conn.query(query, params);
+      return result;
+    } finally {
+      conn.release();
     }
+  }
 
-    // Optional: Add validation methods for Alumno
-    isValid() {
-        return this.firstName && this.maternalSurname && this.paternalSurname &&
-               this.birthDate && this.address && this.address.isValid() &&
-               this.shift; // Se remueve la validación estricta de classroom ya que puede ser null al crear
+  static async getById(id) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        `SELECT s.*,
+         a.street, a.number, a.city, a.provincia,
+         ec.full_name as emergency_contact_name, ec.relationship as emergency_contact_relationship,
+         ec.phone as emergency_contact_phone, ec.alternative_phone as emergency_contact_alt_phone,
+         ec.is_authorized_pickup as emergency_contact_authorized_pickup,
+         c.name as classroom_name
+         FROM student s
+         LEFT JOIN address a ON s.address_id = a.id
+         LEFT JOIN emergency_contact ec ON s.emergency_contact_id = ec.id
+         LEFT JOIN classroom c ON s.classroom_id = c.id
+         WHERE s.id = ?`,
+        [id]
+      );
+      return result[0];
+    } finally {
+      conn.release();
     }
+  }
 
-    static fromDbRow(row, addressRow = null, emergencyContactRow = null, classroomRow = null) {
-        if (!row) return null;
-
-        const address = addressRow ? Address.fromDbRow(addressRow) : null;
-        const emergencyContact = emergencyContactRow ? EmergencyContact.fromDbRow(emergencyContactRow) : null;
-        const classroom = classroomRow ? Classroom.fromDbRow(classroomRow) : null;
-
-        return new Student(
-            row.id,
-            row.first_name,
-            row.middle_name_optional,
-            row.third_name_optional,
-            row.nickname_optional,
-            row.paternal_surname,
-            row.maternal_surname,
-            row.dni,
-            row.birth_date,
-            address,
-            emergencyContact,
-            classroom,
-            row.shift,
-            row.health_insurance,
-            row.affiliate_number,
-            row.allergies,
-            row.medications,
-            row.medical_observations,
-            row.blood_type,
-            row.pediatrician_name,
-            row.pediatrician_phone,
-            row.photo_authorization,
-            row.trip_authorization,
-            row.medical_attention_authorization,
-            row.status,
-            row.enrollment_date,
-            row.withdrawal_date,
-            row.has_siblings_in_school,
-            row.special_needs,
-            row.vaccination_status,
-            row.observations
+  static async create(studentData) {
+    const conn = await getConnection();
+    try {
+      // First create the emergency contact
+      if (studentData.emergency_contact) {
+        const ecResult = await conn.query(
+          `INSERT INTO emergency_contact (student_id, full_name, relationship, 
+           priority, phone, alternative_phone, is_authorized_pickup) 
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            null, // student_id will be set after student creation
+            studentData.emergency_contact.full_name,
+            studentData.emergency_contact.relationship,
+            studentData.emergency_contact.priority || 1,
+            studentData.emergency_contact.phone,
+            studentData.emergency_contact.alternative_phone,
+            studentData.emergency_contact.is_authorized_pickup || false
+          ]
         );
-    }
+        
+        studentData.emergency_contact_id = ecResult.insertId;
+      }
 
-    toDbRow() {
-        return {
-            first_name: this.firstName,
-            middle_name_optional: this.middleNameOptional,
-            third_name_optional: this.thirdNameOptional,
-            nickname_optional: this.nicknameOptional,
-            paternal_surname: this.paternalSurname,
-            maternal_surname: this.maternalSurname,
-            dni: this.dni,
-            birth_date: this.birthDate,
-            address_id: this.address ? this.address.id : null,
-            emergency_contact_id: this.emergencyContact ? this.emergencyContact.id : null,
-            classroom_id: this.classroom ? this.classroom.id : null,
-            shift: this.shift,
-            health_insurance: this.healthInsurance,
-            affiliate_number: this.affiliateNumber,
-            allergies: this.allergies,
-            medications: this.medications,
-            medical_observations: this.medicalObservations,
-            blood_type: this.bloodType,
-            pediatrician_name: this.pediatricianName,
-            pediatrician_phone: this.pediatricianPhone,
-            photo_authorization: this.photoAuthorization,
-            trip_authorization: this.tripAuthorization,
-            medical_attention_authorization: this.medicalAttentionAuthorization,
-            status: this.status,
-            enrollment_date: this.enrollmentDate,
-            withdrawal_date: this.withdrawalDate,
-            has_siblings_in_school: this.hasSiblingsInSchool,
-            special_needs: this.specialNeeds,
-            vaccination_status: this.vaccinationStatus,
-            observations: this.observations
-        };
+      // Then create the student
+      const result = await conn.query(
+        `INSERT INTO student (first_name, middle_name_optional, third_name_optional, 
+         paternal_surname, maternal_surname, nickname_optional, dni, birth_date, 
+         address_id, emergency_contact_id, classroom_id, shift, status, 
+         enrollment_date, withdrawal_date, health_insurance, affiliate_number, 
+         allergies, medications, medical_observations, blood_type, 
+         pediatrician_name, pediatrician_phone, photo_authorization, 
+         trip_authorization, medical_attention_authorization, 
+         has_siblings_in_school, special_needs, vaccination_status, observations) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          studentData.first_name,
+          studentData.middle_name_optional,
+          studentData.third_name_optional,
+          studentData.paternal_surname,
+          studentData.maternal_surname,
+          studentData.nickname_optional,
+          studentData.dni,
+          studentData.birth_date,
+          studentData.address_id,
+          studentData.emergency_contact_id,
+          studentData.classroom_id,
+          studentData.shift,
+          studentData.status,
+          studentData.enrollment_date,
+          studentData.withdrawal_date,
+          studentData.health_insurance,
+          studentData.affiliate_number,
+          studentData.allergies,
+          studentData.medications,
+          studentData.medical_observations,
+          studentData.blood_type,
+          studentData.pediatrician_name,
+          studentData.pediatrician_phone,
+          studentData.photo_authorization || false,
+          studentData.trip_authorization || false,
+          studentData.medical_attention_authorization || false,
+          studentData.has_siblings_in_school || false,
+          studentData.special_needs,
+          studentData.vaccination_status || 'no_informado',
+          studentData.observations
+        ]
+      );
+      
+      const studentId = result.insertId;
+      
+      // Update emergency contact with the student ID
+      if (studentData.emergency_contact_id) {
+        await conn.query(
+          `UPDATE emergency_contact SET student_id = ? WHERE id = ?`,
+          [studentId, studentData.emergency_contact_id]
+        );
+      }
+      
+      return studentId;
+    } finally {
+      conn.release();
     }
+  }
 
-    // Serializar para el frontend (español)
-    toJSON() {
-        return {
-            id: this.id,
-            nombre: this.firstName,
-            segundoNombre: this.middleNameOptional,
-            tercerNombre: this.thirdNameOptional,
-            alias: this.nicknameOptional,
-            apellidoPaterno: this.paternalSurname,
-            apellidoMaterno: this.maternalSurname,
-            fechaNacimiento: this.birthDate,
-            turno: this.shift,
-            direccion: this.address ? {
-                id: this.address.id,
-                calle: this.address.street,
-                numero: this.address.number,
-                ciudad: this.address.city,
-                provincia: this.address.provincia,
-                codigoPostal: this.address.postalCodeOptional
-            } : null,
-            contactoEmergencia: this.emergencyContact ? {
-                id: this.emergencyContact.id,
-                nombreCompleto: this.emergencyContact.fullName,
-                relacion: this.emergencyContact.relationship,
-                telefono: this.emergencyContact.phone
-            } : null,
-            sala: this.classroom ? {
-                id: this.classroom.id,
-                nombre: this.classroom.name,
-                capacidad: this.classroom.capacity
-            } : null
-        };
+  static async update(id, studentData) {
+    const conn = await getConnection();
+    try {
+      // Update the student record
+      const result = await conn.query(
+        `UPDATE student SET first_name = ?, middle_name_optional = ?, 
+         third_name_optional = ?, paternal_surname = ?, maternal_surname = ?, 
+         nickname_optional = ?, dni = ?, birth_date = ?, address_id = ?, 
+         classroom_id = ?, shift = ?, status = ?, enrollment_date = ?, 
+         withdrawal_date = ?, health_insurance = ?, affiliate_number = ?, 
+         allergies = ?, medications = ?, medical_observations = ?, 
+         blood_type = ?, pediatrician_name = ?, pediatrician_phone = ?, 
+         photo_authorization = ?, trip_authorization = ?, 
+         medical_attention_authorization = ?, has_siblings_in_school = ?, 
+         special_needs = ?, vaccination_status = ?, observations = ? 
+         WHERE id = ?`,
+        [
+          studentData.first_name,
+          studentData.middle_name_optional,
+          studentData.third_name_optional,
+          studentData.paternal_surname,
+          studentData.maternal_surname,
+          studentData.nickname_optional,
+          studentData.dni,
+          studentData.birth_date,
+          studentData.address_id,
+          studentData.classroom_id,
+          studentData.shift,
+          studentData.status,
+          studentData.enrollment_date,
+          studentData.withdrawal_date,
+          studentData.health_insurance,
+          studentData.affiliate_number,
+          studentData.allergies,
+          studentData.medications,
+          studentData.medical_observations,
+          studentData.blood_type,
+          studentData.pediatrician_name,
+          studentData.pediatrician_phone,
+          studentData.photo_authorization,
+          studentData.trip_authorization,
+          studentData.medical_attention_authorization,
+          studentData.has_siblings_in_school,
+          studentData.special_needs,
+          studentData.vaccination_status,
+          studentData.observations,
+          id
+        ]
+      );
+
+      // If emergency contact info was provided, update it too
+      if (studentData.emergency_contact && studentData.emergency_contact_id) {
+        await conn.query(
+          `UPDATE emergency_contact SET full_name = ?, relationship = ?, 
+           priority = ?, phone = ?, alternative_phone = ?, 
+           is_authorized_pickup = ? WHERE id = ?`,
+          [
+            studentData.emergency_contact.full_name,
+            studentData.emergency_contact.relationship,
+            studentData.emergency_contact.priority || 1,
+            studentData.emergency_contact.phone,
+            studentData.emergency_contact.alternative_phone,
+            studentData.emergency_contact.is_authorized_pickup || false,
+            studentData.emergency_contact_id
+          ]
+        );
+      }
+
+      return result.affectedRows > 0;
+    } finally {
+      conn.release();
     }
+  }
+
+  static async delete(id) {
+    const conn = await getConnection();
+    try {
+      // First delete related records
+      await conn.query('DELETE FROM student_guardian WHERE student_id = ?', [id]);
+      await conn.query('DELETE FROM student_documents WHERE student_id = ?', [id]);
+      await conn.query('DELETE FROM student_status_history WHERE student_id = ?', [id]);
+      await conn.query('DELETE FROM pending_documentation WHERE student_id = ?', [id]);
+      await conn.query('DELETE FROM attendance WHERE student_id = ?', [id]);
+      await conn.query('DELETE FROM vaccination_records WHERE student_id = ?', [id]);
+      await conn.query('DELETE FROM parent_portal_submissions WHERE student_id = ?', [id]);
+
+      // Then delete the student
+      const result = await conn.query('DELETE FROM student WHERE id = ?', [id]);
+      return result.affectedRows > 0;
+    } finally {
+      conn.release();
+    }
+  }
+
+  static async getVaccinationStatus(studentId) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        `SELECT s.vaccination_status as overall_status,
+         COUNT(CASE WHEN vr.status = 'faltante' THEN 1 END) as missing_vaccines,
+         COUNT(CASE WHEN vr.status = 'activo' THEN 1 END) as active_vaccines,
+         COUNT(CASE WHEN vr.status = 'completo' THEN 1 END) as complete_vaccines,
+         COUNT(vr.id) as total_vaccines
+         FROM student s
+         LEFT JOIN vaccination_records vr ON s.id = vr.student_id
+         WHERE s.id = ?
+         GROUP BY s.id, s.vaccination_status`,
+        [studentId]
+      );
+      return result[0] || null;
+    } finally {
+      conn.release();
+    }
+  }
+
+  static async getPendingDocuments(studentId) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        `SELECT pd.*, 
+         CONCAT(stf.first_name, ' ', stf.paternal_surname) as completed_by_name
+         FROM pending_documentation pd
+         LEFT JOIN staff stf ON pd.completed_by = stf.id
+         WHERE pd.student_id = ? AND pd.completed_at IS NULL`,
+        [studentId]
+      );
+      return result;
+    } finally {
+      conn.release();
+    }
+  }
 }
 
 module.exports = Student;

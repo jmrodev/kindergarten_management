@@ -1,7 +1,7 @@
 // backend/routes/auth.js
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const { generateToken, authenticateToken } = require('../middleware/auth');
+const { generateToken, protect } = require('../middleware/auth');
 const { AppError } = require('../middleware/errorHandler'); // Import AppError
 const { sanitizeObject, sanitizeWhitespace } = require('../utils/sanitization'); // Import sanitization utilities
 
@@ -78,7 +78,7 @@ router.post('/login', async (req, res, next) => {
 });
 
 // GET /api/auth/me - Obtener usuario actual
-router.get('/me', authenticateToken, async (req, res, next) => {
+router.get('/me', protect, async (req, res, next) => {
     const pool = req.app.get('pool');
 
     try {
@@ -115,7 +115,7 @@ router.get('/me', authenticateToken, async (req, res, next) => {
 });
 
 // POST /api/auth/register - Registrar nuevo usuario (solo admin)
-router.post('/register', authenticateToken, async (req, res, next) => {
+router.post('/register', protect, async (req, res, next) => {
     const pool = req.app.get('pool');
     
     // Solo admin puede registrar usuarios
@@ -174,7 +174,7 @@ router.post('/register', authenticateToken, async (req, res, next) => {
 });
 
 // POST /api/auth/change-password - Cambiar contraseña
-router.post('/change-password', authenticateToken, async (req, res, next) => {
+router.post('/change-password', protect, async (req, res, next) => {
     const pool = req.app.get('pool');
     const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
     const { currentPassword, newPassword } = sanitizedBody;

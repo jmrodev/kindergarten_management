@@ -1,41 +1,77 @@
-// backend/models/Direccion.js
+// models/Address.js
+const { getConnection } = require('../db');
 
-class Direccion {
-    constructor(id, calle, numero, ciudad, provincia, codigoPostal) {
-        this.id = id;
-        this.calle = calle;
-        this.numero = numero;
-        this.ciudad = ciudad;
-        this.provincia = provincia;
-        this.codigoPostal = codigoPostal;
+class Address {
+  static async getAll() {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query('SELECT * FROM address ORDER BY city, street');
+      return result;
+    } finally {
+      conn.release();
     }
+  }
 
-    // Optional: Add validation methods
-    isValid() {
-        return this.calle && this.numero && this.ciudad && this.provincia;
+  static async getById(id) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query('SELECT * FROM address WHERE id = ?', [id]);
+      return result[0];
+    } finally {
+      conn.release();
     }
+  }
 
-    static fromDbRow(row) {
-        if (!row) return null;
-        return new Direccion(
-            row.id,
-            row.calle,
-            row.numero,
-            row.ciudad,
-            row.provincia,
-            row.codigo_postal
-        );
+  static async create(addressData) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        `INSERT INTO address (street, number, city, provincia, postal_code_optional) 
+         VALUES (?, ?, ?, ?, ?)`,
+        [
+          addressData.street,
+          addressData.number,
+          addressData.city,
+          addressData.provincia,
+          addressData.postal_code_optional
+        ]
+      );
+      return result.insertId;
+    } finally {
+      conn.release();
     }
+  }
 
-    toDbRow() {
-        return {
-            calle: this.calle,
-            numero: this.numero,
-            ciudad: this.ciudad,
-            provincia: this.provincia,
-            codigo_postal: this.codigoPostal
-        };
+  static async update(id, addressData) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        `UPDATE address SET street = ?, number = ?, city = ?, 
+         provincia = ?, postal_code_optional = ? WHERE id = ?`,
+        [
+          addressData.street,
+          addressData.number,
+          addressData.city,
+          addressData.provincia,
+          addressData.postal_code_optional,
+          id
+        ]
+      );
+      return result.affectedRows > 0;
+    } finally {
+      conn.release();
     }
+  }
+
+  static async delete(id) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query('DELETE FROM address WHERE id = ?', [id]);
+      return result.affectedRows > 0;
+    } finally {
+      conn.release();
+    }
+  }
 }
 
-module.exports = Direccion;
+module.exports = Address;

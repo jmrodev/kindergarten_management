@@ -1,21 +1,13 @@
 // backend/routes/permissions.js
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
+const { protect, requireRoles } = require('../middleware/auth');
 const { AppError } = require('../middleware/errorHandler'); // Import AppError
 const { sanitizeObject, sanitizeWhitespace } = require('../utils/sanitization'); // Import sanitization utilities
 
-// Middleware para verificar que solo admin/directivo accedan
-const requireDirectionRole = (req, res, next) => {
-    // Assuming 'Administrator' and 'Directivo' are the role_name values in the database
-    if (req.user.role !== 'Administrator' && req.user.role !== 'Directivo') {
-        return next(new AppError('Acceso denegado. Solo administradores o directivos pueden realizar esta acción.', 403));
-    }
-    next();
-};
 
 // GET /api/permissions - Obtener todos los permisos
-router.get('/', authenticateToken, requireDirectionRole, async (req, res, next) => {
+router.get('/', protect, requireRoles(["Administrator", "Directivo"]), async (req, res, next) => {
     const pool = req.app.get('pool');
     
     try {
@@ -32,7 +24,7 @@ router.get('/', authenticateToken, requireDirectionRole, async (req, res, next) 
 });
 
 // GET /api/permissions/modules - Obtener módulos
-router.get('/modules', authenticateToken, requireDirectionRole, async (req, res, next) => {
+router.get('/modules', protect, requireRoles(["Administrator", "Directivo"]), async (req, res, next) => {
     const pool = req.app.get('pool');
     
     try {
@@ -50,7 +42,7 @@ router.get('/modules', authenticateToken, requireDirectionRole, async (req, res,
 });
 
 // GET /api/permissions/actions - Obtener acciones
-router.get('/actions', authenticateToken, requireDirectionRole, async (req, res, next) => {
+router.get('/actions', protect, requireRoles(["Administrator", "Directivo"]), async (req, res, next) => {
     const pool = req.app.get('pool');
     
     try {
@@ -67,7 +59,7 @@ router.get('/actions', authenticateToken, requireDirectionRole, async (req, res,
 });
 
 // POST /api/permissions/toggle - Toggle permiso
-router.post('/toggle', authenticateToken, requireDirectionRole, async (req, res, next) => {
+router.post('/toggle', protect, requireRoles(["Administrator", "Directivo"]), async (req, res, next) => {
     const pool = req.app.get('pool');
     const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
     const { roleId, moduleId, actionId, isGranted } = sanitizedBody;
@@ -137,7 +129,7 @@ router.post('/toggle', authenticateToken, requireDirectionRole, async (req, res,
 });
 
 // GET /api/permissions/audit - Obtener log de auditoría
-router.get('/audit', authenticateToken, requireDirectionRole, async (req, res, next) => {
+router.get('/audit', protect, requireRoles(["Administrator", "Directivo"]), async (req, res, next) => {
     const pool = req.app.get('pool');
     const sanitizedQuery = sanitizeObject(req.query, sanitizeWhitespace);
     const { limit } = sanitizedQuery;
@@ -169,7 +161,7 @@ router.get('/audit', authenticateToken, requireDirectionRole, async (req, res, n
 });
 
 // GET /api/permissions/check/:role/:module/:action - Verificar permiso específico
-router.get('/check/:role/:module/:action', authenticateToken, async (req, res, next) => {
+router.get('/check/:role/:module/:action', protect, async (req, res, next) => {
     const pool = req.app.get('pool');
     const sanitizedParams = sanitizeObject(req.params, sanitizeWhitespace);
     const { role, module, action } = sanitizedParams;

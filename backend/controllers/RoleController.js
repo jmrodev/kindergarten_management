@@ -5,7 +5,7 @@ const { sanitizeObject, sanitizeWhitespace } = require('../utils/sanitization');
 const RoleController = {
     async getAllRoles(req, res) {
         try {
-            const roles = await RoleRepository.findAll();
+            const roles = await RoleRepository.getAll();
             res.json(roles);
         } catch (error) {
             console.error('Error in getAllRoles:', error);
@@ -15,7 +15,7 @@ const RoleController = {
 
     async getRoleById(req, res) {
         try {
-            const role = await RoleRepository.findById(req.params.id);
+            const role = await RoleRepository.getById(req.params.id);
             if (!role) {
                 throw new AppError('Rol no encontrado', 404);
             }
@@ -30,7 +30,7 @@ const RoleController = {
         try {
             const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
             const id = await RoleRepository.create(sanitizedBody);
-            const newRole = await RoleRepository.findById(id);
+            const newRole = await RoleRepository.getById(id);
             res.status(201).json(newRole);
         } catch (error) {
             console.error('Error in createRole:', error);
@@ -40,13 +40,13 @@ const RoleController = {
 
     async updateRole(req, res) {
         try {
-            const role = await RoleRepository.findById(req.params.id);
+            const role = await RoleRepository.getById(req.params.id);
             if (!role) {
                 throw new AppError('Rol no encontrado', 404);
             }
             const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
             await RoleRepository.update(req.params.id, sanitizedBody);
-            const updatedRole = await RoleRepository.findById(req.params.id);
+            const updatedRole = await RoleRepository.getById(req.params.id);
             res.json(updatedRole);
         } catch (error) {
             console.error('Error in updateRole:', error);
@@ -56,7 +56,7 @@ const RoleController = {
 
     async deleteRole(req, res) {
         try {
-            const role = await RoleRepository.findById(req.params.id);
+            const role = await RoleRepository.getById(req.params.id);
             if (!role) {
                 throw new AppError('Rol no encontrado', 404);
             }
@@ -88,7 +88,7 @@ const RoleController = {
         try {
             const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
             const id = await RoleRepository.createAccessLevel(sanitizedBody);
-            const newAccessLevel = await RoleRepository.findById(id); // Assuming findById can also fetch access levels, or create a separate one
+            const newAccessLevel = await RoleRepository.getById(id); // Assuming findById can also fetch access levels, or create a separate one
             res.status(201).json(newAccessLevel);
         } catch (error) {
             console.error('Error in createAccessLevel:', error);

@@ -1,21 +1,12 @@
 // backend/routes/enrollmentManagementRoutes.js
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
+const { protect, requireRoles } = require('../middleware/auth');
 const { AppError } = require('../middleware/errorHandler');
 const { sanitizeObject, sanitizeWhitespace } = require('../utils/sanitization');
 
-// Middleware para verificar que solo admin/directivo/secretary accedan
-const requireAuthorizedRole = (req, res, next) => {
-    // Only Administrator, Directivo, or Secretary can access these endpoints
-    if (!['Administrator', 'Directivo', 'Secretary'].includes(req.user.role)) {
-        return next(new AppError('Acceso denegado. Solo Administradores, Directivos o Secretarios pueden acceder.', 403));
-    }
-    next();
-};
-
 // GET /api/enrollment-management/pending - Obtener inscripciones pendientes
-router.get('/pending', authenticateToken, requireAuthorizedRole, async (req, res, next) => {
+router.get('/pending', protect, requireRoles(['Administrator', 'Directivo', 'Secretary']), async (req, res, next) => {
     const pool = req.app.get('pool');
 
     try {
@@ -90,7 +81,7 @@ router.get('/pending', authenticateToken, requireAuthorizedRole, async (req, res
 });
 
 // GET /api/enrollment-management/completed - Obtener inscripciones completadas
-router.get('/completed', authenticateToken, requireAuthorizedRole, async (req, res, next) => {
+router.get('/completed', protect, requireRoles(['Administrator', 'Directivo', 'Secretary']), async (req, res, next) => {
     const pool = req.app.get('pool');
 
     try {
@@ -130,7 +121,7 @@ router.get('/completed', authenticateToken, requireAuthorizedRole, async (req, r
 });
 
 // PATCH /api/enrollment-management/:submissionId/approve - Aprobar inscripción
-router.patch('/:submissionId/approve', authenticateToken, requireAuthorizedRole, async (req, res, next) => {
+router.patch('/:submissionId/approve', protect, requireRoles(['Administrator', 'Directivo', 'Secretary']), async (req, res, next) => {
     const pool = req.app.get('pool');
     const submissionId = req.params.submissionId;
     const userId = req.user.id;
@@ -178,7 +169,7 @@ router.patch('/:submissionId/approve', authenticateToken, requireAuthorizedRole,
 });
 
 // PATCH /api/enrollment-management/:submissionId/reject - Rechazar inscripción
-router.patch('/:submissionId/reject', authenticateToken, requireAuthorizedRole, async (req, res, next) => {
+router.patch('/:submissionId/reject', protect, requireRoles(['Administrator', 'Directivo', 'Secretary']), async (req, res, next) => {
     const pool = req.app.get('pool');
     const submissionId = req.params.submissionId;
     const userId = req.user.id;
@@ -232,7 +223,7 @@ router.patch('/:submissionId/reject', authenticateToken, requireAuthorizedRole, 
 });
 
 // GET /api/enrollment-management/:submissionId - Obtener detalles de una inscripción específica
-router.get('/:submissionId', authenticateToken, requireAuthorizedRole, async (req, res, next) => {
+router.get('/:submissionId', protect, requireRoles(['Administrator', 'Directivo', 'Secretary']), async (req, res, next) => {
     const pool = req.app.get('pool');
     const submissionId = req.params.submissionId;
 
@@ -340,7 +331,7 @@ router.get('/:submissionId', authenticateToken, requireAuthorizedRole, async (re
 });
 
 // GET /api/enrollment-management/:submissionId/documents - Obtener documentos de una inscripción específica con estado de verificación
-router.get('/:submissionId/documents', authenticateToken, requireAuthorizedRole, async (req, res, next) => {
+router.get('/:submissionId/documents', protect, requireRoles(['Administrator', 'Directivo', 'Secretary']), async (req, res, next) => {
     const pool = req.app.get('pool');
     const submissionId = req.params.submissionId;
 
@@ -386,7 +377,7 @@ router.get('/:submissionId/documents', authenticateToken, requireAuthorizedRole,
 });
 
 // PATCH /api/enrollment-management/:submissionId/documents/:documentId/verify - Verificar entrega de documento (marcar con checkbox)
-router.patch('/:submissionId/documents/:documentId/verify', authenticateToken, requireAuthorizedRole, async (req, res, next) => {
+router.patch('/:submissionId/documents/:documentId/verify', protect, requireRoles(['Administrator', 'Directivo', 'Secretary']), async (req, res, next) => {
     const pool = req.app.get('pool');
     const submissionId = req.params.submissionId;
     const documentId = req.params.documentId;
@@ -427,7 +418,7 @@ router.patch('/:submissionId/documents/:documentId/verify', authenticateToken, r
 });
 
 // PATCH /api/enrollment-management/:submissionId/documents/:documentId/unverify - Desverificar entrega de documento
-router.patch('/:submissionId/documents/:documentId/unverify', authenticateToken, requireAuthorizedRole, async (req, res, next) => {
+router.patch('/:submissionId/documents/:documentId/unverify', protect, requireRoles(['Administrator', 'Directivo', 'Secretary']), async (req, res, next) => {
     const pool = req.app.get('pool');
     const submissionId = req.params.submissionId;
     const documentId = req.params.documentId;
@@ -467,7 +458,7 @@ router.patch('/:submissionId/documents/:documentId/unverify', authenticateToken,
 });
 
 // PATCH /api/enrollment-management/:submissionId/approve-with-verification - Aprobar inscripción después de revisar documentos
-router.patch('/:submissionId/approve-with-verification', authenticateToken, requireAuthorizedRole, async (req, res, next) => {
+router.patch('/:submissionId/approve-with-verification', protect, requireRoles(['Administrator', 'Directivo', 'Secretary']), async (req, res, next) => {
     const pool = req.app.get('pool');
     const submissionId = req.params.submissionId;
     const userId = req.user.id;
@@ -528,7 +519,7 @@ router.patch('/:submissionId/approve-with-verification', authenticateToken, requ
 });
 
 // GET /api/enrollment-management/pre-enrolled - Obtener estudiantes en preinscripto para revisión de documentos
-router.get('/pre-enrolled', authenticateToken, requireAuthorizedRole, async (req, res, next) => {
+router.get('/pre-enrolled', protect, requireRoles(['Administrator', 'Directivo', 'Secretary']), async (req, res, next) => {
     const pool = req.app.get('pool');
 
     try {

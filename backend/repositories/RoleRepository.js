@@ -1,121 +1,120 @@
-const pool = require('../db');
+// repositories/RoleRepository.js
+const { getConnection } = require('../db');
 
-const RoleRepository = {
-    async findAll() {
-        const conn = await pool.getConnection();
-        try {
-            const rows = await conn.query(`
-                SELECT 
-                    r.id,
-                    r.role_name,
-                    r.access_level_id,
-                    al.access_name
-                FROM role r
-                JOIN access_level al ON r.access_level_id = al.id
-                ORDER BY r.role_name
-            `);
-            return rows;
-        } finally {
-            conn.release();
-        }
-    },
+class RoleRepository {
+  static async getAll(options = {}) {
+    const conn = await getConnection();
+    try {
+      const { filters = {}, pagination = {} } = options;
+      let query = `
+        SELECT r.*, al.access_name
+        FROM role r
+        LEFT JOIN access_level al ON r.access_level_id = al.id
+        WHERE 1=1
+      `;
+      const params = [];
 
-    async findById(id) {
-        const conn = await pool.getConnection();
-        try {
-            const rows = await conn.query(`
-                SELECT 
-                    r.id,
-                    r.role_name,
-                    r.access_level_id,
-                    al.access_name
-                FROM role r
-                JOIN access_level al ON r.access_level_id = al.id
-                WHERE r.id = ?
-            `, [id]);
-            return rows[0] || null;
-        } finally {
-            conn.release();
-        }
-    },
+      // Apply filters
+      if (filters.accessLevelId) {
+        query += ' AND r.access_level_id = ?';
+        params.push(filters.accessLevelId);
+      }
 
-    async findByName(roleName) {
-        const conn = await pool.getConnection();
-        try {
-            const rows = await conn.query(`
-                SELECT 
-                    r.id,
-                    r.role_name,
-                    r.access_level_id,
-                    al.access_name
-                FROM role r
-                JOIN access_level al ON r.access_level_id = al.id
-                WHERE r.role_name = ?
-            `, [roleName]);
-            return rows[0] || null;
-        } finally {
-            conn.release();
-        }
-    },
+      // Apply pagination
+      if (pagination.limit && pagination.offset !== undefined) {
+        query += ' LIMIT ? OFFSET ?';
+        params.push(pagination.limit, pagination.offset);
+      } else if (pagination.limit) {
+        query += ' LIMIT ?';
+        params.push(pagination.limit);
+      }
 
-    async create(roleData) {
-        const conn = await pool.getConnection();
-        try {
-            const result = await conn.query(
-                'INSERT INTO role (role_name, access_level_id) VALUES (?, ?)',
-                [roleData.role_name, roleData.access_level_id]
-            );
-            return result.insertId;
-        } finally {
-            conn.release();
-        }
-    },
+      query += ' ORDER BY r.role_name';
 
-    async update(id, roleData) {
-        const conn = await pool.getConnection();
-        try {
-            await conn.query(
-                'UPDATE role SET role_name = ?, access_level_id = ? WHERE id = ?',
-                [roleData.role_name, roleData.access_level_id, id]
-            );
-            return true;
-        } finally {
-            conn.release();
-        }
-    },
-
-    async delete(id) {
-        const conn = await pool.getConnection();
-        try {
-            await conn.query('DELETE FROM role WHERE id = ?', [id]);
-            return true;
-        } finally {
-            conn.release();
-        }
-    },
-
-    async findAllAccessLevels() {
-        const conn = await pool.getConnection();
-        try {
-            const rows = await conn.query('SELECT id, access_name FROM access_level ORDER BY access_name');
-            return rows;
-        } finally {
-            conn.release();
-        }
-    },
-
-    async createAccessLevel(accessLevelData) {
-        const conn = await pool.getConnection();
-        try {
-            const result = await conn.query(
-                'INSERT INTO access_level (access_name, description) VALUES (?, ?)',
-                [accessLevelData.access_name, accessLevelData.description]
-            );
-            return result.insertId;
-        } finally {
-            conn.release();
-        }
+      const results = await conn.query(query, params);
+      return results;
+    } finally {
+      conn.release();
     }
-};
+  }
+
+  static async getById(id) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        `SELECT r.*, al.access_name
+         FROM role r
+         LEFT JOIN access_level al ON r.access_level_id = al.id
+         WHERE r.id = ?`,
+        [id]
+      );
+      return result[0];
+    } finally {
+      conn.release();
+    }
+  }
+
+  static async create(roleData) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        `INSERT INTO role (role_name, access_level_id) 
+         VALUES (?, ?)`,
+        [
+          roleData.role_name,
+          roleData.access_level_id
+        ]
+      );
+      return result.insertId;
+    } finally {
+      conn.release();
+    }
+  }
+
+  static async update(id, roleData) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        `UPDATE role SET role_name = ?, access_level_id = ? WHERE id = ?`,
+        [
+          roleData.role_name,
+          roleData.access_level_id,
+          id
+        ]
+      );
+      return result.affectedRows > 0;
+    } finally {
+      conn.release();
+    }
+  }
+
+  static async delete(id) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query('DELETE FROM role WHERE id = ?', [id]);
+      return result.affectedRows > 0;
+    } finally {
+      conn.release();
+    }
+  }
+
+  static async count(filters = {}) {
+    const conn = await getConnection();
+    try {
+      let query = 'SELECT COUNT(*) as count FROM role WHERE 1=1';
+      const params = [];
+
+      if (filters.accessLevelId) {
+        query += ' AND access_level_id = ?';
+        params.push(filters.accessLevelId);
+      }
+
+      const result = await conn.query(query, params);
+      return result[0].count;
+    } finally {
+      conn.release();
+    }
+  }
+}
 
 module.exports = RoleRepository;

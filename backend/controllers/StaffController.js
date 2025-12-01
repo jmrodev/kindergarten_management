@@ -6,7 +6,7 @@ const { sanitizeObject, sanitizeWhitespace } = require('../utils/sanitization');
 const StaffController = {
     async getAllStaff(req, res) {
         try {
-            const staff = await StaffRepository.findAll();
+            const staff = await StaffRepository.getAll();
             res.json(staff);
         } catch (error) {
             console.error('Error in getAllStaff:', error);
@@ -16,7 +16,7 @@ const StaffController = {
 
     async getStaffById(req, res) {
         try {
-            const staff = await StaffRepository.findById(req.params.id);
+            const staff = await StaffRepository.getById(req.params.id);
             if (!staff) {
                 throw new AppError('Personal no encontrado', 404);
             }
@@ -38,7 +38,7 @@ const StaffController = {
             }
             
             const id = await StaffRepository.create(staffData);
-            const newStaff = await StaffRepository.findById(id);
+            const newStaff = await StaffRepository.getById(id);
             res.status(201).json(newStaff);
         } catch (error) {
             console.error('Error in createStaff:', error);
@@ -48,7 +48,7 @@ const StaffController = {
 
     async updateStaff(req, res) {
         try {
-            const staff = await StaffRepository.findById(req.params.id);
+            const staff = await StaffRepository.getById(req.params.id);
 
             if (!staff) {
                 throw new AppError('Personal no encontrado', 404);
@@ -66,7 +66,7 @@ const StaffController = {
             await StaffRepository.update(req.params.id, sanitizedBody);
 
             // Verificar si el rol actualizado es 'Teacher' para manejar la asignación de sala
-            const updatedStaffAfterSave = await StaffRepository.findById(req.params.id);
+            const updatedStaffAfterSave = await StaffRepository.getById(req.params.id);
             const isTeacherRole = updatedStaffAfterSave.role_name === 'Teacher';
 
             // Si se proporciona un classroom_id y el rol es 'Teacher', actualizar también la asignación en la sala
@@ -91,7 +91,7 @@ const StaffController = {
 
     async deleteStaff(req, res) {
         try {
-            const staff = await StaffRepository.findById(req.params.id);
+            const staff = await StaffRepository.getById(req.params.id);
             
             if (!staff) {
                 throw new AppError('Personal no encontrado', 404);
@@ -112,7 +112,8 @@ const StaffController = {
 
     async getRoles(req, res) {
         try {
-            const roles = await StaffRepository.getRoles();
+            const RoleRepository = require('../repositories/RoleRepository');
+            const roles = await RoleRepository.getAll();
             res.json(roles);
         } catch (error) {
             console.error('Error in getRoles:', error);

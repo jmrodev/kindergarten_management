@@ -1,0 +1,206 @@
+// controllers/CalendarController.js
+const Calendar = require('../models/Calendar');
+const Classroom = require('../models/Classroom');
+const Staff = require('../models/Staff');
+const { AppError } = require('../middleware/errorHandler');
+
+class CalendarController {
+  static async getAll(req, res, next) {
+    try {
+      const filters = {};
+      
+      if (req.query.classroomId) filters.classroomId = req.query.classroomId;
+      if (req.query.eventType) filters.eventType = req.query.eventType;
+      if (req.query.staffId) filters.staffId = req.query.staffId;
+      if (req.query.startDate && req.query.endDate) {
+        filters.startDate = req.query.startDate;
+        filters.endDate = req.query.endDate;
+      }
+
+      const calendarEvents = await Calendar.getAll(filters);
+      res.status(200).json({
+        status: 'success',
+        data: calendarEvents
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getById(req, res, next) {
+    try {
+      const { id } = req.params;
+      const calendarEvent = await Calendar.getById(id);
+
+      if (!calendarEvent) {
+        return next(new AppError(`No calendar event found with id: ${id}`, 404));
+      }
+
+      res.status(200).json({
+        status: 'success',
+        data: calendarEvent
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async create(req, res, next) {
+    try {
+      // Validate classroom exists
+      if (req.body.classroom_id) {
+        const classroom = await Classroom.getById(req.body.classroom_id);
+        if (!classroom) {
+          return next(new AppError(`No classroom found with id: ${req.body.classroom_id}`, 404));
+        }
+      }
+
+      // Validate staff exists
+      if (req.body.staff_id) {
+        const staff = await Staff.getById(req.body.staff_id);
+        if (!staff) {
+          return next(new AppError(`No staff found with id: ${req.body.staff_id}`, 404));
+        }
+      }
+
+      const eventId = await Calendar.create(req.body);
+      const createdEvent = await Calendar.getById(eventId);
+
+      res.status(201).json({
+        status: 'success',
+        message: 'Calendar event created successfully',
+        data: createdEvent
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async update(req, res, next) {
+    try {
+      const { id } = req.params;
+      const calendarEvent = await Calendar.getById(id);
+
+      if (!calendarEvent) {
+        return next(new AppError(`No calendar event found with id: ${id}`, 404));
+      }
+
+      // Validate classroom exists
+      if (req.body.classroom_id) {
+        const classroom = await Classroom.getById(req.body.classroom_id);
+        if (!classroom) {
+          return next(new AppError(`No classroom found with id: ${req.body.classroom_id}`, 404));
+        }
+      }
+
+      // Validate staff exists
+      if (req.body.staff_id) {
+        const staff = await Staff.getById(req.body.staff_id);
+        if (!staff) {
+          return next(new AppError(`No staff found with id: ${req.body.staff_id}`, 404));
+        }
+      }
+
+      const updated = await Calendar.update(id, req.body);
+
+      if (!updated) {
+        return next(new AppError(`No calendar event found with id: ${id}`, 404));
+      }
+
+      const updatedEvent = await Calendar.getById(id);
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Calendar event updated successfully',
+        data: updatedEvent
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async delete(req, res, next) {
+    try {
+      const { id } = req.params;
+      const deleted = await Calendar.delete(id);
+
+      if (!deleted) {
+        return next(new AppError(`No calendar event found with id: ${id}`, 404));
+      }
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Calendar event deleted successfully'
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getEventsByMonth(req, res, next) {
+    try {
+      const { year, month } = req.params;
+      
+      // Validate year and month
+      if (year < 1900 || year > 2100) {
+        return next(new AppError('Year must be between 1900 and 2100', 400));
+      }
+      
+      if (month < 1 || month > 12) {
+        return next(new AppError('Month must be between 1 and 12', 400));
+      }
+
+      const events = await Calendar.getEventsByMonth(year, month);
+
+      res.status(200).json({
+        status: 'success',
+        data: events
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getEventsByClassroom(req, res, next) {
+    try {
+      const { classroomId } = req.params;
+      const { startDate, endDate } = req.query;
+
+      // Validate classroom exists
+      const classroom = await Classroom.getById(classroomId);
+      if (!classroom) {
+        return next(new AppError(`No classroom found with id: ${classroomId}`, 404));
+      }
+
+      const events = await Calendar.getEventsByClassroom(classroomId, startDate, endDate);
+
+      res.status(200).json({
+        status: 'success',
+        data: events
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getSpecialEvents(req, res, next) {
+    try {
+      const { startDate, endDate } = req.query;
+
+      if (!startDate || !endDate) {
+        return next(new AppError('Both startDate and endDate are required', 400));
+      }
+
+      const events = await Calendar.getSpecialEvents(startDate, endDate);
+
+      res.status(200).json({
+        status: 'success',
+        data: events
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+}
+
+module.exports = CalendarController;

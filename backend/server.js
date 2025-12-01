@@ -16,6 +16,12 @@ const enrollmentRoutes = require('./routes/enrollmentRoutes');
 const enrollmentManagementRoutes = require('./routes/enrollmentManagementRoutes');
 const lotteryRoutes = require('./routes/lotteryRoutes');
 const roleRoutes = require('./routes/roleRoutes');
+const meetingMinutesRoutes = require('./routes/meetingMinutesRoutes');
+const vaccinationRecordRoutes = require('./routes/vaccinationRecordRoutes');
+const documentReviewRoutes = require('./routes/documentReviewRoutes');
+const attendanceRoutes = require('./routes/attendanceRoutes');
+const calendarRoutes = require('./routes/calendarRoutes');
+const activityRoutes = require('./routes/activityRoutes');
 const { AppError, errorHandler } = require('./middleware/errorHandler'); // Import AppError and errorHandler
 const { passport, isGoogleConfigured } = require('./config/passport');
 const { jsonSerializer } = require('./utils/serialization'); // Import jsonSerializer
@@ -30,7 +36,10 @@ const pool = mariadb.createPool({
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'kindergarten_db',
-    connectionLimit: 5
+    connectionLimit: 10, // Aumentado para mejor rendimiento
+    acquireTimeout: 60000, // Tiempo de espera para adquirir conexión (60 segundos)
+    timeout: 60000, // Tiempo de espera general (60 segundos)
+    reconnect: true // Permitir reconexión automática
 });
 
 // Make pool available to routes
@@ -49,7 +58,7 @@ pool.getConnection()
 
 // Middleware
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: process.env.FRONTEND_URL ? [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5175'] : ['http://localhost:5173', 'http://localhost:5175'],
     credentials: true
 })); // Enable CORS with credentials
 app.use(bodyParser.json()); // Parse JSON request bodies
@@ -81,6 +90,12 @@ app.use('/api/guardians', guardianRoutes); // Guardian/tutor management
 app.use('/api/enrollments', enrollmentRoutes); // Enrollment management
 app.use('/api/enrollment-management', enrollmentManagementRoutes); // Enrollment management for admin review
 app.use('/api/lottery', lotteryRoutes); // Lottery list management
+app.use('/api/meeting-minutes', meetingMinutesRoutes); // Meeting minutes management
+app.use('/api/vaccination-records', vaccinationRecordRoutes); // Vaccination records management
+app.use('/api/document-reviews', documentReviewRoutes); // Document reviews management
+app.use('/api/attendance', attendanceRoutes); // Attendance management
+app.use('/api/calendar', calendarRoutes); // Calendar management
+app.use('/api/activities', activityRoutes); // Activities management
 
 // Solo habilitar rutas del portal si Google OAuth está configurado
 if (isGoogleConfigured) {
@@ -89,6 +104,11 @@ if (isGoogleConfigured) {
 
 // Handle undefined routes (404)
 app.use((req, res, next) => {
+    // Ignorar ciertas rutas comunes que pueden ser solicitadas por clientes
+    if (req.originalUrl === '/ws' || req.originalUrl === '/ws/' || req.path === '/ws') {
+        // No lanzar error para conexiones WebSocket no manejadas
+        return res.status(404).json({ error: 'WebSocket endpoint not available' });
+    }
     next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 

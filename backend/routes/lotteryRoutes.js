@@ -1,21 +1,15 @@
 // backend/routes/lotteryRoutes.js
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 const { AppError } = require('../middleware/errorHandler');
 const { sanitizeObject, sanitizeWhitespace } = require('../utils/sanitization');
 
-// Middleware para verificar que solo admin/directivo/secretary accedan
-const requireAuthorizedRole = (req, res, next) => {
-    // Only Administrator, Directivo, or Secretary can access these endpoints
-    if (!['Administrator', 'Directivo', 'Secretary'].includes(req.user.role)) {
-        return next(new AppError('Acceso denegado. Solo Administradores, Directivos o Secretarios pueden acceder.', 403));
-    }
-    next();
-};
+const { requireRoles } = require('../middleware/auth');
+
 
 // GET /api/lottery/pending - Obtener alumnos pendientes en la lista de sorteo
-router.get('/pending', authenticateToken, requireAuthorizedRole, async (req, res, next) => {
+router.get('/pending', protect, requireRoles(['Administrator', 'Directivo', 'Secretary']), async (req, res, next) => {
     const pool = req.app.get('pool');
 
     try {
@@ -58,7 +52,7 @@ router.get('/pending', authenticateToken, requireAuthorizedRole, async (req, res
 });
 
 // GET /api/lottery/completed - Obtener alumnos que ya han sido aceptados de la lista de sorteo
-router.get('/completed', authenticateToken, requireAuthorizedRole, async (req, res, next) => {
+router.get('/completed', protect, requireRoles(['Administrator', 'Directivo', 'Secretary']), async (req, res, next) => {
     const pool = req.app.get('pool');
 
     try {
@@ -96,7 +90,7 @@ router.get('/completed', authenticateToken, requireAuthorizedRole, async (req, r
 });
 
 // POST /api/lottery/move-to-lottery - Mover alumno de 'approved' a 'sorteo' (después de revisión)
-router.post('/move-to-lottery', authenticateToken, requireAuthorizedRole, async (req, res, next) => {
+router.post('/move-to-lottery', protect, requireRoles(['Administrator', 'Directivo', 'Secretary']), async (req, res, next) => {
     const pool = req.app.get('pool');
     const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
     const { studentId } = sanitizedBody;
@@ -141,7 +135,7 @@ router.post('/move-to-lottery', authenticateToken, requireAuthorizedRole, async 
 });
 
 // PATCH /api/lottery/:studentId/accept - Aceptar alumno del sorteo a una sala específica
-router.patch('/:studentId/accept', authenticateToken, requireAuthorizedRole, async (req, res, next) => {
+router.patch('/:studentId/accept', protect, requireRoles(['Administrator', 'Directivo', 'Secretary']), async (req, res, next) => {
     const pool = req.app.get('pool');
     const studentId = req.params.studentId;
     const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
@@ -198,7 +192,7 @@ router.patch('/:studentId/accept', authenticateToken, requireAuthorizedRole, asy
 });
 
 // GET /api/lottery/pending-documentation/:studentId - Obtener documentación pendiente de un alumno
-router.get('/pending-documentation/:studentId', authenticateToken, requireAuthorizedRole, async (req, res, next) => {
+router.get('/pending-documentation/:studentId', protect, requireRoles(['Administrator', 'Directivo', 'Secretary']), async (req, res, next) => {
     const pool = req.app.get('pool');
     const studentId = req.params.studentId;
 
@@ -233,7 +227,7 @@ router.get('/pending-documentation/:studentId', authenticateToken, requireAuthor
 });
 
 // PATCH /api/lottery/pending-documentation/:docId/complete - Marcar documentación como completada
-router.patch('/pending-documentation/:docId/complete', authenticateToken, requireAuthorizedRole, async (req, res, next) => {
+router.patch('/pending-documentation/:docId/complete', protect, requireRoles(['Administrator', 'Directivo', 'Secretary']), async (req, res, next) => {
     const pool = req.app.get('pool');
     const docId = req.params.docId;
     const userId = req.user.id;

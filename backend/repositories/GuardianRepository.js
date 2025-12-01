@@ -1,376 +1,195 @@
-// backend/repositories/GuardianRepository.js
+// repositories/GuardianRepository.js
 const { getConnection } = require('../db');
-const Guardian = require('../models/Guardian');
 
 class GuardianRepository {
-    async create(guardianData) {
-        let conn;
-        try {
-            conn = await getConnection();
-            const result = await conn.query(
-                `INSERT INTO guardian (
-                    first_name, 
-                    middle_name_optional, 
-                    paternal_surname, 
-                    maternal_surname, 
-                    preferred_surname,
-                    address_id,
-                    phone, 
-                    email_optional,
-                    authorized_pickup,
-                    authorized_change
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    guardianData.firstName,
-                    guardianData.middleName,
-                    guardianData.paternalSurname,
-                    guardianData.maternalSurname,
-                    guardianData.preferredSurname,
-                    guardianData.addressId,
-                    guardianData.phone,
-                    guardianData.email,
-                    guardianData.authorizedPickup || false,
-                    guardianData.authorizedChange || false
-                ]
-            );
-            guardianData.id = result.insertId;
-            return Guardian.fromDbRow(guardianData);
-        } catch (err) {
-            console.error('Error creating guardian:', err);
-            throw err;
-        } finally {
-            if (conn) conn.release();
-        }
-    }
+  static async getAll(options = {}) {
+    const conn = await getConnection();
+    try {
+      const { filters = {}, pagination = {} } = options;
+      let query = `
+        SELECT g.*, 
+               a.street, a.number, a.city, a.provincia,
+               pp.name as portal_user_name,
+               r.role_name
+        FROM guardian g
+        LEFT JOIN address a ON g.address_id = a.id
+        LEFT JOIN parent_portal_users pp ON g.parent_portal_user_id = pp.id
+        LEFT JOIN role r ON g.role_id = r.id
+        WHERE 1=1
+      `;
+      const params = [];
 
-    async findAll() {
-        let conn;
-        try {
-            conn = await getConnection();
-            const rows = await conn.query(`
-                SELECT g.*, a.street, a.number, a.city, a.provincia, a.postal_code_optional
-                FROM guardian g
-                LEFT JOIN address a ON g.address_id = a.id
-                ORDER BY g.paternal_surname, g.first_name
-            `);
-            return rows.map(row => Guardian.fromDbRow(row));
-        } catch (err) {
-            console.error('Error finding all guardians:', err);
-            throw err;
-        } finally {
-            if (conn) conn.release();
-        }
-    }
+      // Apply filters
+      if (filters.roleId) {
+        query += ' AND g.role_id = ?';
+        params.push(filters.roleId);
+      }
 
-    async findById(id) {
-        let conn;
-        try {
-            conn = await getConnection();
-            const rows = await conn.query(`
-                SELECT g.*, a.street, a.number, a.city, a.provincia, a.postal_code_optional
-                FROM guardian g
-                LEFT JOIN address a ON g.address_id = a.id
-                WHERE g.id = ?
-            `, [id]);
-            if (rows.length === 0) return null;
-            return Guardian.fromDbRow(rows[0]);
-        } catch (err) {
-            console.error(`Error finding guardian with id ${id}:`, err);
-            throw err;
-        } finally {
-            if (conn) conn.release();
-        }
-    }
+      // Apply pagination
+      if (pagination.limit && pagination.offset !== undefined) {
+        query += ' LIMIT ? OFFSET ?';
+        params.push(pagination.limit, pagination.offset);
+      } else if (pagination.limit) {
+        query += ' LIMIT ?';
+        params.push(pagination.limit);
+      }
 
-    async findByStudentId(studentId) {
-        let conn;
-        try {
-            conn = await getConnection();
-            const rows = await conn.query(`
-                SELECT 
-                    g.*,
-                    sg.relationship_type as relationship,
-                    sg.is_primary,
-                    sg.authorized_pickup as sg_authorized_pickup,
-                    sg.authorized_diaper_change,
-                    sg.notes,
-                    a.street,
-                    a.number,
-                    a.city, 
-                    a.provincia, 
-                    a.postal_code_optional
-                FROM guardian g
-                INNER JOIN student_guardian sg ON g.id = sg.guardian_id
-                LEFT JOIN address a ON g.address_id = a.id
-                WHERE sg.student_id = ?
-                ORDER BY sg.is_primary DESC, g.paternal_surname, g.first_name
-            `, [studentId]);
-            
-            return rows.map(row => {
-                const guardian = Guardian.fromDbRow(row);
-                guardian.relationship = row.relationship;
-                guardian.isPrimary = row.is_primary;
-                guardian.authorizedPickupRelation = row.sg_authorized_pickup;
-                guardian.authorizedDiaperChange = row.authorized_diaper_change;
-                guardian.notes = row.notes;
-                return guardian;
-            });
-        } catch (err) {
-            console.error(`Error finding guardians for student ${studentId}:`, err);
-            throw err;
-        } finally {
-            if (conn) conn.release();
-        }
-    }
+      query += ' ORDER BY g.paternal_surname, g.first_name';
 
-    async update(id, guardianData) {
-        let conn;
-        try {
-            conn = await getConnection();
-            await conn.query(
-                `UPDATE guardian SET
-                    first_name = ?,
-                    middle_name_optional = ?,
-                    paternal_surname = ?,
-                    maternal_surname = ?,
-                    preferred_surname = ?,
-                    address_id = ?,
-                    phone = ?,
-                    email_optional = ?,
-                    authorized_pickup = ?,
-                    authorized_change = ?
-                WHERE id = ?`,
-                [
-                    guardianData.firstName,
-                    guardianData.middleName,
-                    guardianData.paternalSurname,
-                    guardianData.maternalSurname,
-                    guardianData.preferredSurname,
-                    guardianData.addressId,
-                    guardianData.phone,
-                    guardianData.email,
-                    guardianData.authorizedPickup || false,
-                    guardianData.authorizedChange || false,
-                    id
-                ]
-            );
-            return this.findById(id);
-        } catch (err) {
-            console.error(`Error updating guardian with id ${id}:`, err);
-            throw err;
-        } finally {
-            if (conn) conn.release();
-        }
+      const results = await conn.query(query, params);
+      return results;
+    } finally {
+      conn.release();
     }
+  }
 
-    async delete(id) {
-        let conn;
-        try {
-            conn = await getConnection();
-            
-            // Verificar si tiene estudiantes asignados
-            const check = await conn.query(
-                'SELECT COUNT(*) as count FROM student_guardian WHERE guardian_id = ?',
-                [id]
-            );
-            
-            if (check[0].count > 0) {
-                throw new Error(`Cannot delete guardian: Still assigned to ${check[0].count} student(s)`);
-            }
-            
-            const result = await conn.query('DELETE FROM guardian WHERE id = ?', [id]);
-            return result.affectedRows > 0;
-        } catch (err) {
-            console.error(`Error deleting guardian with id ${id}:`, err);
-            throw err;
-        } finally {
-            if (conn) conn.release();
-        }
+  static async getById(id) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        `SELECT g.*, 
+         a.street, a.number, a.city, a.provincia,
+         pp.name as portal_user_name,
+         r.role_name
+         FROM guardian g
+         LEFT JOIN address a ON g.address_id = a.id
+         LEFT JOIN parent_portal_users pp ON g.parent_portal_user_id = pp.id
+         LEFT JOIN role r ON g.role_id = r.id
+         WHERE g.id = ?`,
+        [id]
+      );
+      return result[0];
+    } finally {
+      conn.release();
     }
+  }
 
-    // Métodos para gestionar la relación student_guardian
-    async assignToStudent(studentId, guardianId, relationData) {
-        let conn;
-        try {
-            conn = await getConnection();
-            
-            // Si es principal, quitar el flag de otros
-            if (relationData.isPrimary) {
-                await conn.query(
-                    'UPDATE student_guardian SET is_primary = FALSE WHERE student_id = ?',
-                    [studentId]
-                );
-            }
-            
-            const result = await conn.query(
-                `INSERT INTO student_guardian (
-                    student_id, 
-                    guardian_id, 
-                                        relationship_type, 
-                                        is_primary,
-                                        authorized_pickup,
-                                        authorized_diaper_change,
-                                        notes
-                                    ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                                    [
-                                        studentId,
-                                        guardianId,
-                                        relationData.relationship_type,
-                                        relationData.isPrimary || false,
-                                        relationData.authorizedPickup || false,
-                                        relationData.authorizedDiaperChange || false,
-                                        relationData.notes || null
-                                    ]            );
-            
-            return result.insertId;
-        } catch (err) {
-            console.error('Error assigning guardian to student:', err);
-            throw err;
-        } finally {
-            if (conn) conn.release();
-        }
+  static async create(guardianData) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        `INSERT INTO guardian (first_name, middle_name_optional, paternal_surname, 
+         maternal_surname, preferred_surname, dni, address_id, phone, 
+         email_optional, workplace, work_phone, authorized_pickup, 
+         authorized_change, parent_portal_user_id, role_id) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          guardianData.first_name,
+          guardianData.middle_name_optional,
+          guardianData.paternal_surname,
+          guardianData.maternal_surname,
+          guardianData.preferred_surname,
+          guardianData.dni,
+          guardianData.address_id,
+          guardianData.phone,
+          guardianData.email_optional,
+          guardianData.workplace,
+          guardianData.work_phone,
+          guardianData.authorized_pickup || false,
+          guardianData.authorized_change || false,
+          guardianData.parent_portal_user_id,
+          guardianData.role_id
+        ]
+      );
+      return result.insertId;
+    } finally {
+      conn.release();
     }
+  }
 
-    async updateRelation(studentId, guardianId, relationData) {
-        let conn;
-        try {
-            conn = await getConnection();
-            
-            // Si es principal, quitar el flag de otros
-            if (relationData.isPrimary) {
-                await conn.query(
-                    'UPDATE student_guardian SET is_primary = FALSE WHERE student_id = ? AND guardian_id != ?',
-                    [studentId, guardianId]
-                );
-            }
-            
-            await conn.query(
-                `UPDATE student_guardian SET
-                    relationship_type = ?,
-                    is_primary = ?,
-                    authorized_pickup = ?,
-                    authorized_diaper_change = ?,
-                    notes = ?
-                WHERE student_id = ? AND guardian_id = ?`,
-                [
-                    relationData.relationship_type,
-                    relationData.isPrimary || false,
-                    relationData.authorizedPickup || false,
-                    relationData.authorizedDiaperChange || false,
-                    relationData.notes || null,
-                    studentId,
-                    guardianId
-                ]
-            );
-            
-            return true;
-        } catch (err) {
-            console.error('Error updating guardian relation:', err);
-            throw err;
-        } finally {
-            if (conn) conn.release();
-        }
+  static async update(id, guardianData) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        `UPDATE guardian SET first_name = ?, middle_name_optional = ?, 
+         paternal_surname = ?, maternal_surname = ?, preferred_surname = ?, 
+         dni = ?, address_id = ?, phone = ?, email_optional = ?, workplace = ?, 
+         work_phone = ?, authorized_pickup = ?, authorized_change = ?, 
+         parent_portal_user_id = ?, role_id = ? WHERE id = ?`,
+        [
+          guardianData.first_name,
+          guardianData.middle_name_optional,
+          guardianData.paternal_surname,
+          guardianData.maternal_surname,
+          guardianData.preferred_surname,
+          guardianData.dni,
+          guardianData.address_id,
+          guardianData.phone,
+          guardianData.email_optional,
+          guardianData.workplace,
+          guardianData.work_phone,
+          guardianData.authorized_pickup,
+          guardianData.authorized_change,
+          guardianData.parent_portal_user_id,
+          guardianData.role_id,
+          id
+        ]
+      );
+      return result.affectedRows > 0;
+    } finally {
+      conn.release();
     }
+  }
 
-    async removeFromStudent(studentId, guardianId) {
-        let conn;
-        try {
-            conn = await getConnection();
-            
-            // Verificar que no sea el único responsable
-            const check = await conn.query(
-                'SELECT COUNT(*) as count FROM student_guardian WHERE student_id = ?',
-                [studentId]
-            );
-            
-            if (check[0].count <= 1) {
-                throw new Error('Cannot remove last guardian from student');
-            }
-            
-            const result = await conn.query(
-                'DELETE FROM student_guardian WHERE student_id = ? AND guardian_id = ?',
-                [studentId, guardianId]
-            );
-            
-            return result.affectedRows > 0;
-        } catch (err) {
-            console.error('Error removing guardian from student:', err);
-            throw err;
-        } finally {
-            if (conn) conn.release();
-        }
+  static async delete(id) {
+    const conn = await getConnection();
+    try {
+      // First remove from student_guardian relationships
+      await conn.query('DELETE FROM student_guardian WHERE guardian_id = ?', [id]);
+      
+      // Then delete the guardian
+      const result = await conn.query('DELETE FROM guardian WHERE id = ?', [id]);
+      return result.affectedRows > 0;
+    } finally {
+      conn.release();
     }
+  }
 
-    async getAllRelationships(searchTerm = null) {
-        let conn;
-        try {
-            conn = await getConnection();
-            
-            let query = `
-                SELECT 
-                    g.id as guardian_id,
-                    g.first_name as g_first_name,
-                    g.middle_name_optional as g_middle_name,
-                    g.paternal_surname as g_paternal_surname,
-                    g.maternal_surname as g_maternal_surname,
-                    g.phone as g_phone,
-                    g.email_optional as g_email,
-                    s.id as student_id,
-                    s.first_name as s_first_name,
-                    s.paternal_surname as s_paternal_surname,
-                    s.maternal_surname as s_maternal_surname,
-                    s.nickname_optional as s_nickname,
-                    s.birth_date,
-                    s.shift,
-                    c.id as classroom_id,
-                    c.name as classroom_name,
-                    sg.relationship_type as relationship,
-                    sg.is_primary,
-                    sg.authorized_pickup,
-                    sg.authorized_diaper_change,
-                    sg.notes
-                FROM student_guardian sg
-                INNER JOIN guardian g ON sg.guardian_id = g.id
-                INNER JOIN student s ON sg.student_id = s.id
-                LEFT JOIN classroom c ON s.classroom_id = c.id
-                WHERE 1=1
-            `;
-            
-            const params = [];
-            
-            if (searchTerm && searchTerm.trim().length > 0) {
-                const searchTerms = searchTerm.trim().split(/\s+/);
-                searchTerms.forEach(term => {
-                    query += ` AND (
-                        g.first_name LIKE ? 
-                        OR g.middle_name_optional LIKE ?
-                        OR g.paternal_surname LIKE ? 
-                        OR g.maternal_surname LIKE ?
-                        OR g.phone LIKE ?
-                        OR g.email_optional LIKE ?
-                        OR s.first_name LIKE ?
-                        OR s.paternal_surname LIKE ?
-                        OR s.maternal_surname LIKE ?
-                        OR s.nickname_optional LIKE ?
-                        OR c.name LIKE ?
-                    )`;
-                    const likeParam = `%${term}%`;
-                    params.push(likeParam, likeParam, likeParam, likeParam, likeParam, 
-                               likeParam, likeParam, likeParam, likeParam, likeParam, likeParam);
-                });
-            }
-            
-            query += ` ORDER BY g.paternal_surname, g.first_name, s.paternal_surname, s.first_name`;
-            
-            const rows = await conn.query(query, params);
-            return rows;
-        } catch (err) {
-            console.error('Error getting all relationships:', err);
-            throw err;
-        } finally {
-            if (conn) conn.release();
-        }
+  static async getByStudentId(studentId) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        `SELECT g.*, 
+         a.street, a.number, a.city, a.provincia,
+         sg.relationship_type, sg.is_primary, sg.authorized_pickup, sg.authorized_diaper_change,
+         sg.custody_rights, sg.financial_responsible,
+         CONCAT(pp.first_name, ' ', pp.paternal_surname) as portal_user_name
+         FROM guardian g
+         LEFT JOIN address a ON g.address_id = a.id
+         LEFT JOIN student_guardian sg ON g.id = sg.guardian_id
+         LEFT JOIN parent_portal_users pp ON g.parent_portal_user_id = pp.id
+         WHERE sg.student_id = ?
+         ORDER BY sg.is_primary DESC, g.paternal_surname, g.first_name`,
+        [studentId]
+      );
+      return result;
+    } finally {
+      conn.release();
     }
+  }
+
+  static async count(filters = {}) {
+    const conn = await getConnection();
+    try {
+      let query = `
+        SELECT COUNT(*) as count
+        FROM guardian g
+        LEFT JOIN role r ON g.role_id = r.id
+        WHERE 1=1
+      `;
+      const params = [];
+
+      if (filters.roleId) {
+        query += ' AND g.role_id = ?';
+        params.push(filters.roleId);
+      }
+
+      const result = await conn.query(query, params);
+      return result[0].count;
+    } finally {
+      conn.release();
+    }
+  }
 }
 
-module.exports = new GuardianRepository();
+module.exports = GuardianRepository;
