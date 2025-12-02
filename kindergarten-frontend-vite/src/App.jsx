@@ -1,9 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Container } from 'react-bootstrap';
 import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
-import Navbar from './components/Navbar.jsx';
 import Dashboard from './views/Dashboard.jsx';
 import Login from './views/auth/Login.jsx';
 import StudentList from './views/students/StudentList.jsx';
@@ -20,11 +18,12 @@ import VaccinationList from './views/vaccinations/VaccinationList.jsx';
 import DocumentReviewList from './views/documentReviews/DocumentReviewList.jsx';
 import MeetingMinutesList from './views/meetingMinutes/MeetingMinutesList.jsx';
 import ActivityList from './views/activities/ActivityList.jsx';
+import Container from './components/atoms/Container';
 
 // Componente para rutas protegidas
 function App() {
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthProvider>
         <div className="App">
           <AppContent />
@@ -38,8 +37,7 @@ function AppContent() {
   const { currentUser } = useAuth();
 
   return (
-    <div>
-      {currentUser && <Navbar />}
+    <div className="app-container">
       <Container fluid className="main-content">
         <Routes>
           {/* Ruta pública para login */}

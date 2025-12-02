@@ -22,7 +22,7 @@ const ClassroomList = ({ salas, loading, onEdit, onDelete, onSelect, onAssignStu
     return (
         <div>
             <h2>Listado de Salas</h2>
-            {salas.length === 0 ? (
+            {Array.isArray(salas) && salas.length === 0 ? (
                 <Alert variant="info">No hay salas registradas.</Alert>
             ) : (
                 <Table striped bordered hover responsive>
@@ -40,7 +40,7 @@ const ClassroomList = ({ salas, loading, onEdit, onDelete, onSelect, onAssignStu
                         </tr>
                     </thead>
                     <tbody>
-                        {salas.map((sala) => {
+                        {Array.isArray(salas) ? salas.map((sala) => {
                             const status = getClassroomStatus(sala.asignados, sala.capacidad);
                             const disponibles = getAvailableSpaces(sala.asignados, sala.capacidad);
                             
@@ -143,7 +143,7 @@ const ClassroomList = ({ salas, loading, onEdit, onDelete, onSelect, onAssignStu
                                     </td>
                                 </tr>
                             );
-                        })}
+                        }) : null}
                     </tbody>
                 </Table>
             )}

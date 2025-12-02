@@ -2,11 +2,13 @@
 import React, { useState } from 'react';
 import { Modal, Button, Form, Table, Badge, Alert, Spinner, Row, Col } from 'react-bootstrap';
 
-const AssignStudentModal = ({ show, onHide, sala, alumnos, loading, onAssign }) => {
+const AssignStudentModal = ({ show, onHide, sala, alumnos: rawAlumnos, loading, onAssign }) => {
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterSala, setFilterSala] = useState('all');
     const [filterTurno, setFilterTurno] = useState('all');
+
+    const alumnos = Array.isArray(rawAlumnos) ? rawAlumnos : [];
 
     if (!sala) return null;
 

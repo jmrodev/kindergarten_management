@@ -1,0 +1,145 @@
+/* Office Ribbon Menu Styles */
+.office-ribbon-menu {
+  border: 1px solid var(--office-border) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 4px var(--office-shadow) !important;
+  overflow: hidden !important;
+  margin-bottom: 20px !important;
+}
+
+.office-ribbon-header {
+  background-color: var(--office-blue) !important;
+  color: var(--office-white) !important;
+  border-bottom: 1px solid var(--office-border) !important;
+  padding: 12px 16px !important;
+}
+
+.office-ribbon-title {
+  font-weight: 600 !important;
+  color: var(--office-white) !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.office-ribbon-icon {
+  color: var(--office-white) !important;
+}
+
+.office-ribbon-action-btn {
+  border-radius: 4px !important;
+  padding: 6px 12px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s !important;
+  border: none !important;
+  background-color: var(--office-white) !important;
+  color: var(--office-blue) !important;
+}
+
+.office-ribbon-action-btn:hover {
+  background-color: var(--office-gray) !important;
+  color: var(--office-blue-dark) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 6px var(--office-shadow) !important;
+}
+
+.office-ribbon-body {
+  background-color: var(--office-gray-light) !important;
+  padding: 12px 16px !important;
+}
+
+.office-ribbon-content {
+  display: flex !important;
+  align-items: end !important;
+  gap: 16px !important;
+  flex-wrap: wrap !important;
+}
+
+.office-ribbon-section {
+  min-width: 180px !important;
+  flex: 1 !important;
+}
+
+.office-ribbon-section-title {
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  color: var(--office-gray-darker) !important;
+  margin-bottom: 6px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.office-ribbon-input {
+  border: 1px solid var(--office-border) !important;
+  border-radius: 4px !important;
+  padding: 6px 10px !important;
+  font-size: 14px !important;
+  background-color: var(--office-white) !important;
+  color: var(--office-gray-darker) !important;
+}
+
+.office-ribbon-input:focus {
+  border-color: var(--office-blue) !important;
+  box-shadow: 0 0 0 0.2rem rgba(24, 90, 189, 0.25) !important;
+  background-color: var(--office-white) !important;
+  color: var(--office-gray-darker) !important;
+}
+
+.office-ribbon-select {
+  border: 1px solid var(--office-border) !important;
+  border-radius: 4px !important;
+  padding: 6px 10px !important;
+  font-size: 14px !important;
+  background-color: var(--office-white) !important;
+  color: var(--office-gray-darker) !important;
+}
+
+.office-ribbon-select:focus {
+  border-color: var(--office-blue) !important;
+  box-shadow: 0 0 0 0.2rem rgba(24, 90, 189, 0.25) !important;
+  background-color: var(--office-white) !important;
+  color: var(--office-gray-darker) !important;
+}
+
+.office-ribbon-actions {
+  display: flex !important;
+  gap: 8px !important;
+  min-width: auto !important;
+}
+
+.office-ribbon-btn {
+  border-radius: 4px !important;
+  padding: 6px 12px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s !important;
+  border: 1px solid var(--office-border) !important;
+  background-color: var(--office-white) !important;
+  color: var(--office-gray-darker) !important;
+}
+
+.office-ribbon-btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 6px var(--office-shadow) !important;
+}
+
+.office-ribbon-btn.outline-primary {
+  color: var(--office-blue) !important;
+  border-color: var(--office-blue) !important;
+}
+
+.office-ribbon-btn.outline-primary:hover {
+  background-color: var(--office-blue) !important;
+  border-color: var(--office-blue) !important;
+  color: var(--office-white) !important;
+}
+
+.office-ribbon-btn.outline-secondary {
+  color: var(--office-gray-darker) !important;
+  border-color: var(--office-border) !important;
+}
+
+.office-ribbon-btn.outline-secondary:hover {
+  background-color: var(--office-gray-darker) !important;
+  border-color: var(--office-gray-darker) !important;
+  color: var(--office-white) !important;
+}

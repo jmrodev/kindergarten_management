@@ -2,7 +2,8 @@
 import React from 'react';
 import { Card, Badge, Button, Row, Col, Alert } from 'react-bootstrap';
 
-const GuardianList = ({ guardians = [], onEdit, onRemove, onAdd, canEdit = true }) => {
+const GuardianList = ({ guardians: rawGuardians = [], onEdit, onRemove, onAdd, canEdit = true }) => {
+    const guardians = Array.isArray(rawGuardians) ? rawGuardians : [];
     const getRelationIcon = (relation) => {
         const icons = {
             'Padre': '👨',

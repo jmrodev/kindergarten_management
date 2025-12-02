@@ -4,7 +4,7 @@ import { Modal, Badge, ProgressBar, Row, Col, Table } from 'react-bootstrap';
 import { getClassroomStatus } from '../utils/classroomStatus';
 
 const OcupacionModal = ({ show, onHide, salas }) => {
-    const salasValidas = salas || [];
+    const salasValidas = Array.isArray(salas) ? salas : [];
     const haySalas = salasValidas.length > 0;
 
     const capacidadTotal = salasValidas.reduce((sum, s) => sum + s.capacidad, 0);

@@ -31,7 +31,8 @@ const SalasPage = ({
     // Agrupar salas por turno
     const groupedByTurno = useMemo(() => {
         const groups = {};
-        salas.forEach(sala => {
+        const salasValidas = Array.isArray(salas) ? salas : [];
+        salasValidas.forEach(sala => {
             const turno = sala.turno || 'Sin turno';
             if (!groups[turno]) {
                 groups[turno] = [];
@@ -43,8 +44,9 @@ const SalasPage = ({
 
     // Filtrar salas según pestaña activa
     const filteredSalas = useMemo(() => {
+        const salasValidas = Array.isArray(salas) ? salas : [];
         if (activeTab === 'todos') {
-            return salas;
+            return salasValidas;
         }
         return groupedByTurno[activeTab] || [];
     }, [activeTab, salas, groupedByTurno]);

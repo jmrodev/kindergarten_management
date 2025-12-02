@@ -97,7 +97,7 @@ const StudentList = ({ alumnos, loading, onEdit, onDelete, onSelect }) => {
                 <h2 className="mb-0">
                     <span style={{fontSize: '1.8rem'}}><span className="material-icons">groups</span></span> Listado de Alumnos
                 </h2>
-                {alumnos.length > 0 && (
+                {Array.isArray(alumnos) && alumnos.length > 0 && (
                     <span className="text-muted" style={{fontSize: '0.95rem'}}>
                         <span className="material-icons" style={{fontSize: '1rem', verticalAlign: 'middle'}}>info</span>
                         {' '}{alumnos.length} alumno{alumnos.length !== 1 ? 's' : ''} encontrado{alumnos.length !== 1 ? 's' : ''}
@@ -105,11 +105,11 @@ const StudentList = ({ alumnos, loading, onEdit, onDelete, onSelect }) => {
                 )}
             </div>
 
-            {alumnos.length === 0 ? (
+            {Array.isArray(alumnos) && alumnos.length === 0 ? (
                 <Alert variant="warning" className="shadow-sm border-0 py-4">
                     <Alert.Heading className="h5"><span className="material-icons">search</span> No se encontraron alumnos</Alert.Heading>
                     <p className="mb-0">
-                        No hay alumnos que coincidan con los criterios de búsqueda. 
+                        No hay alumnos que coincidan con los criterios de búsqueda.
                         Intente ajustar los filtros o registre un nuevo alumno.
                     </p>
                 </Alert>
@@ -136,114 +136,123 @@ const StudentList = ({ alumnos, loading, onEdit, onDelete, onSelect }) => {
                             </tr>
                         </thead>
                         <tbody>
-                            {alumnos.map((alumno, index) => (
-                                <tr 
-                                    key={alumno.id} 
-                                    onClick={() => onSelect(alumno)} 
-                                    style={{
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s ease',
-                                        backgroundColor: index % 2 === 0 ? '#f8f9fa' : 'white'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.backgroundColor = '#e7f3ff';
-                                        e.currentTarget.style.transform = 'scale(1.01)';
-                                        e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.backgroundColor = index % 2 === 0 ? '#f8f9fa' : 'white';
-                                        e.currentTarget.style.transform = 'scale(1)';
-                                        e.currentTarget.style.boxShadow = 'none';
-                                    }}
-                                >
-                                    <td className="py-3 px-4 fw-semibold text-dark" style={{fontSize: '1.05rem'}}>
-                                        {`${alumno.nombre} ${alumno.apellidoPaterno} ${alumno.apellidoMaterno}`}
-                                        {alumno.alias && (
-                                            <Badge bg="light" text="dark" className="ms-2" style={{fontSize: '0.85rem'}}>
-                                                "{alumno.alias}"
-                                            </Badge>
-                                        )}
-                                    </td>
-                                    <td className="py-3 px-3">
-                                        <span 
-                                            className="px-4 py-2 d-inline-block"
-                                            style={{
-                                                fontSize: '0.95rem',
-                                                fontWeight: '600',
-                                                borderRadius: '4px',
-                                                backgroundColor: darkMode ? getEdadColor(calcularEdad(alumno.fechaNacimiento)).darkBg : getEdadColor(calcularEdad(alumno.fechaNacimiento)).bg,
-                                                color: darkMode ? getEdadColor(calcularEdad(alumno.fechaNacimiento)).darkColor : getEdadColor(calcularEdad(alumno.fechaNacimiento)).color,
-                                                border: `2px solid ${darkMode ? getEdadColor(calcularEdad(alumno.fechaNacimiento)).darkBorder : getEdadColor(calcularEdad(alumno.fechaNacimiento)).border}`
-                                            }}
-                                        >
-                                            {calcularEdad(alumno.fechaNacimiento)} años
-                                        </span>
-                                    </td>
-                                    <td className="py-3 px-3">
-                                        <span 
-                                            className="px-4 py-2 d-inline-block"
-                                            style={{
-                                                fontSize: '0.95rem',
-                                                fontWeight: '600',
-                                                borderRadius: '4px',
-                                                backgroundColor: darkMode ? getSalaColor(alumno.sala?.nombre).darkBg : getSalaColor(alumno.sala?.nombre).bg,
-                                                color: darkMode ? getSalaColor(alumno.sala?.nombre).darkColor : getSalaColor(alumno.sala?.nombre).color,
-                                                border: `2px solid ${darkMode ? getSalaColor(alumno.sala?.nombre).darkBorder : getSalaColor(alumno.sala?.nombre).border}`
-                                            }}
-                                        >
-                                            {alumno.sala ? alumno.sala.nombre : 'N/A'}
-                                        </span>
-                                    </td>
-                                    <td className="py-3 px-3">
-                                        <span 
-                                            className="px-4 py-2 d-inline-block"
-                                            style={{
-                                                fontSize: '0.95rem',
-                                                fontWeight: '600',
-                                                borderRadius: '4px',
-                                                backgroundColor: darkMode ? getTurnoColor(alumno.turno).darkBg : getTurnoColor(alumno.turno).bg,
-                                                color: darkMode ? getTurnoColor(alumno.turno).darkColor : getTurnoColor(alumno.turno).color,
-                                                border: `2px solid ${darkMode ? getTurnoColor(alumno.turno).darkBorder : getTurnoColor(alumno.turno).border}`
-                                            }}
-                                        >
-                                            {getTurnoIcon(alumno.turno)} {alumno.turno}
-                                        </span>
-                                    </td>
-                                    <td 
-                                        className="py-3 px-3 text-center" 
-                                        onClick={(e) => e.stopPropagation()}
+                            {Array.isArray(alumnos) ? (
+                                alumnos.map((alumno, index) => (
+                                    <tr
+                                        key={alumno.id}
+                                        onClick={() => onSelect(alumno)}
+                                        style={{
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s ease',
+                                            backgroundColor: index % 2 === 0 ? '#f8f9fa' : 'white'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#e7f3ff';
+                                            e.currentTarget.style.transform = 'scale(1.01)';
+                                            e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = index % 2 === 0 ? '#f8f9fa' : 'white';
+                                            e.currentTarget.style.transform = 'scale(1)';
+                                            e.currentTarget.style.boxShadow = 'none';
+                                        }}
                                     >
-                                        <div className="d-flex gap-2 justify-content-center">
-                                            <Button 
-                                                variant="outline-primary" 
-                                                size="sm" 
-                                                onClick={() => onEdit(alumno)}
-                                                className="shadow-sm px-3"
+                                        <td className="py-3 px-4 fw-semibold text-dark" style={{fontSize: '1.05rem'}}>
+                                            {`${alumno.nombre} ${alumno.apellidoPaterno} ${alumno.apellidoMaterno}`}
+                                            {alumno.alias && (
+                                                <Badge bg="light" text="dark" className="ms-2" style={{fontSize: '0.85rem'}}>
+                                                    "{alumno.alias}"
+                                                </Badge>
+                                            )}
+                                        </td>
+                                        <td className="py-3 px-3">
+                                            <span
+                                                className="px-4 py-2 d-inline-block"
                                                 style={{
-                                                    borderWidth: '2px',
-                                                    fontWeight: '500',
-                                                    transition: 'all 0.2s ease'
+                                                    fontSize: '0.95rem',
+                                                    fontWeight: '600',
+                                                    borderRadius: '4px',
+                                                    backgroundColor: darkMode ? getEdadColor(calcularEdad(alumno.fechaNacimiento)).darkBg : getEdadColor(calcularEdad(alumno.fechaNacimiento)).bg,
+                                                    color: darkMode ? getEdadColor(calcularEdad(alumno.fechaNacimiento)).darkColor : getEdadColor(calcularEdad(alumno.fechaNacimiento)).color,
+                                                    border: `2px solid ${darkMode ? getEdadColor(calcularEdad(alumno.fechaNacimiento)).darkBorder : getEdadColor(calcularEdad(alumno.fechaNacimiento)).border}`
                                                 }}
                                             >
-                                                <span className="material-icons" style={{fontSize: '1rem'}}>edit</span> Editar
-                                            </Button>
-                                            <Button 
-                                                variant="outline-danger" 
-                                                size="sm" 
-                                                onClick={() => onDelete(alumno.id)}
-                                                className="shadow-sm px-3"
+                                                {calcularEdad(alumno.fechaNacimiento)} años
+                                            </span>
+                                        </td>
+                                        <td className="py-3 px-3">
+                                            <span
+                                                className="px-4 py-2 d-inline-block"
                                                 style={{
-                                                    borderWidth: '2px',
-                                                    fontWeight: '500',
-                                                    transition: 'all 0.2s ease'
+                                                    fontSize: '0.95rem',
+                                                    fontWeight: '600',
+                                                    borderRadius: '4px',
+                                                    backgroundColor: darkMode ? getSalaColor(alumno.sala?.nombre).darkBg : getSalaColor(alumno.sala?.nombre).bg,
+                                                    color: darkMode ? getSalaColor(alumno.sala?.nombre).darkColor : getSalaColor(alumno.sala?.nombre).color,
+                                                    border: `2px solid ${darkMode ? getSalaColor(alumno.sala?.nombre).darkBorder : getSalaColor(alumno.sala?.nombre).border}`
                                                 }}
                                             >
-                                                <span className="material-icons" style={{fontSize: '1rem'}}>delete</span> Eliminar
-                                            </Button>
-                                        </div>
+                                                {alumno.sala ? alumno.sala.nombre : 'N/A'}
+                                            </span>
+                                        </td>
+                                        <td className="py-3 px-3">
+                                            <span
+                                                className="px-4 py-2 d-inline-block"
+                                                style={{
+                                                    fontSize: '0.95rem',
+                                                    fontWeight: '600',
+                                                    borderRadius: '4px',
+                                                    backgroundColor: darkMode ? getTurnoColor(alumno.turno).darkBg : getTurnoColor(alumno.turno).bg,
+                                                    color: darkMode ? getTurnoColor(alumno.turno).darkColor : getTurnoColor(alumno.turno).color,
+                                                    border: `2px solid ${darkMode ? getTurnoColor(alumno.turno).darkBorder : getTurnoColor(alumno.turno).border}`
+                                                }}
+                                            >
+                                                {getTurnoIcon(alumno.turno)} {alumno.turno}
+                                            </span>
+                                        </td>
+                                        <td
+                                            className="py-3 px-3 text-center"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <div className="d-flex gap-2 justify-content-center">
+                                                <Button
+                                                    variant="outline-primary"
+                                                    size="sm"
+                                                    onClick={() => onEdit(alumno)}
+                                                    className="shadow-sm px-3"
+                                                    style={{
+                                                        borderWidth: '2px',
+                                                        fontWeight: '500',
+                                                        transition: 'all 0.2s ease'
+                                                    }}
+                                                >
+                                                    <span className="material-icons" style={{fontSize: '1rem'}}>edit</span> Editar
+                                                </Button>
+                                                <Button
+                                                    variant="outline-danger"
+                                                    size="sm"
+                                                    onClick={() => onDelete(alumno.id)}
+                                                    className="shadow-sm px-3"
+                                                    style={{
+                                                        borderWidth: '2px',
+                                                        fontWeight: '500',
+                                                        transition: 'all 0.2s ease'
+                                                    }}
+                                                >
+                                                    <span className="material-icons" style={{fontSize: '1rem'}}>delete</span> Eliminar
+                                                </Button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="5" className="text-center p-4 text-muted">
+                                        <span className="material-icons" style={{fontSize: '2rem', opacity: 0.5}}>person</span>
+                                        <div>No hay alumnos para mostrar</div>
                                     </td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </Table>
                 </Card>

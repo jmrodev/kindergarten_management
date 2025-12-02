@@ -21,6 +21,10 @@ const staffService = {
 
   delete: (id) => {
     return api.delete(`/staff/${id}`);
+  },
+
+  getRoles: () => {
+    return api.get(`/staff/roles`);
   }
 };
 

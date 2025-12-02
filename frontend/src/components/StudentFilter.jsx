@@ -273,7 +273,7 @@ const StudentFilter = ({ onFilter, onClear, salas }) => {
                                                 }}
                                             >
                                                 <option value="">Todas las salas</option>
-                                                {salas && salas.map(sala => (
+                                                {Array.isArray(salas) && salas.map(sala => (
                                                     <option key={sala.id} value={sala.id}>
                                                         {sala.nombre}
                                                     </option>

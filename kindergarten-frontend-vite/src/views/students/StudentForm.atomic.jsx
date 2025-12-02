@@ -522,7 +522,6 @@ const StudentForm = () => {
                       </Col>
                     </Row>
                   {/* Información de dirección */}
-                  </FormSection>
                   <FormSection title="Dirección" subtitle="Información de la dirección del alumno">
                     <Row>
                       <Col md={6}>
@@ -757,6 +756,49 @@ const StudentForm = () => {
         </Card.Body>
       </Card>
 
+      <style jsx>{`
+        .tabs-container {
+          width: 100%;
+        }
+        
+        .tab-nav {
+          display: flex;
+          border-bottom: 1px solid var(--pastel-border);
+          margin-bottom: 1rem;
+        }
+        
+        .tab-button {
+          padding: 0.75rem 1.5rem;
+          border: none;
+          background: none;
+          cursor: pointer;
+          border-bottom: 2px solid transparent;
+          color: var(--pastel-text);
+        }
+        
+        .tab-button.active {
+          border-bottom: 2px solid var(--primary-color);
+          color: var(--primary-color);
+          font-weight: 500;
+        }
+        
+        .tab-content {
+          min-height: 400px;
+        }
+        
+        .alert {
+          padding: 0.75rem 1.25rem;
+          margin-bottom: 1rem;
+          border: 1px solid transparent;
+          border-radius: 0.375rem;
+        }
+        
+        .alert-danger {
+          color: #721c24;
+          background-color: #f8d7da;
+          border-color: #f5c6cb;
+        }
+      `}</style>
     </Container>
   );
 };

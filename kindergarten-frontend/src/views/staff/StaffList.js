@@ -21,7 +21,7 @@ const StaffList = () => {
       setLoading(true);
 
       const response = await staffService.getAll(filters);
-      setStaff(response.data.data || []);
+      setStaff(response.data || []);
     } catch (err) {
       setError('Error al cargar el personal: ' + err.message);
       console.error('Error fetching staff:', err);

@@ -5,20 +5,22 @@ import { getClassroomStatus } from '../utils/classroomStatus';
 
 const Dashboard = ({ alumnos, salas, onNavigate, onShowOcupacion }) => {
     // Estadísticas de alumnos
-    const totalAlumnos = alumnos.length;
-    const alumnosSinSala = alumnos.filter(a => !a.sala).length;
-    const alumnosMañana = alumnos.filter(a => a.turno === 'Mañana').length;
-    const alumnosTarde = alumnos.filter(a => a.turno === 'Tarde').length;
+    const alumnosValidos = Array.isArray(alumnos) ? alumnos : [];
+    const totalAlumnos = alumnosValidos.length;
+    const alumnosSinSala = alumnosValidos.filter(a => !a.sala).length;
+    const alumnosMañana = alumnosValidos.filter(a => a.turno === 'Mañana').length;
+    const alumnosTarde = alumnosValidos.filter(a => a.turno === 'Tarde').length;
 
     // Estadísticas de salas
-    const totalSalas = salas.length;
-    const salasVacias = salas.filter(s => s.asignados === 0).length;
-    const salasCompletas = salas.filter(s => s.asignados >= s.capacidad).length;
-    const salasSobrepasadas = salas.filter(s => s.asignados > s.capacidad).length;
-    
+    const salasValidas = Array.isArray(salas) ? salas : [];
+    const totalSalas = salasValidas.length;
+    const salasVacias = salasValidas.filter(s => s.asignados === 0).length;
+    const salasCompletas = salasValidas.filter(s => s.asignados >= s.capacidad).length;
+    const salasSobrepasadas = salasValidas.filter(s => s.asignados > s.capacidad).length;
+
     // Capacidad total
-    const capacidadTotal = salas.reduce((sum, s) => sum + s.capacidad, 0);
-    const ocupacionTotal = salas.reduce((sum, s) => sum + (s.asignados || 0), 0);
+    const capacidadTotal = salasValidas.reduce((sum, s) => sum + s.capacidad, 0);
+    const ocupacionTotal = salasValidas.reduce((sum, s) => sum + (s.asignados || 0), 0);
     const porcentajeOcupacion = capacidadTotal > 0 ? (ocupacionTotal / capacidadTotal) * 100 : 0;
     const espaciosDisponibles = capacidadTotal - ocupacionTotal;
 
@@ -35,12 +37,12 @@ const Dashboard = ({ alumnos, salas, onNavigate, onShowOcupacion }) => {
         return edad;
     };
 
-    const edadPromedio = alumnos.length > 0
-        ? (alumnos.reduce((sum, a) => sum + calcularEdad(a.fechaNacimiento), 0) / alumnos.length).toFixed(1)
+    const edadPromedio = alumnosValidos.length > 0
+        ? (alumnosValidos.reduce((sum, a) => sum + calcularEdad(a.fechaNacimiento), 0) / alumnosValidos.length).toFixed(1)
         : 0;
 
     // Salas con más alumnos
-    const salasOrdenadas = [...salas].sort((a, b) => (b.asignados || 0) - (a.asignados || 0)).slice(0, 5);
+    const salasOrdenadas = [...salasValidas].sort((a, b) => (b.asignados || 0) - (a.asignados || 0)).slice(0, 5);
 
     return (
         <div>

@@ -28,7 +28,8 @@ const AlumnosPage = ({
     // Agrupar alumnos por sala y turno
     const groupedBySalaTurno = useMemo(() => {
         const groups = {};
-        alumnos.forEach(alumno => {
+        const alumnosValidos = Array.isArray(alumnos) ? alumnos : [];
+        alumnosValidos.forEach(alumno => {
             if (alumno.sala && alumno.turno) {
                 const key = `${alumno.sala.nombre}-${alumno.turno}`;
                 if (!groups[key]) {
@@ -46,8 +47,9 @@ const AlumnosPage = ({
 
     // Filtrar alumnos según pestaña activa
     const filteredAlumnos = useMemo(() => {
+        const alumnosValidos = Array.isArray(alumnos) ? alumnos : [];
         if (activeTab === 'todos') {
-            return alumnos;
+            return alumnosValidos;
         }
         return groupedBySalaTurno[activeTab]?.alumnos || [];
     }, [activeTab, alumnos, groupedBySalaTurno]);
@@ -105,7 +107,7 @@ const AlumnosPage = ({
                         <span className="material-icons" style={{ fontSize: '1rem', verticalAlign: 'middle' }}>
                             groups
                         </span>
-                        {' '}Todos ({alumnos.length})
+                        {' '}Todos ({Array.isArray(alumnos) ? alumnos.length : 0})
                     </Nav.Link>
                 </Nav.Item>
                 {Object.keys(groupedBySalaTurno).sort().map(key => {
@@ -116,14 +118,14 @@ const AlumnosPage = ({
                                 <span className="material-icons" style={{ fontSize: '1rem', verticalAlign: 'middle' }}>
                                     class
                                 </span>
-                                {' '}{group.sala} - {group.turno} ({group.alumnos.length})
+                                {' '}{group.sala} - {group.turno} ({Array.isArray(group.alumnos) ? group.alumnos.length : 0})
                             </Nav.Link>
                         </Nav.Item>
                     );
                 })}
             </Nav>
 
-            {filteredAlumnos.length === 0 && !loading ? (
+            {Array.isArray(filteredAlumnos) && filteredAlumnos.length === 0 && !loading ? (
                 <Card>
                     <Card.Body className="text-center p-5">
                         <span className="material-icons" style={{ fontSize: '4rem', color: '#ccc' }}>

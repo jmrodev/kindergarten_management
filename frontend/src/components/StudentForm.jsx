@@ -420,7 +420,7 @@ const StudentForm = ({ show, initialData = {}, onSubmit, onCancel, showError, sh
                                     required
                                 >
                                     <option value="">Seleccionar sala...</option>
-                                    {salas.map(sala => (
+                                    {Array.isArray(salas) && salas.map(sala => (
                                         <option key={sala.id} value={sala.id}>
                                             {sala.nombre} (Cap: {sala.capacidad})
                                         </option>

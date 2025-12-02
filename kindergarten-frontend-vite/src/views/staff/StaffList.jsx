@@ -1,6 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Row, Col, Card, Table, Button, Spinner, Alert, Modal, Form } from 'react-bootstrap';
-import { PersonFill, Pencil, Trash, Plus, Eye } from 'react-bootstrap-icons';
+import { PersonFill, Plus } from 'react-bootstrap-icons';
+import OfficeTable from '../../components/organisms/OfficeTable';
+import TableCell from '../../components/atoms/TableCell';
+import TableRow from '../../components/molecules/TableRow';
+import TableHeaderCell from '../../components/atoms/TableHeaderCell';
+import Badge from '../../components/atoms/Badge';
+import Icon from '../../components/atoms/Icon';
+import Container from '../../components/atoms/Container';
+import { Row, Col } from '../../components/atoms/Grid';
+import Card from '../../components/atoms/Card';
+import Button from '../../components/atoms/Button';
+import Spinner from '../../components/atoms/Spinner';
+import Modal from 'react-bootstrap/Modal';
+import Form from 'react-bootstrap/Form';
+import Alert from 'react-bootstrap/Alert';
+import { safeExtractData, getColorVariantById, normalizeName } from '../../utils/apiResponseHandler';
 import staffService from '../../api/staffService';
 
 const StaffList = () => {
@@ -21,7 +35,7 @@ const StaffList = () => {
       setLoading(true);
 
       const response = await staffService.getAll(filters);
-      setStaff(response.data.data || []);
+      setStaff(safeExtractData(response));
     } catch (err) {
       setError('Error al cargar el personal: ' + err.message);
       console.error('Error fetching staff:', err);
@@ -69,165 +83,98 @@ const StaffList = () => {
   }
 
   return (
-    <Container fluid className="py-4">
-      <Row className="mb-4">
-        <Col>
-          <h1 className="h3 mb-0">
-            <PersonFill className="me-2" />
-            Gestión de Personal
-          </h1>
-          <p className="text-muted">Administrar la información del personal del jardín</p>
-        </Col>
-      </Row>
+    <Container fluid className="p-0 m-0" style={{padding: '0', margin: '0', marginTop: '0', paddingTop: '0'}}>
 
-      {error && <Alert variant="danger">{error}</Alert>}
-
-      <Card className="mb-4">
-        <Card.Header>
-          <Row className="align-items-center">
-            <Col>
-              <h5 className="mb-0">Filtros de Búsqueda</h5>
-            </Col>
-            <Col xs="auto">
-              <Button variant="primary" href="/staff/new">
-                <Plus className="me-2" />
-                Nuevo Personal
-              </Button>
-            </Col>
-          </Row>
+      <Card className="border-0 m-0" style={{marginTop: '0', paddingTop: '0', border: 'none'}}>
+        <Card.Header className="p-1" style={{padding: '2px', borderBottom: '1px solid #dee2e6'}}>
+          <h5 className="mb-0" style={{fontSize: '0.9rem', padding: '4px 8px'}}>Listado de Personal</h5>
         </Card.Header>
-        <Card.Body>
-          <Form>
-            <Row>
-              <Col md={4}>
-                <Form.Group>
-                  <Form.Label>Buscar</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Nombre, apellido o DNI..."
-                    value={filters.search}
-                    onChange={(e) => handleFilterChange('search', e.target.value)}
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={4}>
-                <Form.Group>
-                  <Form.Label>Rol</Form.Label>
-                  <Form.Select
-                    value={filters.role}
-                    onChange={(e) => handleFilterChange('role', e.target.value)}
-                  >
-                    <option value="">Todos los roles</option>
-                    <option value="Administrator">Administrador</option>
-                    <option value="Director">Director</option>
-                    <option value="Teacher">Docente</option>
-                    <option value="Secretary">Secretario</option>
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-              <Col md={4}>
-                <Form.Group>
-                  <Form.Label>Estado</Form.Label>
-                  <Form.Select
-                    value={filters.isActive}
-                    onChange={(e) => handleFilterChange('isActive', e.target.value)}
-                  >
-                    <option value="">Todos</option>
-                    <option value="true">Activo</option>
-                    <option value="false">Inactivo</option>
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-            </Row>
-          </Form>
-        </Card.Body>
-      </Card>
-
-      <Card>
-        <Card.Header>
-          <h5 className="mb-0">Listado de Personal</h5>
-        </Card.Header>
-        <Card.Body className="p-0">
-          <div className="table-responsive">
-            <Table className="mb-0" striped hover>
-              <thead className="table-light">
-                <tr>
-                  <th>Nombre</th>
-                  <th>DNI</th>
-                  <th>Email</th>
-                  <th>Rol</th>
-                  <th>Sala Asignada</th>
-                  <th>Estado</th>
-                  <th>Último Login</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {staff.length === 0 ? (
-                  <tr>
-                    <td colSpan="8" className="text-center py-4">
-                      No se encontró personal
-                    </td>
-                  </tr>
-                ) : (
-                  staff.map((staffMember) => (
-                    <tr key={staffMember.id}>
-                      <td>
-                        {staffMember.first_name} {staffMember.paternal_surname} {staffMember.maternal_surname}
-                      </td>
-                      <td>{staffMember.dni}</td>
-                      <td>{staffMember.email}</td>
-                      <td>
-                        <span className="badge bg-secondary">
-                          {staffMember.role_name}
-                        </span>
-                      </td>
-                      <td>{staffMember.classroom_name || 'No asignado'}</td>
-                      <td>
-                        <span className={`badge ${staffMember.is_active ? 'bg-success' : 'bg-secondary'}`}>
-                          {staffMember.is_active ? 'Activo' : 'Inactivo'}
-                        </span>
-                      </td>
-                      <td>
-                        {staffMember.last_login 
-                          ? new Date(staffMember.last_login).toLocaleDateString() 
-                          : 'Nunca'
-                        }
-                      </td>
-                      <td>
-                        <Button 
-                          variant="outline-primary" 
-                          size="sm" 
-                          className="me-2"
-                          href={`/staff/edit/${staffMember.id}`}
-                        >
-                          <Pencil size={16} />
-                        </Button>
-                        <Button 
-                          variant="outline-info" 
-                          size="sm" 
-                          className="me-2"
-                          href={`/staff/${staffMember.id}`}
-                        >
-                          <Eye size={16} />
-                        </Button>
-                        <Button 
-                          variant="outline-danger" 
-                          size="sm"
-                          onClick={() => {
-                            setStaffToDelete(staffMember);
-                            setShowDeleteModal(true);
-                          }}
-                        >
-                          <Trash size={16} />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </Table>
-          </div>
+        <Card.Body className="p-0" style={{padding: '0'}}>
+          <OfficeTable
+            headers={[
+              { label: 'Nombre' },
+              { label: 'DNI' },
+              { label: 'Email' },
+              { label: 'Rol' },
+              { label: 'Sala Asignada' },
+              { label: 'Turno' },
+              { label: 'Estado' },
+              { label: 'Último Login' },
+              { label: 'Acciones' }
+            ]}
+            data={staff}
+            renderRow={(staffMember) => (
+              <>
+                <TableCell>
+                  {normalizeName(staffMember.first_name)} {normalizeName(staffMember.paternal_surname)} {normalizeName(staffMember.maternal_surname)}
+                </TableCell>
+                <TableCell>{staffMember.dni}</TableCell>
+                <TableCell>{staffMember.email}</TableCell>
+                <TableCell>
+                  <Badge type="role" variant={getColorVariantById(staffMember.role_id || staffMember.role_name)} capitalize="uppercase">
+                    {staffMember.role_name}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {staffMember.classroom_name ? (
+                    <Badge type="classroom" variant={getColorVariantById(staffMember.classroom_id || staffMember.classroom_name)} capitalize="uppercase">
+                      {staffMember.classroom_name}
+                    </Badge>
+                  ) : (
+                    <Badge type="classroom" variant="default" capitalize="uppercase">
+                      No asignado
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {staffMember.shift ? (
+                    <Badge type="classroom" variant={getColorVariantById(staffMember.shift_id || staffMember.shift)} capitalize="uppercase">
+                      {staffMember.shift}
+                    </Badge>
+                  ) : (
+                    <Badge type="classroom" variant="default" capitalize="uppercase">
+                      Sin turno
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Badge type="status" variant={getColorVariantById(staffMember.is_active ? 'active' : 'inactive')} capitalize="uppercase">
+                    {staffMember.is_active ? 'Activo' : 'Inactivo'}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {staffMember.last_login
+                    ? new Date(staffMember.last_login).toLocaleString('es-AR', {
+                        dateStyle: 'short',
+                        timeStyle: 'short'
+                      })
+                    : 'Nunca'
+                  }
+                </TableCell>
+                <TableCell>
+                  <div className="office-actions-container">
+                    <a href={`/staff/edit/${staffMember.id}`} title="Editar" style={{ textDecoration: 'none', color: 'inherit', margin: '0.25rem' }}>
+                      <Icon type="edit" size={18} title="Editar" />
+                    </a>
+                    <a href={`/staff/${staffMember.id}`} title="Ver Detalles" style={{ textDecoration: 'none', color: 'inherit', margin: '0.25rem' }}>
+                      <Icon type="view" size={18} title="Ver Detalles" />
+                    </a>
+                    <span
+                      onClick={() => {
+                        setStaffToDelete(staffMember);
+                        setShowDeleteModal(true);
+                      }}
+                      title="Eliminar"
+                      style={{ cursor: 'pointer', margin: '0.25rem' }}
+                    >
+                      <Icon type="delete" size={18} title="Eliminar" />
+                    </span>
+                  </div>
+                </TableCell>
+              </>
+            )}
+            emptyMessage="No se encontró personal"
+          />
         </Card.Body>
       </Card>
 
@@ -238,7 +185,7 @@ const StaffList = () => {
         </Modal.Header>
         <Modal.Body>
           ¿Está seguro de que desea eliminar al personal <strong>
-            {staffToDelete?.first_name} {staffToDelete?.paternal_surname}
+            {staffToDelete?.first_name && normalizeName(staffToDelete.first_name)} {staffToDelete?.paternal_surname && normalizeName(staffToDelete.paternal_surname)}
           </strong>? Esta acción no se puede deshacer.
         </Modal.Body>
         <Modal.Footer>
