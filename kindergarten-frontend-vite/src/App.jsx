@@ -4,6 +4,9 @@ import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Dashboard from './views/Dashboard.jsx';
 import Login from './views/auth/Login.jsx';
+import GoogleAuth from './views/auth/GoogleAuth.jsx';
+import ParentDashboard from './views/ParentDashboard.jsx';
+import RegisterChildForm from './views/RegisterChildForm.jsx';
 import StudentList from './views/students/StudentList.jsx';
 import StudentForm from './views/students/StudentForm.jsx';
 import ClassroomList from './views/classrooms/ClassroomList.jsx';
@@ -18,7 +21,7 @@ import VaccinationList from './views/vaccinations/VaccinationList.jsx';
 import DocumentReviewList from './views/documentReviews/DocumentReviewList.jsx';
 import MeetingMinutesList from './views/meetingMinutes/MeetingMinutesList.jsx';
 import ActivityList from './views/activities/ActivityList.jsx';
-import Container from './components/atoms/Container';
+import { Container } from 'react-bootstrap';
 
 // Componente para rutas protegidas
 function App() {
@@ -40,8 +43,9 @@ function AppContent() {
     <div className="app-container">
       <Container fluid className="main-content">
         <Routes>
-          {/* Ruta pública para login */}
+          {/* Rutas públicas */}
           <Route path="/login" element={currentUser ? <Navigate to="/dashboard" /> : <Login />} />
+          <Route path="/auth/google" element={<GoogleAuth />} />
 
           {/* Rutas protegidas */}
           <Route path="/" element={<ProtectedRoute />}>
@@ -85,6 +89,10 @@ function AppContent() {
 
             {/* Rutas de actividades */}
             <Route path="activities" element={<ActivityList />} />
+
+            {/* Rutas para padres */}
+            <Route path="parent-dashboard" element={<ParentDashboard />} />
+            <Route path="register-child" element={<RegisterChildForm />} />
           </Route>
 
           {/* Redirección por defecto */}

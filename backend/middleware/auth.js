@@ -6,11 +6,20 @@ const { getConnection } = require('../db');
 
 const generateToken = (user) => {
   // Convertir BigInt a número o string para evitar problemas de serialización
-  const payload = {
+  let payload = {
     id: typeof user.id === 'bigint' ? Number(user.id) : user.id,
-    email: user.email,
     role: user.role
   };
+
+  // Si es un usuario del portal de padres (con Google), incluir información específica
+  if (user.google_user) {
+    payload.google_user = user.google_user;
+    payload.email = user.email;
+    payload.name = user.name;
+  } else {
+    // Para usuarios normales del sistema (staff), usar la información tradicional
+    payload.email = user.email;
+  }
 
   return jwt.sign(
     payload,

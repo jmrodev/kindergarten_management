@@ -42,7 +42,10 @@ const upload = multer({
 
 class ParentPortalController {
     ensureAuthenticated(req, res, next) {
-        if (req.isAuthenticated()) {
+        // Para JWT, la autenticación se maneja en el middleware 'protect'
+        // Este método es mantenido para compatibilidad, pero no se usará con JWT
+        // ya que la verificación se hace con el middleware 'protect' importado en las rutas
+        if (req.user) {
             return next();
         }
         res.status(401).json({ error: 'Not authenticated' });
@@ -50,13 +53,15 @@ class ParentPortalController {
 
     async checkAuth(req, res) {
         try {
-            if (req.isAuthenticated()) {
+            // Para JWT opcional, req.user puede ser null si no hay token o es inválido
+            if (req.user) {
                 res.json({
                     authenticated: true,
                     user: {
                         id: req.user.id,
                         email: req.user.email,
-                        name: req.user.name
+                        name: req.user.name,
+                        google_user: req.user.google_user
                     }
                 });
             } else {
@@ -68,11 +73,17 @@ class ParentPortalController {
         }
     }
 
-    async getDraft(req, res) {
+    async getDraftByUserId(req, res) {
         let conn;
         try {
             const pool = req.app.get('pool');
-            const userId = req.user.id;
+            const userId = req.params.userId; // Permitir obtener el borrador de un usuario específico
+
+            // Verificar que el usuario esté autenticado y que el ID coincida o tenga permisos adecuados
+            if (req.user.id != userId) {
+                return res.status(403).json({ error: 'Forbidden' });
+            }
+
             conn = await pool.getConnection();
             const rows = await conn.query(
                 'SELECT * FROM parent_registration_drafts WHERE user_id = ?',
@@ -83,23 +94,23 @@ class ParentPortalController {
                 let formData;
                 try {
                     // Intentar parsear el JSON
-                    formData = typeof rows[0].form_data === 'string' 
-                        ? JSON.parse(rows[0].form_data) 
+                    formData = typeof rows[0].form_data === 'string'
+                        ? JSON.parse(rows[0].form_data)
                         : rows[0].form_data;
                 } catch (parseError) {
                     console.error('Error parsing draft data:', parseError);
                     formData = {};
                 }
-                
+
                 res.json({
-                    draft: {
+                    data: {
                         data: formData,
                         currentStep: rows[0].current_step,
                         updatedAt: rows[0].updated_at
                     }
                 });
             } else {
-                res.json({ draft: null });
+                res.json({ data: null });
             }
         } catch (error) {
             console.error('Get draft error:', error);
@@ -107,6 +118,11 @@ class ParentPortalController {
         } finally {
             if (conn) conn.release();
         }
+    }
+
+    async getDraft(req, res) {
+        // Este método ahora se usará para obtener el borrador del usuario actual
+        this.getDraftByUserId(req, res);
     }
 
     async saveDraft(req, res) {
@@ -136,11 +152,17 @@ class ParentPortalController {
         }
     }
 
-    async deleteDraft(req, res) {
+    async deleteDraftByUserId(req, res) {
         let conn;
         try {
             const pool = req.app.get('pool');
-            const userId = req.user.id;
+            const userId = req.params.userId; // Permitir obtener el borrador de un usuario específico
+
+            // Verificar que el usuario esté autenticado y que el ID coincida o tenga permisos adecuados
+            if (req.user.id != userId) {
+                return res.status(403).json({ error: 'Forbidden' });
+            }
+
             conn = await pool.getConnection();
             await conn.query('DELETE FROM parent_registration_drafts WHERE user_id = ?', [userId]);
             res.json({ success: true });
@@ -150,6 +172,11 @@ class ParentPortalController {
         } finally {
             if (conn) conn.release();
         }
+    }
+
+    async deleteDraft(req, res) {
+        // Este método ahora se usará para eliminar el borrador del usuario actual
+        this.deleteDraftByUserId(req, res);
     }
 
     async submitRegistration(req, res) {
@@ -169,35 +196,32 @@ class ParentPortalController {
             const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
 
             const {
-                // Datos alumno
-                nombre, segundoNombre, tercerNombre, alias,
-                apellidoPaterno, apellidoMaterno, dni, fechaNacimiento, turno,
-                salaPreferida, tieneHermanos,
-                // Dirección
-                calle, numero, ciudad, provincia, codigoPostal,
-                // Información médica
-                obraSocial, numeroAfiliado, grupoSanguineo, alergias, medicacion,
-                observacionesMedicas, pediatraNombre, pediatraTelefono, estadoVacunacion,
-                necesidadesEspeciales,
-                // Contacto emergencia
-                nombreEmergencia, relacionEmergencia, telefonoEmergencia,
-                telefonoAlternativoEmergencia, autorizadoRetiroEmergencia,
-                // Responsable
-                nombrePadre, segundoNombrePadre, apellidoPaternoPadre,
-                apellidoMaternoPadre, apellidoPreferidoPadre, dniPadre,
-                telefonoPadre, emailPadre, lugarTrabajo, telefonoTrabajo,
-                relacionConAlumno, autorizadoRetiro, autorizadoCambio,
-                // Autorizaciones
-                autorizacionFotos, autorizacionSalidas, autorizacionAtencionMedica,
-                // Documentos (rutas ya subidas)
-                documents
+                // Datos alumno (using the new form structure from RegisterChildForm.jsx)
+                first_name, middle_name_optional, third_name_optional, nickname_optional,
+                paternal_surname, maternal_surname, dni, birth_date,
+                // Address
+                street, number, city, provincia, postal_code_optional,
+                // Emergency contact
+                emergency_contact_full_name, emergency_contact_relationship,
+                emergency_contact_phone, emergency_contact_alternative_phone,
+                emergency_contact_authorized_pickup,
+                // Medical info
+                health_insurance, affiliate_number, allergies, medications,
+                medical_observations, blood_type, pediatrician_name, pediatrician_phone,
+                vaccination_status, special_needs,
+                // Authorizations
+                photo_authorization, trip_authorization, medical_attention_authorization,
+                // Additional info
+                has_siblings_in_school, observations,
+                // School info
+                classroom_id, shift, status, enrollment_date
             } = sanitizedBody;
 
             // 1. Crear dirección
             const addressResult = await conn.query(
                 `INSERT INTO address (street, number, city, provincia, postal_code_optional)
                  VALUES (?, ?, ?, ?, ?)`,
-                [calle, numero, ciudad, provincia, codigoPostal || null]
+                [street || null, number || null, city || null, provincia || null, postal_code_optional || null]
             );
             const addressId = addressResult.insertId;
 
@@ -205,89 +229,66 @@ class ParentPortalController {
             const emergencyResult = await conn.query(
                 `INSERT INTO emergency_contact (full_name, relationship, phone, alternative_phone, is_authorized_pickup)
                  VALUES (?, ?, ?, ?, ?)`,
-                [nombreEmergencia, relacionEmergencia, telefonoEmergencia, 
-                 telefonoAlternativoEmergencia || null, autorizadoRetiroEmergencia || false]
+                [emergency_contact_full_name || null, emergency_contact_relationship || null,
+                 emergency_contact_phone || null, emergency_contact_alternative_phone || null,
+                 emergency_contact_authorized_pickup || false]
             );
             const emergencyContactId = emergencyResult.insertId;
 
-            // 3. Crear alumno con TODOS los campos
+            // 3. Crear alumno con TODOS los campos desde el formulario de inscripción
             const studentResult = await conn.query(
                 `INSERT INTO student (
                     first_name, middle_name_optional, third_name_optional, nickname_optional,
                     paternal_surname, maternal_surname, dni, birth_date, address_id,
-                    emergency_contact_id, shift, status, enrollment_date,
+                    emergency_contact_id, classroom_id, shift, status, enrollment_date,
                     health_insurance, affiliate_number, allergies, medications,
                     medical_observations, blood_type, pediatrician_name, pediatrician_phone,
                     photo_authorization, trip_authorization, medical_attention_authorization,
                     has_siblings_in_school, special_needs, vaccination_status, observations
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
-                    nombre, segundoNombre || null, tercerNombre || null, alias || null,
-                    apellidoPaterno, apellidoMaterno, dni || null, fechaNacimiento, addressId,
-                    emergencyContactId, turno, 'pendiente', new Date(),
-                    obraSocial || null, numeroAfiliado || null, alergias || null, medicacion || null,
-                    observacionesMedicas || null, grupoSanguineo || null, pediatraNombre || null,
-                    pediatraTelefono || null, autorizacionFotos || false, autorizacionSalidas || false,
-                    autorizacionAtencionMedica || false, tieneHermanos || false, necesidadesEspeciales || null,
-                    estadoVacunacion || 'no_informado', salaPreferida || null
+                    first_name || null, middle_name_optional || null, third_name_optional || null, nickname_optional || null,
+                    paternal_surname || null, maternal_surname || null, dni || null, birth_date || null, addressId,
+                    emergencyContactId, classroom_id || null, shift || null, status || 'preinscripto', enrollment_date || new Date(),
+                    health_insurance || null, affiliate_number || null, allergies || null, medications || null,
+                    medical_observations || null, blood_type || null, pediatrician_name || null, pediatrician_phone || null,
+                    photo_authorization || false, trip_authorization || false, medical_attention_authorization || false,
+                    has_siblings_in_school || false, special_needs || null, vaccination_status || 'no_informado', observations || null
                 ]
             );
             const studentId = studentResult.insertId;
 
-            // 4. Crear tutor/responsable
-            const guardianResult = await conn.query(
-                `INSERT INTO guardian (
-                    first_name, middle_name_optional, paternal_surname, maternal_surname,
-                    preferred_surname, dni, address_id, phone, email_optional,
-                    workplace, work_phone, authorized_pickup, authorized_change,
-                    parent_portal_user_id, role_id
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    nombrePadre, segundoNombrePadre || null, apellidoPaternoPadre,
-                    apellidoMaternoPadre, apellidoPreferidoPadre || null, dniPadre || null,
-                    addressId, telefonoPadre, emailPadre || null, lugarTrabajo || null,
-                    telefonoTrabajo || null, autorizadoRetiro !== false, autorizadoCambio !== false,
-                    req.user.id,
-                    tutorRoleId
-                ]
+            // 4. Crear o asociar tutor/responsable (el padre que está registrando)
+            // Primero verificar si ya existe un guardian para este usuario del portal de padres
+            const existingGuardianQuery = await conn.query(
+                `SELECT id FROM guardian WHERE parent_portal_user_id = ?`,
+                [req.user.id]
             );
-            const guardianId = guardianResult.insertId;
+
+            let guardianId;
+            if (existingGuardianQuery.length > 0) {
+                // Si ya existe un guardian para este usuario del portal, usamos ese
+                guardianId = existingGuardianQuery[0].id;
+            } else {
+                // Si no existe, creamos uno nuevo con información mínima
+                const guardianResult = await conn.query(
+                    `INSERT INTO guardian (
+                        first_name, paternal_surname, dni, parent_portal_user_id, role_id
+                    ) VALUES (?, ?, ?, ?, ?)`,
+                    [req.user.name || 'Nombre', 'Apellido', 'SIN_DNI', req.user.id, tutorRoleId]
+                );
+                guardianId = guardianResult.insertId;
+            }
 
             // 5. Relacionar tutor con alumno
             await conn.query(
                 `INSERT INTO student_guardian (
-                    student_id, guardian_id, relationship_type, is_primary,
-                    custody_rights, financial_responsible
-                ) VALUES (?, ?, ?, ?, ?, ?)`,
-                [studentId, guardianId, relacionConAlumno || 'padre', true, true, true]
+                    student_id, guardian_id, relationship_type, is_primary
+                ) VALUES (?, ?, 'padre', TRUE)`,
+                [studentId, guardianId]
             );
 
-            // 6. Guardar documentos si existen
-            if (documents && Object.keys(documents).length > 0) {
-                const docTypeMap = {
-                    dniAlumno: 'dni',
-                    dniResponsable: 'dni',
-                    certificadoNacimiento: 'certificado_nacimiento',
-                    carnetVacunas: 'certificado_vacunas',
-                    certificadoMedico: 'certificado_medico',
-                    constanciaObraSocial: 'otro'
-                };
-
-                for (const [key, filePath] of Object.entries(documents)) {
-                    if (filePath) {
-                        await conn.query(
-                            `INSERT INTO student_documents (
-                                student_id, document_type, file_name, file_path, 
-                                uploaded_by, upload_date
-                            ) VALUES (?, ?, ?, ?, ?, NOW())`,
-                            [studentId, docTypeMap[key] || 'otro', 
-                             path.basename(filePath), filePath, req.user.id]
-                        );
-                    }
-                }
-            }
-
-            // 7. Registrar el envío con estado pending_review
+            // 6. Registrar el envío con estado pending_review
             await conn.query(
                 `INSERT INTO parent_portal_submissions (user_id, student_id, submitted_at, status)
                  VALUES (?, ?, NOW(), 'pending_review')`,
@@ -295,20 +296,81 @@ class ParentPortalController {
             );
 
             await conn.commit();
-            res.json({ 
-                success: true, 
+            res.json({
+                success: true,
                 message: 'Registro completado exitosamente',
-                studentId 
+                studentId
             });
         } catch (error) {
             await conn.rollback();
             console.error('Submit registration error:', error);
-            res.status(500).json({ 
+            res.status(500).json({
                 error: 'Error al procesar el registro',
-                details: error.message 
+                details: error.message
             });
         } finally {
             conn.release();
+        }
+    }
+
+    async getParentUser(req, res) {
+        let conn;
+        try {
+            const pool = req.app.get('pool');
+            const parentId = req.params.id;
+            conn = await pool.getConnection();
+
+            const rows = await conn.query(
+                'SELECT * FROM parent_portal_users WHERE id = ?',
+                [parentId]
+            );
+
+            if (rows.length > 0) {
+                res.json({
+                    data: {
+                        id: rows[0].id,
+                        email: rows[0].email,
+                        name: rows[0].name,
+                        created_at: rows[0].created_at
+                    }
+                });
+            } else {
+                res.status(404).json({ error: 'Parent user not found' });
+            }
+        } catch (error) {
+            console.error('Get parent user error:', error);
+            res.status(500).json({ error: 'Error getting parent user' });
+        } finally {
+            if (conn) conn.release();
+        }
+    }
+
+    async getStudentsByParent(req, res) {
+        let conn;
+        try {
+            const pool = req.app.get('pool');
+            const parentId = req.params.parentId;
+            conn = await pool.getConnection();
+
+            // Consulta para obtener los alumnos asociados a un padre a través de la tabla student_guardian
+            const rows = await conn.query(
+                `SELECT s.*, c.name as classroom_name
+                 FROM student s
+                 LEFT JOIN classroom c ON s.classroom_id = c.id
+                 JOIN student_guardian sg ON s.id = sg.student_id
+                 JOIN guardian g ON sg.guardian_id = g.id
+                 WHERE g.parent_portal_user_id = ?`,
+                [parentId]
+            );
+
+            res.json({
+                data: rows
+            });
+        } catch (error) {
+            console.error('Get students by parent error:', error);
+            res.status(500).json({ error: 'Error getting students for parent' });
+        } finally {
+            if (conn) conn.release();
         }
     }
 
