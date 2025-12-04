@@ -143,11 +143,11 @@ const StudentList = () => {
         </Card.Body>
       </Card>
 
-      <Card>
-        <Card.Header>
+      <Card className="table-container">
+        <Card.Header className="table-header">
           <h5 className="mb-0">Listado de Alumnos</h5>
         </Card.Header>
-        <Card.Body className="p-0">
+        <Card.Body className="table-body p-0">
           <div className="table-responsive">
             <Table className="mb-0" striped hover>
               <thead className="table-light">
@@ -174,14 +174,14 @@ const StudentList = () => {
                     <tr key={student.id}>
                       <td>
                         {student.photo_path ? (
-                          <img 
-                            src={student.photo_path} 
-                            alt="Foto del alumno" 
+                          <img
+                            src={student.photo_path}
+                            alt="Foto del alumno"
                             className="rounded-circle"
                             style={{ width: '40px', height: '40px', objectFit: 'cover' }}
                           />
                         ) : (
-                          <div className="rounded-circle bg-light d-flex align-items-center justify-content-center" 
+                          <div className="rounded-circle bg-light d-flex align-items-center justify-content-center"
                                style={{ width: '40px', height: '40px' }}>
                             <PersonCircle size={20} />
                           </div>
@@ -208,24 +208,24 @@ const StudentList = () => {
                         </span>
                       </td>
                       <td>
-                        <Button 
-                          variant="outline-primary" 
-                          size="sm" 
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
                           className="me-2"
                           href={`/students/edit/${student.id}`}
                         >
                           <Pencil size={16} />
                         </Button>
-                        <Button 
-                          variant="outline-info" 
-                          size="sm" 
+                        <Button
+                          variant="outline-info"
+                          size="sm"
                           className="me-2"
                           href={`/students/${student.id}`}
                         >
                           <Eye size={16} />
                         </Button>
-                        <Button 
-                          variant="outline-danger" 
+                        <Button
+                          variant="outline-danger"
                           size="sm"
                           onClick={() => {
                             setStudentToDelete(student);

@@ -487,7 +487,7 @@ INSERT INTO staff (
     first_name, paternal_surname, email, password_hash, is_active,
     address_id, classroom_id, role_id, last_login
 ) VALUES (
-    'Admin', 'User', 'admin@kindergarten.com', '$2b$10$KztEjpwYr/rzl7OAKLRWf.Citp8esIqisRoqTOPEWJu.HYRTBcMZ6', TRUE,
+    'Admin', 'User', 'admin@kindergarten.com', '$2b$10$kGhrBcJy5aEF7xpAGBhXlOpCgT.2VNcO8TO2176FwnzbhmZd5.yfm', TRUE,
     @admin_address_id, NULL, @admin_role_id, NOW()
 );
 

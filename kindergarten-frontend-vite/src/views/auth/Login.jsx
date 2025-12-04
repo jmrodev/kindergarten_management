@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Card, Form, Button, Alert, InputGroup } from 'react-bootstrap';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
-import { PersonFill, LockFill, BoxArrowInRight } from 'react-bootstrap-icons';
+import { PersonFill, LockFill, BoxArrowInRight, Eye, EyeSlash } from 'react-bootstrap-icons';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -74,13 +75,22 @@ const Login = () => {
                     <LockFill className="me-1" />
                     Contraseña
                   </Form.Label>
-                  <Form.Control
-                    type="password"
-                    placeholder="Ingrese su contraseña"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={loading}
-                  />
+                  <InputGroup>
+                    <Form.Control
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Ingrese su contraseña"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={loading}
+                    />
+                    <Button
+                      variant="outline-secondary"
+                      onClick={() => setShowPassword(!showPassword)}
+                      disabled={loading}
+                    >
+                      {showPassword ? <EyeSlash /> : <Eye />}
+                    </Button>
+                  </InputGroup>
                 </Form.Group>
 
                 <div className="d-grid">
@@ -106,8 +116,11 @@ const Login = () => {
               </Form>
 
               <div className="text-center mt-4">
-                <small className="text-muted">
+                <small className="text-muted d-block mb-2">
                   ¿Olvidó su contraseña? Contacte al administrador del sistema.
+                </small>
+                <small className="text-muted">
+                  <em>Credenciales por defecto:</em> <strong>admin@kindergarten.com</strong> / <strong>admin123</strong>
                 </small>
               </div>
             </Card.Body>

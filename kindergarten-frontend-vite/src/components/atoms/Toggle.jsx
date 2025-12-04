@@ -12,12 +12,9 @@ const Toggle = ({
   className = '',
   ...props
 }) => {
-  const toggleClass = `form-toggle ${error ? 'form-toggle-error' : ''} ${className}`.trim();
-  const labelClass = `form-toggle-label ${required ? 'form-label-required' : ''}`;
-
   return (
-    <div className="form-group">
-      <label className={labelClass}>
+    <div className={`toggle-container ${className}`.trim()}>
+      <label className={`toggle-label ${required ? 'required' : ''}`}>
         <input
           type="checkbox"
           name={name}
@@ -25,14 +22,14 @@ const Toggle = ({
           onChange={onChange}
           required={required}
           disabled={disabled}
-          className="form-toggle-input"
+          className="toggle-checkbox"
           {...props}
         />
-        <span className="form-toggle-slider"></span>
-        {label}
+        <span className="toggle-switch"></span>
+        <span className="toggle-text">{label}</span>
       </label>
-      {error && <div className="form-error">{error}</div>}
-      {helpText && !error && <div className="form-help">{helpText}</div>}
+      {error && <div className="toggle-error">{error}</div>}
+      {helpText && !error && <div className="toggle-help">{helpText}</div>}
     </div>
   );
 };

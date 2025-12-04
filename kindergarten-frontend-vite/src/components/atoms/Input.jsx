@@ -1,5 +1,6 @@
 import React from 'react';
 import { normalizeName } from '../../utils/apiResponseHandler';
+// Removed local CSS import since we're using global atomic styles
 
 const Input = ({
   label,
@@ -21,11 +22,11 @@ const Input = ({
   // Manejador de cambio que puede normalizar el nombre si es necesario
   const handleChange = (e) => {
     let processedValue = e.target.value;
-    
+
     if (normalize && ['first_name', 'paternal_surname', 'maternal_surname', 'nickname_optional'].includes(name)) {
       processedValue = normalizeName(processedValue);
     }
-    
+
     if (onChange) {
       onChange({
         ...e,
@@ -38,13 +39,18 @@ const Input = ({
     }
   };
 
-  const inputClass = `form-input ${error ? 'form-input-error' : ''} ${className}`.trim();
-  const labelClass = `form-label ${required ? 'form-label-required' : ''}`;
+  // Determinar si el campo tiene contenido para aplicar clases CSS
+  const hasValue = value.trim() !== '';
+  const inputFieldClass = [
+    'input-field',
+    error ? 'error' : '',
+    hasValue ? 'filled' : (required && !hasValue ? 'empty' : ''),
+  ].filter(Boolean).join(' ');
 
   return (
-    <div className="form-group">
+    <div className={`input-container ${className}`.trim()}>
       {label && (
-        <label htmlFor={name} className={labelClass}>
+        <label htmlFor={name} className={`input-label ${required ? 'required' : ''}`}>
           {label}
         </label>
       )}
@@ -59,11 +65,11 @@ const Input = ({
         disabled={disabled}
         pattern={pattern}
         title={title}
-        className={inputClass}
+        className={`${inputFieldClass} ${className}`.trim()}
         {...props}
       />
-      {error && <div className="form-error">{error}</div>}
-      {helpText && !error && <div className="form-help">{helpText}</div>}
+      {error && <div className="input-error">{error}</div>}
+      {helpText && !error && <div className="input-help">{helpText}</div>}
     </div>
   );
 };

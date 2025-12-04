@@ -16,8 +16,8 @@ const GuardianList = () => {
         </Col>
       </Row>
 
-      <Card className="mb-4">
-        <Card.Header>
+      <Card className="form-container mb-4">
+        <Card.Header className="form-header">
           <Row className="align-items-center">
             <Col>
               <h5 className="mb-0">Filtros de Búsqueda</h5>
@@ -30,16 +30,16 @@ const GuardianList = () => {
             </Col>
           </Row>
         </Card.Header>
-        <Card.Body>
+        <Card.Body className="form-body">
           <p>Filtros de búsqueda...</p>
         </Card.Body>
       </Card>
 
-      <Card>
-        <Card.Header>
+      <Card className="table-container">
+        <Card.Header className="table-header">
           <h5 className="mb-0">Listado de Responsables</h5>
         </Card.Header>
-        <Card.Body className="p-0">
+        <Card.Body className="table-body p-0">
           <div className="table-responsive">
             <Table className="mb-0" striped hover>
               <thead className="table-light">

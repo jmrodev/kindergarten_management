@@ -16,8 +16,8 @@ const StaffForm = () => {
         </Col>
       </Row>
 
-      <Card>
-        <Card.Header>
+      <Card className="form-container">
+        <Card.Header className="form-header">
           <Link to="/staff" className="btn btn-outline-secondary btn-sm me-2">
             <ArrowLeft className="me-1" />
             Volver
@@ -26,7 +26,7 @@ const StaffForm = () => {
             Guardar Personal
           </Button>
         </Card.Header>
-        <Card.Body>
+        <Card.Body className="form-body">
           <p>Formulario para crear/editar personal...</p>
         </Card.Body>
       </Card>

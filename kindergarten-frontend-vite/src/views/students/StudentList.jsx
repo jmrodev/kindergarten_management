@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, PersonCircle } from 'react-bootstrap-icons';
+import { Plus, PersonCircle, FileEarmarkPlus } from 'react-bootstrap-icons';
+import { useNavigate } from 'react-router-dom';
+import OfficeRibbonWithTitle from '../../components/atoms/OfficeRibbonWithTitle';
 import OfficeTable from '../../components/organisms/OfficeTable';
 import TableCell from '../../components/atoms/TableCell';
 import TableRow from '../../components/molecules/TableRow';
@@ -11,8 +13,10 @@ import { Row, Col } from '../../components/atoms/Grid';
 import Card from '../../components/atoms/Card';
 import Button from '../../components/atoms/Button';
 import Spinner from '../../components/atoms/Spinner';
-import Modal from 'react-bootstrap/Modal'; // Por ahora mantendremos Modal ya que requiere más trabajo personalizarlo
-import Form from 'react-bootstrap/Form'; // Por ahora mantendremos Form
+import VaccinationStatusWithLink from '../../components/atoms/VaccinationStatusWithLink';
+import ConfirmationModal from '../../components/molecules/ConfirmationModal';
+import FormModal from '../../components/molecules/FormModal';
+import StudentDetails from '../../components/organisms/StudentDetails';
 import Alert from 'react-bootstrap/Alert'; // Por ahora mantendremos Alert
 import { safeExtractData, getColorVariantById, normalizeName } from '../../utils/apiResponseHandler';
 import studentService from '../../api/studentService';
@@ -22,7 +26,10 @@ const StudentList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState(null);
+  const [studentToView, setStudentToView] = useState(null);
+  const navigate = useNavigate();
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -75,8 +82,20 @@ const StudentList = () => {
     <Container fluid className="p-0 m-0" style={{padding: '0', margin: '0', marginTop: '0', paddingTop: '0'}}>
 
       <Card className="border-0 m-0" style={{marginTop: '0', paddingTop: '0', border: 'none'}}>
-        <Card.Header className="p-1" style={{padding: '2px', borderBottom: '1px solid #dee2e6'}}>
-          <h5 className="mb-0" style={{fontSize: '0.9rem', padding: '4px 8px'}}>Listado de Alumnos</h5>
+        <Card.Header className="p-1 office-ribbon" style={{padding: '2px', borderBottom: '1px solid #dee2e6'}}>
+          <OfficeRibbonWithTitle
+            title="Listado de Alumnos"
+            menuItems={[
+              {
+                label: "Nuevo",
+                icon: <FileEarmarkPlus size={16} />,
+                onClick: () => navigate('/students/new')
+              }
+            ]}
+            onClose={() => navigate('/dashboard')}
+            navigate={navigate}
+            showTitle={false} // Hide the title as requested
+          />
         </Card.Header>
         <Card.Body className="p-0" style={{padding: '0'}}>
           <OfficeTable
@@ -144,22 +163,41 @@ const StudentList = () => {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge
-                    type="vaccine"
-                    variant={getColorVariantById(student.vaccination_status_id || student.vaccination_status)}
-                    capitalize="uppercase"
-                  >
-                    {student.vaccination_status}
-                  </Badge>
+                  <VaccinationStatusWithLink
+                    studentId={student.id}
+                    status={student.vaccination_status}
+                  />
                 </TableCell>
                 <TableCell>
                   <div className="office-actions-container">
-                    <a href={`/students/edit/${student.id}`} title="Editar" style={{ textDecoration: 'none', color: 'inherit', margin: '0.25rem' }}>
+                    <span
+                      onClick={() => navigate(`/students/edit/${student.id}`)}
+                      title="Editar"
+                      style={{ cursor: 'pointer', margin: '0.25rem', textDecoration: 'none', color: 'inherit' }}
+                    >
                       <Icon type="edit" size={18} title="Editar" />
-                    </a>
-                    <a href={`/students/${student.id}`} title="Ver Detalles" style={{ textDecoration: 'none', color: 'inherit', margin: '0.25rem' }}>
+                    </span>
+                    <span
+                      onClick={async () => {
+                        try {
+                          // Get the complete student record (with emergency contact info included)
+                          const studentResponse = await studentService.getById(student.id);
+                          const fullStudentData = studentResponse.data.data;
+
+                          setStudentToView(fullStudentData);
+                          setShowViewModal(true);
+                        } catch (err) {
+                          console.error('Error loading student data:', err);
+                          // Fallback to basic student data
+                          setStudentToView(student);
+                          setShowViewModal(true);
+                        }
+                      }}
+                      title="Ver Detalles"
+                      style={{ cursor: 'pointer', margin: '0.25rem', textDecoration: 'none', color: 'inherit' }}
+                    >
                       <Icon type="view" size={18} title="Ver Detalles" />
-                    </a>
+                    </span>
                     <span
                       onClick={() => {
                         setStudentToDelete(student);
@@ -179,25 +217,28 @@ const StudentList = () => {
         </Card.Body>
       </Card>
 
-      {/* Modal de confirmación de eliminación */}
-      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Confirmar Eliminación</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          ¿Está seguro de que desea eliminar al alumno <strong>
-            {studentToDelete?.first_name && normalizeName(studentToDelete.first_name)} {studentToDelete?.paternal_surname && normalizeName(studentToDelete.paternal_surname)}
-          </strong>? Esta acción no se puede deshacer.
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-            Cancelar
-          </Button>
-          <Button variant="danger" onClick={handleDelete}>
-            Eliminar
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <ConfirmationModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+        title="Confirmar Eliminación"
+        message={`¿Está seguro de que desea eliminar al alumno ${studentToDelete?.first_name && normalizeName(studentToDelete.first_name)} ${studentToDelete?.paternal_surname && normalizeName(studentToDelete.paternal_surname)}? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+      />
+
+      <FormModal
+        show={showViewModal}
+        onHide={() => {
+          setShowViewModal(false);
+          setStudentToView(null);
+        }}
+        title={`Detalles de ${studentToView ? normalizeName(studentToView.first_name) + ' ' + normalizeName(studentToView.paternal_surname) : ''}`}
+        size="lg"
+      >
+        <StudentDetails student={studentToView} />
+      </FormModal>
     </Container>
   );
 };

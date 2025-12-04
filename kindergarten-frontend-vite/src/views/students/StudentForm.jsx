@@ -1,25 +1,23 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Save, Person, Pencil } from 'react-bootstrap-icons';
+import { ArrowLeft, Save, Person, ShieldCheck } from 'react-bootstrap-icons';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import studentService from '../../api/studentService';
 import classroomService from '../../api/classroomService';
 import { normalizeName } from '../../utils/apiResponseHandler';
-import { StudentFormValidator } from '../../utils/formValidation';
-
-// Componentes atómicos
-import Container from '../../components/atoms/Container';
-import { Row, Col } from '../../components/atoms/Grid';
-import Card from '../../components/atoms/Card';
 import Button from '../../components/atoms/Button';
+import Card from '../../components/atoms/Card';
+import Container from '../../components/atoms/Container';
 import Input from '../../components/atoms/Input';
 import Select from '../../components/atoms/Select';
 import TextArea from '../../components/atoms/TextArea';
 import Toggle from '../../components/atoms/Toggle';
-import FormSection from '../../components/atoms/FormSection';
+import { Row, Col } from '../../components/atoms/Grid';
 
 const StudentForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const isEdit = !!id;
 
   const [formData, setFormData] = useState({
@@ -82,8 +80,6 @@ const StudentForm = () => {
   const [classrooms, setClassrooms] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [errors, setErrors] = useState({});
-  const [activeTab, setActiveTab] = useState('personal');
 
   const fetchClassrooms = useCallback(async () => {
     try {
@@ -100,8 +96,8 @@ const StudentForm = () => {
       const response = await studentService.getById(id);
       const student = response.data.data;
 
-      setFormData(prev => ({
-        ...prev,
+      setFormData({
+        // Datos personales
         first_name: student.first_name || '',
         middle_name_optional: student.middle_name_optional || '',
         third_name_optional: student.third_name_optional || '',
@@ -111,16 +107,31 @@ const StudentForm = () => {
         dni: student.dni || '',
         birth_date: student.birth_date || '',
 
-        street: student.street || '',
-        number: student.number || '',
-        city: student.city || '',
-        provincia: student.provincia || '',
-        postal_code_optional: student.postal_code_optional || '',
+        // Dirección
+        street: student.address?.street || '',
+        number: student.address?.number || '',
+        city: student.address?.city || '',
+        provincia: student.address?.provincia || '',
+        postal_code_optional: student.address?.postal_code_optional || '',
+        address_id: student.address_id || null,
 
+        // Contacto de emergencia
+        emergency_contact_full_name: student.emergency_contact?.full_name || '',
+        emergency_contact_relationship: student.emergency_contact?.relationship || '',
+        emergency_contact_priority: student.emergency_contact?.priority || 1,
+        emergency_contact_phone: student.emergency_contact?.phone || '',
+        emergency_contact_alternative_phone: student.emergency_contact?.alternative_phone || '',
+        emergency_contact_authorized_pickup: student.emergency_contact?.is_authorized_pickup || false,
+        emergency_contact_id: student.emergency_contact_id || null,
+
+        // Información escolar
         classroom_id: student.classroom_id || '',
         shift: student.shift || '',
         status: student.status || 'preinscripto',
+        enrollment_date: student.enrollment_date || '',
+        withdrawal_date: student.withdrawal_date || '',
 
+        // Información médica
         health_insurance: student.health_insurance || '',
         affiliate_number: student.affiliate_number || '',
         allergies: student.allergies || '',
@@ -130,22 +141,17 @@ const StudentForm = () => {
         pediatrician_name: student.pediatrician_name || '',
         pediatrician_phone: student.pediatrician_phone || '',
 
+        // Autorizaciones
         photo_authorization: student.photo_authorization || false,
         trip_authorization: student.trip_authorization || false,
         medical_attention_authorization: student.medical_attention_authorization || false,
 
+        // Información adicional
         has_siblings_in_school: student.has_siblings_in_school || false,
         special_needs: student.special_needs || '',
         vaccination_status: student.vaccination_status || 'no_informado',
-        observations: student.observations || '',
-
-        emergency_contact_full_name: student.emergency_contact?.full_name || '',
-        emergency_contact_relationship: student.emergency_contact?.relationship || '',
-        emergency_contact_priority: student.emergency_contact?.priority || 1,
-        emergency_contact_phone: student.emergency_contact?.phone || '',
-        emergency_contact_alternative_phone: student.emergency_contact?.alternative_phone || '',
-        emergency_contact_authorized_pickup: student.emergency_contact?.is_authorized_pickup || false
-      }));
+        observations: student.observations || ''
+      });
     } catch (err) {
       setError('Error al cargar los datos del alumno: ' + err.message);
     } finally {
@@ -158,141 +164,78 @@ const StudentForm = () => {
     if (isEdit) {
       fetchStudentData();
     }
-  }, [isEdit, fetchClassrooms, fetchStudentData]);
+  }, [isEdit, fetchStudentData, fetchClassrooms]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-
-    // Limpiar error cuando se cambia el campo
-    if (errors[name]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-  };
-
-  const validateForm = () => {
-    const validationErrors = StudentFormValidator.validateStudent(formData);
-    setErrors(validationErrors);
-    return Object.keys(validationErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-
-    setError(null);
-    setLoading(true);
 
     try {
-      const studentData = {
+      setLoading(true);
+
+      // Normalizamos los nombres
+      const normalizedData = {
         ...formData,
-        emergency_contact: {
-          full_name: formData.emergency_contact_full_name,
-          relationship: formData.emergency_contact_relationship,
-          priority: formData.emergency_contact_priority,
-          phone: formData.emergency_contact_phone,
-          alternative_phone: formData.emergency_contact_alternative_phone,
-          is_authorized_pickup: formData.emergency_contact_authorized_pickup
-        }
+        first_name: normalizeName(formData.first_name),
+        middle_name_optional: normalizeName(formData.middle_name_optional),
+        third_name_optional: normalizeName(formData.third_name_optional),
+        paternal_surname: normalizeName(formData.paternal_surname),
+        maternal_surname: normalizeName(formData.maternal_surname),
+        nickname_optional: normalizeName(formData.nickname_optional)
       };
 
-      let response;
       if (isEdit) {
-        response = await studentService.update(id, studentData);
-        navigate(`/students/${id}`);
+        await studentService.update(id, normalizedData);
       } else {
-        response = await studentService.create(studentData);
-        navigate(`/students/edit/${response.data.data.id}`);
+        await studentService.create(normalizedData);
       }
+
+      navigate('/students');
     } catch (err) {
-      setError('Error al guardar el alumno: ' + err.message);
-      console.error('Error saving student:', err);
+      setError('Error al guardar los datos: ' + err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Opciones para selects
-  const shiftOptions = [
-    { value: 'mañana', label: 'Mañana' },
-    { value: 'tarde', label: 'Tarde' },
-    { value: 'mañana y tarde', label: 'Mañana y Tarde' }
-  ];
+  const handleCancel = () => {
+    navigate('/students');
+  };
 
-  const statusOptions = [
-    { value: 'preinscripto', label: 'Preinscripto' },
-    { value: 'pendiente', label: 'Pendiente' },
-    { value: 'approved', label: 'Aprobado' },
-    { value: 'sorteo', label: 'Sorteo' },
-    { value: 'inscripto', label: 'Inscripto' },
-    { value: 'activo', label: 'Activo' },
-    { value: 'inactivo', label: 'Inactivo' },
-    { value: 'egresado', label: 'Egresado' },
-    { value: 'rechazado', label: 'Rechazado' }
-  ];
-
-  const bloodTypeOptions = [
-    { value: 'A+', label: 'A+' },
-    { value: 'A-', label: 'A-' },
-    { value: 'B+', label: 'B+' },
-    { value: 'B-', label: 'B-' },
-    { value: 'AB+', label: 'AB+' },
-    { value: 'AB-', label: 'AB-' },
-    { value: 'O+', label: 'O+' },
-    { value: 'O-', label: 'O-' }
-  ];
-
-  const vaccinationStatusOptions = [
-    { value: 'completo', label: 'Completo' },
-    { value: 'incompleto', label: 'Incompleto' },
-    { value: 'pendiente', label: 'Pendiente' },
-    { value: 'no_informado', label: 'No Informado' }
-  ];
-
-  if (loading && isEdit) {
+  if (loading) {
     return (
-      <Container fluid className="py-4">
-        <Row className="justify-content-center">
-          <Col xs="auto">
-            <div className="spinner-border" role="status">
-              <span className="visually-hidden">Cargando...</span>
-            </div>
-          </Col>
-        </Row>
-      </Container>
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
+        <div className="spinner-border" role="status">
+          <span className="visually-hidden">Cargando...</span>
+        </div>
+      </div>
     );
   }
 
   return (
     <Container fluid className="py-4">
-      <Row className="mb-4">
-        <Col>
-          <h1 className="h3 mb-0">
-            {isEdit ? (
-              <><Pencil className="me-2" /> Editar Alumno</>
-            ) : (
-              <><Person className="me-2" /> Nuevo Alumno</>
-            )}
-          </h1>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2>
+            <Person className="me-2" />
+            {isEdit ? 'Editar Alumno' : 'Crear Nuevo Alumno'}
+          </h2>
           <p className="text-muted">
-            {isEdit
-              ? 'Modificar la información del alumno'
-              : 'Agregar un nuevo alumno al sistema'
-            }
+            {isEdit ? 'Modifique los datos del alumno' : 'Complete la información del nuevo alumno'}
           </p>
-        </Col>
-      </Row>
+        </div>
+        <Link to="/students" className="btn btn-outline-secondary">
+          <ArrowLeft className="me-2" />
+          Volver a la lista
+        </Link>
+      </div>
 
       {error && (
         <div className="alert alert-danger" role="alert">
@@ -301,462 +244,428 @@ const StudentForm = () => {
       )}
 
       <Card>
-        <Card.Header>
-          <Link to="/students" className="btn btn-outline-secondary btn-sm me-2">
-            <ArrowLeft className="me-1" />
-            Volver
-          </Link>
-          <Button
-            variant="primary"
-            onClick={handleSubmit}
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                Guardando...
-              </>
-            ) : (
-              <>
-                <Save className="me-2" />
-                {isEdit ? 'Actualizar' : 'Guardar'} Alumno
-              </>
-            )}
-          </Button>
-        </Card.Header>
         <Card.Body>
-          <div className="tabs-container">
-            <div className="tab-nav">
-              <button 
-                className={`tab-button ${activeTab === 'personal' ? 'active' : ''}`}
-                onClick={() => setActiveTab('personal')}
+          <form onSubmit={handleSubmit}>
+            {/* Datos Personales */}
+            <fieldset className="mb-4">
+              <legend className="h5 mb-3">Datos Personales</legend>
+              <Row>
+                <Col md={6}>
+                  <Input
+                    label="Nombre"
+                    name="first_name"
+                    value={formData.first_name}
+                    onChange={handleChange}
+                    normalize
+                    required
+                  />
+                </Col>
+                <Col md={6}>
+                  <Input
+                    label="Segundo Nombre (Opcional)"
+                    name="middle_name_optional"
+                    value={formData.middle_name_optional}
+                    onChange={handleChange}
+                    normalize
+                  />
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={6}>
+                  <Input
+                    label="Tercer Nombre (Opcional)"
+                    name="third_name_optional"
+                    value={formData.third_name_optional}
+                    onChange={handleChange}
+                    normalize
+                  />
+                </Col>
+                <Col md={6}>
+                  <Input
+                    label="Apellido Paterno"
+                    name="paternal_surname"
+                    value={formData.paternal_surname}
+                    onChange={handleChange}
+                    normalize
+                    required
+                  />
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={6}>
+                  <Input
+                    label="Apellido Materno (Opcional)"
+                    name="maternal_surname"
+                    value={formData.maternal_surname}
+                    onChange={handleChange}
+                    normalize
+                  />
+                </Col>
+                <Col md={6}>
+                  <Input
+                    label="Apodo (Opcional)"
+                    name="nickname_optional"
+                    value={formData.nickname_optional}
+                    onChange={handleChange}
+                    normalize
+                  />
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={6}>
+                  <Input
+                    label="DNI"
+                    name="dni"
+                    value={formData.dni}
+                    onChange={handleChange}
+                    required
+                  />
+                </Col>
+                <Col md={6}>
+                  <Input
+                    label="Fecha de Nacimiento"
+                    name="birth_date"
+                    type="date"
+                    value={formData.birth_date}
+                    onChange={handleChange}
+                    required
+                  />
+                </Col>
+              </Row>
+            </fieldset>
+
+            {/* Dirección */}
+            <fieldset className="mb-4">
+              <legend className="h5 mb-3">Dirección</legend>
+              <Row>
+                <Col md={6}>
+                  <Input
+                    label="Calle"
+                    name="street"
+                    value={formData.street}
+                    onChange={handleChange}
+                    normalize
+                  />
+                </Col>
+                <Col md={6}>
+                  <Input
+                    label="Número"
+                    name="number"
+                    value={formData.number}
+                    onChange={handleChange}
+                  />
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={6}>
+                  <Input
+                    label="Ciudad"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
+                    normalize
+                  />
+                </Col>
+                <Col md={6}>
+                  <Input
+                    label="Provincia"
+                    name="provincia"
+                    value={formData.provincia}
+                    onChange={handleChange}
+                    normalize
+                  />
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={6}>
+                  <Input
+                    label="Código Postal (Opcional)"
+                    name="postal_code_optional"
+                    value={formData.postal_code_optional}
+                    onChange={handleChange}
+                  />
+                </Col>
+                <Col md={6}></Col>
+              </Row>
+            </fieldset>
+
+            {/* Información Escolar */}
+            <fieldset className="mb-4">
+              <legend className="h5 mb-3">Información Escolar</legend>
+              <Row>
+                <Col md={6}>
+                  <Select
+                    label="Sala"
+                    name="classroom_id"
+                    value={formData.classroom_id}
+                    onChange={handleChange}
+                    options={[
+                      { value: '', label: 'Seleccione una sala' },
+                      ...classrooms.map(room => ({
+                        value: room.id,
+                        label: room.name
+                      }))
+                    ]}
+                  />
+                </Col>
+                <Col md={6}>
+                  <Input
+                    label="Turno"
+                    name="shift"
+                    value={formData.shift}
+                    onChange={handleChange}
+                    normalize
+                  />
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={6}>
+                  <Select
+                    label="Estado"
+                    name="status"
+                    value={formData.status}
+                    onChange={handleChange}
+                    options={[
+                      { value: 'preinscripto', label: 'Preinscripto' },
+                      { value: 'activo', label: 'Activo' },
+                      { value: 'inscripto', label: 'Inscripto' },
+                      { value: 'egresado', label: 'Egresado' },
+                      { value: 'rechazado', label: 'Rechazado' },
+                      { value: 'inactivo', label: 'Inactivo' }
+                    ]}
+                  />
+                </Col>
+                <Col md={6}>
+                  <Select
+                    label="Estado de Vacunas"
+                    name="vaccination_status"
+                    value={formData.vaccination_status}
+                    onChange={handleChange}
+                    options={[
+                      { value: 'completo', label: 'Completo' },
+                      { value: 'incompleto', label: 'Incompleto' },
+                      { value: 'pendiente', label: 'Pendiente' },
+                      { value: 'no_informado', label: 'No informado' }
+                    ]}
+                  />
+                </Col>
+              </Row>
+            </fieldset>
+
+            {/* Información Médica */}
+            <fieldset className="mb-4">
+              <legend className="h5 mb-3">Información Médica</legend>
+              <Row>
+                <Col md={6}>
+                  <Input
+                    label="Obra Social"
+                    name="health_insurance"
+                    value={formData.health_insurance}
+                    onChange={handleChange}
+                    normalize
+                  />
+                </Col>
+                <Col md={6}>
+                  <Input
+                    label="Número de Afiliado"
+                    name="affiliate_number"
+                    value={formData.affiliate_number}
+                    onChange={handleChange}
+                  />
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={6}>
+                  <Input
+                    label="Alergias"
+                    name="allergies"
+                    value={formData.allergies}
+                    onChange={handleChange}
+                  />
+                </Col>
+                <Col md={6}>
+                  <Input
+                    label="Medicamentos"
+                    name="medications"
+                    value={formData.medications}
+                    onChange={handleChange}
+                  />
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={6}>
+                  <Input
+                    label="Tipo de Sangre"
+                    name="blood_type"
+                    value={formData.blood_type}
+                    onChange={handleChange}
+                  />
+                </Col>
+                <Col md={6}>
+                  <Input
+                    label="Pediatra"
+                    name="pediatrician_name"
+                    value={formData.pediatrician_name}
+                    onChange={handleChange}
+                    normalize
+                  />
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={6}>
+                  <Input
+                    label="Teléfono Pediatra"
+                    name="pediatrician_phone"
+                    value={formData.pediatrician_phone}
+                    onChange={handleChange}
+                  />
+                </Col>
+                <Col md={6}></Col>
+              </Row>
+
+              <Row>
+                <Col md={12}>
+                  <TextArea
+                    label="Observaciones Médicas"
+                    name="medical_observations"
+                    value={formData.medical_observations}
+                    onChange={handleChange}
+                    rows={3}
+                  />
+                </Col>
+              </Row>
+            </fieldset>
+
+            {/* Autorizaciones */}
+            <fieldset className="mb-4">
+              <legend className="h5 mb-3">Autorizaciones</legend>
+              <Row>
+                <Col md={4}>
+                  <Toggle
+                    label="Autorización de fotografías"
+                    name="photo_authorization"
+                    checked={formData.photo_authorization}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      photo_authorization: e.target.checked
+                    }))}
+                  />
+                </Col>
+                <Col md={4}>
+                  <Toggle
+                    label="Autorización de salidas"
+                    name="trip_authorization"
+                    checked={formData.trip_authorization}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      trip_authorization: e.target.checked
+                    }))}
+                  />
+                </Col>
+                <Col md={4}>
+                  <Toggle
+                    label="Autorización atención médica"
+                    name="medical_attention_authorization"
+                    checked={formData.medical_attention_authorization}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      medical_attention_authorization: e.target.checked
+                    }))}
+                  />
+                </Col>
+              </Row>
+            </fieldset>
+
+            {/* Información Adicional */}
+            <fieldset className="mb-4">
+              <legend className="h5 mb-3">Información Adicional</legend>
+              <Row>
+                <Col md={4}>
+                  <Toggle
+                    label="Tiene hermanos en la escuela"
+                    name="has_siblings_in_school"
+                    checked={formData.has_siblings_in_school}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      has_siblings_in_school: e.target.checked
+                    }))}
+                  />
+                </Col>
+                <Col md={4}>
+                  <Input
+                    label="Necesidades Especiales"
+                    name="special_needs"
+                    value={formData.special_needs}
+                    onChange={handleChange}
+                  />
+                </Col>
+                <Col md={4}>
+                  <Input
+                    label="Fecha de Inscripción"
+                    name="enrollment_date"
+                    type="date"
+                    value={formData.enrollment_date}
+                    onChange={handleChange}
+                  />
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={12}>
+                  <TextArea
+                    label="Observaciones Generales"
+                    name="observations"
+                    value={formData.observations}
+                    onChange={handleChange}
+                    rows={3}
+                  />
+                </Col>
+              </Row>
+            </fieldset>
+
+            {/* Botones de acción */}
+            <div className="d-flex gap-2">
+              <Button 
+                type="button" 
+                variant="secondary" 
+                onClick={handleCancel}
+                disabled={loading}
               >
-                Datos Personales
-              </button>
-              <button 
-                className={`tab-button ${activeTab === 'medical' ? 'active' : ''}`}
-                onClick={() => setActiveTab('medical')}
+                <ArrowLeft className="me-2" />
+                Cancelar
+              </Button>
+              <Button 
+                type="submit" 
+                variant="primary"
+                disabled={loading}
               >
-                Información Médica
-              </button>
-              <button 
-                className={`tab-button ${activeTab === 'authorizations' ? 'active' : ''}`}
-                onClick={() => setActiveTab('authorizations')}
-              >
-                Autorizaciones
-              </button>
+                {loading ? (
+                  <>
+                    <div className="spinner-border spinner-border-sm me-2" role="status">
+                      <span className="visually-hidden">Cargando...</span>
+                    </div>
+                    {isEdit ? 'Actualizando...' : 'Creando...'}
+                  </>
+                ) : (
+                  <>
+                    <Save className="me-2" />
+                    {isEdit ? 'Actualizar Alumno' : 'Crear Alumno'}
+                  </>
+                )}
+              </Button>
             </div>
-
-            <div className="tab-content">
-              {activeTab === 'personal' && (
-                <FormSection title="Datos Personales" subtitle="Información básica del alumno">
-                  <Row>
-                    <Col md={6}>
-                      <Input
-                        label="Nombre(s) *"
-                        name="first_name"
-                        value={formData.first_name}
-                        onChange={handleChange}
-                        error={errors.first_name?.[0]}
-                        normalize
-                        required
-                      />
-                    </Col>
-                    <Col md={6}>
-                      <Input
-                        label="Segundo Nombre (Opcional)"
-                        name="middle_name_optional"
-                        value={formData.middle_name_optional}
-                        onChange={handleChange}
-                        normalize
-                      />
-                    </Col>
-                  </Row>
-
-                  <Row>
-                    <Col md={6}>
-                      <Input
-                        label="Apellido Paterno *"
-                        name="paternal_surname"
-                        value={formData.paternal_surname}
-                        onChange={handleChange}
-                        error={errors.paternal_surname?.[0]}
-                        normalize
-                        required
-                      />
-                    </Col>
-                    <Col md={6}>
-                      <Input
-                        label="Apellido Materno"
-                        name="maternal_surname"
-                        value={formData.maternal_surname}
-                        onChange={handleChange}
-                        normalize
-                      />
-                    </Col>
-                  </Row>
-
-                  <Row>
-                    <Col md={6}>
-                      <Input
-                        label="Alias/Nickname"
-                        name="nickname_optional"
-                        value={formData.nickname_optional}
-                        onChange={handleChange}
-                        normalize
-                      />
-                    </Col>
-                    <Col md={6}>
-                      <Input
-                        label="DNI *"
-                        name="dni"
-                        value={formData.dni}
-                        onChange={handleChange}
-                        error={errors.dni?.[0]}
-                        type="text"
-                        required
-                      />
-                    </Col>
-                  </Row>
-
-                  <Row>
-                    <Col md={6}>
-                      <Input
-                        label="Fecha de Nacimiento *"
-                        name="birth_date"
-                        value={formData.birth_date}
-                        onChange={handleChange}
-                        error={errors.birth_date?.[0]}
-                        type="date"
-                        required
-                      />
-                    </Col>
-                    <Col md={6}>
-                      <Select
-                        label="Sala"
-                        name="classroom_id"
-                        value={formData.classroom_id}
-                        onChange={handleChange}
-                        options={classrooms.map(classroom => ({
-                          value: classroom.id,
-                          label: classroom.name
-                        }))}
-                        placeholder="Seleccione una sala"
-                      />
-                    </Col>
-                  </Row>
-
-                  <Row>
-                    <Col md={6}>
-                      <Select
-                        label="Turno"
-                        name="shift"
-                        value={formData.shift}
-                        onChange={handleChange}
-                        options={shiftOptions}
-                        placeholder="Seleccione un turno"
-                      />
-                    </Col>
-                    <Col md={6}>
-                      <Select
-                        label="Estado"
-                        name="status"
-                        value={formData.status}
-                        onChange={handleChange}
-                        options={statusOptions}
-                        placeholder="Seleccione un estado"
-                      />
-                    </Col>
-                  </Row>
-
-                  {/* Información de contacto de emergencia */}
-                  <FormSection title="Contacto de Emergencia" subtitle="Información para contacto en caso de emergencia">
-                    <Row>
-                      <Col md={6}>
-                        <Input
-                          label="Nombre Completo"
-                          name="emergency_contact_full_name"
-                          value={formData.emergency_contact_full_name}
-                          onChange={handleChange}
-                          normalize
-                        />
-                      </Col>
-                      <Col md={6}>
-                        <Input
-                          label="Relación"
-                          name="emergency_contact_relationship"
-                          value={formData.emergency_contact_relationship}
-                          onChange={handleChange}
-                        />
-                      </Col>
-                    </Row>
-                    <Row>
-                      <Col md={6}>
-                        <Input
-                          label="Teléfono"
-                          name="emergency_contact_phone"
-                          value={formData.emergency_contact_phone}
-                          onChange={handleChange}
-                          error={errors.emergency_contact_phone?.[0]}
-                          type="tel"
-                        />
-                      </Col>
-                      <Col md={6}>
-                        <Input
-                          label="Teléfono Alternativo"
-                          name="emergency_contact_alternative_phone"
-                          value={formData.emergency_contact_alternative_phone}
-                          onChange={handleChange}
-                          type="tel"
-                        />
-                      </Col>
-                    </Row>
-                    <Row>
-                      <Col md={12}>
-                        <Toggle
-                          label="Autorizado para retirar"
-                          name="emergency_contact_authorized_pickup"
-                          checked={formData.emergency_contact_authorized_pickup}
-                          onChange={handleChange}
-                        />
-                      </Col>
-                    </Row>
-                  {/* Información de dirección */}
-                  </FormSection>
-                  <FormSection title="Dirección" subtitle="Información de la dirección del alumno">
-                    <Row>
-                      <Col md={6}>
-                        <Input
-                          label="Calle"
-                          name="street"
-                          value={formData.street}
-                          onChange={handleChange}
-                        />
-                      </Col>
-                      <Col md={6}>
-                        <Input
-                          label="Número"
-                          name="number"
-                          value={formData.number}
-                          onChange={handleChange}
-                          type="number"
-                        />
-                      </Col>
-                    </Row>
-                    <Row>
-                      <Col md={6}>
-                        <Input
-                          label="Ciudad"
-                          name="city"
-                          value={formData.city}
-                          onChange={handleChange}
-                          normalize
-                        />
-                      </Col>
-                      <Col md={6}>
-                        <Input
-                          label="Provincia"
-                          name="provincia"
-                          value={formData.provincia}
-                          onChange={handleChange}
-                          normalize
-                        />
-                      </Col>
-                    </Row>
-                    <Row>
-                      <Col md={6}>
-                        <Input
-                          label="Código Postal"
-                          name="postal_code_optional"
-                          value={formData.postal_code_optional}
-                          onChange={handleChange}
-                        />
-                      </Col>
-                    </Row>
-                  </FormSection>
-                </FormSection>
-              )}
-
-              {activeTab === 'medical' && (
-                <FormSection title="Información Médica" subtitle="Datos médicos importantes del alumno">
-                  <Row>
-                    <Col md={6}>
-                      <Input
-                        label="Obra Social"
-                        name="health_insurance"
-                        value={formData.health_insurance}
-                        onChange={handleChange}
-                      />
-                    </Col>
-                    <Col md={6}>
-                      <Input
-                        label="Número de Afiliado"
-                        name="affiliate_number"
-                        value={formData.affiliate_number}
-                        onChange={handleChange}
-                      />
-                    </Col>
-                  </Row>
-
-                  <Row>
-                    <Col md={12}>
-                      <TextArea
-                        label="Alergias"
-                        name="allergies"
-                        value={formData.allergies}
-                        onChange={handleChange}
-                        rows={2}
-                      />
-                    </Col>
-                  </Row>
-
-                  <Row>
-                    <Col md={12}>
-                      <TextArea
-                        label="Medicamentos"
-                        name="medications"
-                        value={formData.medications}
-                        onChange={handleChange}
-                        rows={2}
-                      />
-                    </Col>
-                  </Row>
-
-                  <Row>
-                    <Col md={6}>
-                      <Select
-                        label="Tipo de Sangre"
-                        name="blood_type"
-                        value={formData.blood_type}
-                        onChange={handleChange}
-                        options={bloodTypeOptions}
-                        placeholder="Seleccione tipo de sangre"
-                      />
-                    </Col>
-                    <Col md={6}>
-                      <Input
-                        label="Nombre del Pediatra"
-                        name="pediatrician_name"
-                        value={formData.pediatrician_name}
-                        onChange={handleChange}
-                        normalize
-                      />
-                    </Col>
-                  </Row>
-
-                  <Row>
-                    <Col md={6}>
-                      <Input
-                        label="Teléfono del Pediatra"
-                        name="pediatrician_phone"
-                        value={formData.pediatrician_phone}
-                        onChange={handleChange}
-                        error={errors.pediatrician_phone?.[0]}
-                        type="tel"
-                      />
-                    </Col>
-                    <Col md={6}>
-                      <Select
-                        label="Estado de Vacunación"
-                        name="vaccination_status"
-                        value={formData.vaccination_status}
-                        onChange={handleChange}
-                        options={vaccinationStatusOptions}
-                        placeholder="Seleccione estado de vacunación"
-                      />
-                    </Col>
-                  </Row>
-
-                  <Row>
-                    <Col md={12}>
-                      <TextArea
-                        label="Observaciones Médicas"
-                        name="medical_observations"
-                        value={formData.medical_observations}
-                        onChange={handleChange}
-                        rows={3}
-                      />
-                    </Col>
-                  </Row>
-                </FormSection>
-              )}
-
-              {activeTab === 'authorizations' && (
-                <FormSection title="Autorizaciones" subtitle="Autorizaciones y permisos especiales">
-                  <Row className="mb-3">
-                    <Col md={12}>
-                      <Toggle
-                        label="Autorización para fotografía"
-                        name="photo_authorization"
-                        checked={formData.photo_authorization}
-                        onChange={handleChange}
-                      />
-                    </Col>
-                  </Row>
-
-                  <Row className="mb-3">
-                    <Col md={12}>
-                      <Toggle
-                        label="Autorización para excursiones"
-                        name="trip_authorization"
-                        checked={formData.trip_authorization}
-                        onChange={handleChange}
-                      />
-                    </Col>
-                  </Row>
-
-                  <Row className="mb-3">
-                    <Col md={12}>
-                      <Toggle
-                        label="Autorización para atención médica de emergencia"
-                        name="medical_attention_authorization"
-                        checked={formData.medical_attention_authorization}
-                        onChange={handleChange}
-                      />
-                    </Col>
-                  </Row>
-
-                  <Row className="mb-3">
-                    <Col md={12}>
-                      <Toggle
-                        label="Tiene hermanos en el jardín"
-                        name="has_siblings_in_school"
-                        checked={formData.has_siblings_in_school}
-                        onChange={handleChange}
-                      />
-                    </Col>
-                  </Row>
-
-                  <Row>
-                    <Col md={12}>
-                      <TextArea
-                        label="Necesidades Especiales"
-                        name="special_needs"
-                        value={formData.special_needs}
-                        onChange={handleChange}
-                        rows={3}
-                      />
-                    </Col>
-                  </Row>
-
-                  <Row>
-                    <Col md={12}>
-                      <TextArea
-                        label="Observaciones Generales"
-                        name="observations"
-                        value={formData.observations}
-                        onChange={handleChange}
-                        rows={3}
-                      />
-                    </Col>
-                  </Row>
-                </FormSection>
-              )}
-            </div>
-          </div>
+          </form>
         </Card.Body>
       </Card>
-
     </Container>
   );
 };

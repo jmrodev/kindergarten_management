@@ -1,4 +1,5 @@
 import React from 'react';
+// Removed local CSS import since we're using global atomic styles
 
 const TextArea = ({
   label,
@@ -14,13 +15,18 @@ const TextArea = ({
   className = '',
   ...props
 }) => {
-  const textAreaClass = `form-textarea ${error ? 'form-textarea-error' : ''} ${className}`.trim();
-  const labelClass = `form-label ${required ? 'form-label-required' : ''}`;
+  // Determinar si el campo tiene contenido para aplicar clases CSS
+  const hasValue = value.trim() !== '';
+  const textareaFieldClass = [
+    'textarea-field',
+    error ? 'error' : '',
+    hasValue ? 'filled' : (required && !hasValue ? 'empty' : ''),
+  ].filter(Boolean).join(' ');
 
   return (
-    <div className="form-group">
+    <div className={`textarea-container ${className}`.trim()}>
       {label && (
-        <label htmlFor={name} className={labelClass}>
+        <label htmlFor={name} className={`textarea-label ${required ? 'required' : ''}`}>
           {label}
         </label>
       )}
@@ -33,11 +39,11 @@ const TextArea = ({
         disabled={disabled}
         placeholder={placeholder}
         rows={rows}
-        className={textAreaClass}
+        className={`${textareaFieldClass} ${className}`.trim()}
         {...props}
       />
-      {error && <div className="form-error">{error}</div>}
-      {helpText && !error && <div className="form-help">{helpText}</div>}
+      {error && <div className="textarea-error">{error}</div>}
+      {helpText && !error && <div className="textarea-help">{helpText}</div>}
     </div>
   );
 };

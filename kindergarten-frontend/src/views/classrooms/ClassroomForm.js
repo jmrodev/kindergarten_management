@@ -121,14 +121,14 @@ const ClassroomForm = () => {
 
       {error && <Alert variant="danger">{error}</Alert>}
 
-      <Card>
-        <Card.Header>
+      <Card className="form-container">
+        <Card.Header className="form-header">
           <Link to="/classrooms" className="btn btn-outline-secondary btn-sm me-2">
             <ArrowLeft className="me-1" />
             Volver
           </Link>
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             onClick={handleSubmit}
             disabled={loading}
           >
@@ -145,12 +145,12 @@ const ClassroomForm = () => {
             )}
           </Button>
         </Card.Header>
-        <Card.Body>
+        <Card.Body className="form-body">
           <Form onSubmit={handleSubmit}>
             <Row>
               <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Nombre de la Sala *</Form.Label>
+                <Form.Group className="form-group mb-3">
+                  <Form.Label className="form-label">Nombre de la Sala *</Form.Label>
                   <Form.Control
                     type="text"
                     name="name"
@@ -162,8 +162,8 @@ const ClassroomForm = () => {
                 </Form.Group>
               </Col>
               <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Capacidad *</Form.Label>
+                <Form.Group className="form-group mb-3">
+                  <Form.Label className="form-label">Capacidad *</Form.Label>
                   <Form.Control
                     type="number"
                     name="capacity"
@@ -177,11 +177,11 @@ const ClassroomForm = () => {
                 </Form.Group>
               </Col>
             </Row>
-            
+
             <Row>
               <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Turno *</Form.Label>
+                <Form.Group className="form-group mb-3">
+                  <Form.Label className="form-label">Turno *</Form.Label>
                   <Form.Select
                     name="shift"
                     value={formData.shift}
@@ -196,8 +196,8 @@ const ClassroomForm = () => {
                 </Form.Group>
               </Col>
               <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Año Académico *</Form.Label>
+                <Form.Group className="form-group mb-3">
+                  <Form.Label className="form-label">Año Académico *</Form.Label>
                   <Form.Control
                     type="number"
                     name="academic_year"
@@ -210,11 +210,11 @@ const ClassroomForm = () => {
                 </Form.Group>
               </Col>
             </Row>
-            
+
             <Row>
               <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Grupo de Edad *</Form.Label>
+                <Form.Group className="form-group mb-3">
+                  <Form.Label className="form-label">Grupo de Edad *</Form.Label>
                   <Form.Control
                     type="number"
                     name="age_group"
@@ -228,8 +228,8 @@ const ClassroomForm = () => {
                 </Form.Group>
               </Col>
               <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label className="d-block">Estado</Form.Label>
+                <Form.Group className="form-group mb-3">
+                  <Form.Label className="form-label d-block">Estado</Form.Label>
                   <Form.Check
                     type="switch"
                     id="is_active"
@@ -241,10 +241,10 @@ const ClassroomForm = () => {
                 </Form.Group>
               </Col>
             </Row>
-            
+
             <div className="mt-4">
-              <Button 
-                variant="primary" 
+              <Button
+                variant="primary"
                 onClick={handleSubmit}
                 disabled={loading}
                 className="me-2"
@@ -261,7 +261,7 @@ const ClassroomForm = () => {
                   </>
                 )}
               </Button>
-              
+
               <Link to="/classrooms" className="btn btn-outline-secondary">
                 <ArrowLeft className="me-2" />
                 Volver al listado

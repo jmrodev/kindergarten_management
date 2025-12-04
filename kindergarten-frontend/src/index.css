@@ -27,32 +27,88 @@ code {
   margin-right: 10px;
 }
 
-.table th, .table td {
-  vertical-align: middle;
-}
-
-.card {
+/* Consistent form and table atomic styles */
+.form-container, .table-container {
+  background-color: #ffffff;
+  border-radius: 0.375rem;
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
   border: 1px solid rgba(0, 0, 0, 0.125);
-  margin-bottom: 1rem;
 }
 
-.card-header {
+.form-header, .table-header {
   background-color: #f8f9fa;
   border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+  padding: 1rem 1.25rem;
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+}
+
+.form-body, .table-body {
+  padding: 1.25rem;
+}
+
+.table th, .table td {
+  vertical-align: middle;
+  padding: 0.75rem;
+}
+
+/* Consistent form controls */
+.form-control, .form-select {
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #ced4da;
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 .form-control:focus, .form-select:focus {
   border-color: #86b7fe;
   box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  outline: 0;
 }
 
+/* Consistent form groups */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* Card styles for both forms and tables */
+.card {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  margin-bottom: 1rem;
+  border-radius: 0.375rem;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+  padding: 1rem 1.25rem;
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+/* Button styles */
 .btn {
   border-radius: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  border: 1px solid transparent;
 }
 
 .btn-sm {
   border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
 }
 
 .btn-primary {
@@ -65,8 +121,23 @@ code {
   border-color: #0a58ca;
 }
 
+.btn-outline-primary {
+  color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.btn-outline-primary:hover {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  color: #fff;
+}
+
+/* Badge styles */
 .badge {
   vertical-align: middle;
+  padding: 0.35em 0.65em;
+  font-size: 0.75em;
+  border-radius: 0.375rem;
 }
 
 .status-badge {

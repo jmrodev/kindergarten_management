@@ -273,383 +273,385 @@ const StudentForm = () => {
           </Button>
         </Card.Header>
         <Card.Body>
-          <Tabs 
-            activeKey={activeTab} 
-            onSelect={(k) => setActiveTab(k)}
-            className="mb-4"
-          >
-            {/* Pestaña de Datos Personales */}
-            <Tab eventKey="personal" title="Datos Personales">
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Nombre(s) *</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="first_name"
-                      value={formData.first_name}
-                      onChange={handleChange}
-                      required
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Segundo Nombre (Opcional)</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="middle_name_optional"
-                      value={formData.middle_name_optional}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Apellido Paterno *</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="paternal_surname"
-                      value={formData.paternal_surname}
-                      onChange={handleChange}
-                      required
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Apellido Materno</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="maternal_surname"
-                      value={formData.maternal_surname}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Alias/Nickname</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="nickname_optional"
-                      value={formData.nickname_optional}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>DNI *</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="dni"
-                      value={formData.dni}
-                      onChange={handleChange}
-                      required
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Fecha de Nacimiento *</Form.Label>
-                    <Form.Control
-                      type="date"
-                      name="birth_date"
-                      value={formData.birth_date}
-                      onChange={handleChange}
-                      required
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Sala</Form.Label>
-                    <Form.Select
-                      name="classroom_id"
-                      value={formData.classroom_id}
-                      onChange={handleChange}
-                    >
-                      <option value="">Seleccione una sala</option>
-                      {classrooms.map(classroom => (
-                        <option key={classroom.id} value={classroom.id}>
-                          {classroom.name}
-                        </option>
-                      ))}
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-              </Row>
-              
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Turno</Form.Label>
-                    <Form.Select
-                      name="shift"
-                      value={formData.shift}
-                      onChange={handleChange}
-                    >
-                      <option value="">Seleccione un turno</option>
-                      <option value="mañana">Mañana</option>
-                      <option value="tarde">Tarde</option>
-                      <option value="mañana y tarde">Mañana y Tarde</option>
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Estado</Form.Label>
-                    <Form.Select
-                      name="status"
-                      value={formData.status}
-                      onChange={handleChange}
-                    >
-                      <option value="preinscripto">Preinscripto</option>
-                      <option value="pendiente">Pendiente</option>
-                      <option value="approved">Aprobado</option>
-                      <option value="sorteo">Sorteo</option>
-                      <option value="inscripto">Inscripto</option>
-                      <option value="activo">Activo</option>
-                      <option value="inactivo">Inactivo</option>
-                      <option value="egresado">Egresado</option>
-                      <option value="rechazado">Rechazado</option>
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-              </Row>
-            </Tab>
-            
-            {/* Pestaña de Información Médica */}
-            <Tab eventKey="medical" title="Información Médica">
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Obra Social</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="health_insurance"
-                      value={formData.health_insurance}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Número de Afiliado</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="affiliate_number"
-                      value={formData.affiliate_number}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              
-              <Row>
-                <Col md={12}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Alergias</Form.Label>
-                    <Form.Control
-                      as="textarea"
-                      rows={2}
-                      name="allergies"
-                      value={formData.allergies}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              
-              <Row>
-                <Col md={12}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Medicamentos</Form.Label>
-                    <Form.Control
-                      as="textarea"
-                      rows={2}
-                      name="medications"
-                      value={formData.medications}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Tipo de Sangre</Form.Label>
-                    <Form.Select
-                      name="blood_type"
-                      value={formData.blood_type}
-                      onChange={handleChange}
-                    >
-                      <option value="">Seleccione tipo de sangre</option>
-                      <option value="A+">A+</option>
-                      <option value="A-">A-</option>
-                      <option value="B+">B+</option>
-                      <option value="B-">B-</option>
-                      <option value="AB+">AB+</option>
-                      <option value="AB-">AB-</option>
-                      <option value="O+">O+</option>
-                      <option value="O-">O-</option>
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Nombre del Pediatra</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="pediatrician_name"
-                      value={formData.pediatrician_name}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Teléfono del Pediatra</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="pediatrician_phone"
-                      value={formData.pediatrician_phone}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Estado de Vacunación</Form.Label>
-                    <Form.Select
-                      name="vaccination_status"
-                      value={formData.vaccination_status}
-                      onChange={handleChange}
-                    >
-                      <option value="completo">Completo</option>
-                      <option value="incompleto">Incompleto</option>
-                      <option value="pendiente">Pendiente</option>
-                      <option value="no_informado">No Informado</option>
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-              </Row>
-              
-              <Row>
-                <Col md={12}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Observaciones Médicas</Form.Label>
-                    <Form.Control
-                      as="textarea"
-                      rows={3}
-                      name="medical_observations"
-                      value={formData.medical_observations}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-            </Tab>
-            
-            {/* Pestaña de Autorizaciones */}
-            <Tab eventKey="authorizations" title="Autorizaciones">
-              <Row className="mb-3">
-                <Col md={12}>
-                  <Form.Check
-                    type="switch"
-                    id="photo_authorization"
-                    label="Autorización para fotografía"
-                    name="photo_authorization"
-                    checked={formData.photo_authorization}
-                    onChange={handleChange}
-                  />
-                </Col>
-              </Row>
-              
-              <Row className="mb-3">
-                <Col md={12}>
-                  <Form.Check
-                    type="switch"
-                    id="trip_authorization"
-                    label="Autorización para excursiones"
-                    name="trip_authorization"
-                    checked={formData.trip_authorization}
-                    onChange={handleChange}
-                  />
-                </Col>
-              </Row>
-              
-              <Row className="mb-3">
-                <Col md={12}>
-                  <Form.Check
-                    type="switch"
-                    id="medical_attention_authorization"
-                    label="Autorización para atención médica de emergencia"
-                    name="medical_attention_authorization"
-                    checked={formData.medical_attention_authorization}
-                    onChange={handleChange}
-                  />
-                </Col>
-              </Row>
-              
-              <Row className="mb-3">
-                <Col md={12}>
-                  <Form.Check
-                    type="switch"
-                    id="has_siblings_in_school"
-                    label="Tiene hermanos en el jardín"
-                    name="has_siblings_in_school"
-                    checked={formData.has_siblings_in_school}
-                    onChange={handleChange}
-                  />
-                </Col>
-              </Row>
-              
-              <Row>
-                <Col md={12}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Necesidades Especiales</Form.Label>
-                    <Form.Control
-                      as="textarea"
-                      rows={3}
-                      name="special_needs"
-                      value={formData.special_needs}
+          <div className="form-body">
+            <Tabs
+              activeKey={activeTab}
+              onSelect={(k) => setActiveTab(k)}
+              className="mb-4"
+            >
+              {/* Pestaña de Datos Personales */}
+              <Tab eventKey="personal" title="Datos Personales">
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">Nombre(s) *</Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="first_name"
+                        value={formData.first_name}
+                        onChange={handleChange}
+                        required
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">Segundo Nombre (Opcional)</Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="middle_name_optional"
+                        value={formData.middle_name_optional}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">Apellido Paterno *</Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="paternal_surname"
+                        value={formData.paternal_surname}
+                        onChange={handleChange}
+                        required
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">Apellido Materno</Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="maternal_surname"
+                        value={formData.maternal_surname}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">Alias/Nickname</Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="nickname_optional"
+                        value={formData.nickname_optional}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">DNI *</Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="dni"
+                        value={formData.dni}
+                        onChange={handleChange}
+                        required
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">Fecha de Nacimiento *</Form.Label>
+                      <Form.Control
+                        type="date"
+                        name="birth_date"
+                        value={formData.birth_date}
+                        onChange={handleChange}
+                        required
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">Sala</Form.Label>
+                      <Form.Select
+                        name="classroom_id"
+                        value={formData.classroom_id}
+                        onChange={handleChange}
+                      >
+                        <option value="">Seleccione una sala</option>
+                        {classrooms.map(classroom => (
+                          <option key={classroom.id} value={classroom.id}>
+                            {classroom.name}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">Turno</Form.Label>
+                      <Form.Select
+                        name="shift"
+                        value={formData.shift}
+                        onChange={handleChange}
+                      >
+                        <option value="">Seleccione un turno</option>
+                        <option value="mañana">Mañana</option>
+                        <option value="tarde">Tarde</option>
+                        <option value="mañana y tarde">Mañana y Tarde</option>
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">Estado</Form.Label>
+                      <Form.Select
+                        name="status"
+                        value={formData.status}
+                        onChange={handleChange}
+                      >
+                        <option value="preinscripto">Preinscripto</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="approved">Aprobado</option>
+                        <option value="sorteo">Sorteo</option>
+                        <option value="inscripto">Inscripto</option>
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
+                        <option value="egresado">Egresado</option>
+                        <option value="rechazado">Rechazado</option>
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                </Row>
+              </Tab>
+
+              {/* Pestaña de Información Médica */}
+              <Tab eventKey="medical" title="Información Médica">
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">Obra Social</Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="health_insurance"
+                        value={formData.health_insurance}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">Número de Afiliado</Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="affiliate_number"
+                        value={formData.affiliate_number}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col md={12}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">Alergias</Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={2}
+                        name="allergies"
+                        value={formData.allergies}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col md={12}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">Medicamentos</Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={2}
+                        name="medications"
+                        value={formData.medications}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">Tipo de Sangre</Form.Label>
+                      <Form.Select
+                        name="blood_type"
+                        value={formData.blood_type}
+                        onChange={handleChange}
+                      >
+                        <option value="">Seleccione tipo de sangre</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">Nombre del Pediatra</Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="pediatrician_name"
+                        value={formData.pediatrician_name}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">Teléfono del Pediatra</Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="pediatrician_phone"
+                        value={formData.pediatrician_phone}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">Estado de Vacunación</Form.Label>
+                      <Form.Select
+                        name="vaccination_status"
+                        value={formData.vaccination_status}
+                        onChange={handleChange}
+                      >
+                        <option value="completo">Completo</option>
+                        <option value="incompleto">Incompleto</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="no_informado">No Informado</option>
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col md={12}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">Observaciones Médicas</Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={3}
+                        name="medical_observations"
+                        value={formData.medical_observations}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+              </Tab>
+
+              {/* Pestaña de Autorizaciones */}
+              <Tab eventKey="authorizations" title="Autorizaciones">
+                <Row className="mb-3">
+                  <Col md={12}>
+                    <Form.Check
+                      type="switch"
+                      id="photo_authorization"
+                      label="Autorización para fotografía"
+                      name="photo_authorization"
+                      checked={formData.photo_authorization}
                       onChange={handleChange}
                     />
-                  </Form.Group>
-                </Col>
-              </Row>
-              
-              <Row>
-                <Col md={12}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Observaciones Generales</Form.Label>
-                    <Form.Control
-                      as="textarea"
-                      rows={3}
-                      name="observations"
-                      value={formData.observations}
+                  </Col>
+                </Row>
+
+                <Row className="mb-3">
+                  <Col md={12}>
+                    <Form.Check
+                      type="switch"
+                      id="trip_authorization"
+                      label="Autorización para excursiones"
+                      name="trip_authorization"
+                      checked={formData.trip_authorization}
                       onChange={handleChange}
                     />
-                  </Form.Group>
-                </Col>
-              </Row>
-            </Tab>
-          </Tabs>
+                  </Col>
+                </Row>
+
+                <Row className="mb-3">
+                  <Col md={12}>
+                    <Form.Check
+                      type="switch"
+                      id="medical_attention_authorization"
+                      label="Autorización para atención médica de emergencia"
+                      name="medical_attention_authorization"
+                      checked={formData.medical_attention_authorization}
+                      onChange={handleChange}
+                    />
+                  </Col>
+                </Row>
+
+                <Row className="mb-3">
+                  <Col md={12}>
+                    <Form.Check
+                      type="switch"
+                      id="has_siblings_in_school"
+                      label="Tiene hermanos en el jardín"
+                      name="has_siblings_in_school"
+                      checked={formData.has_siblings_in_school}
+                      onChange={handleChange}
+                    />
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col md={12}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">Necesidades Especiales</Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={3}
+                        name="special_needs"
+                        value={formData.special_needs}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col md={12}>
+                    <Form.Group className="form-group mb-3">
+                      <Form.Label className="form-label">Observaciones Generales</Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={3}
+                        name="observations"
+                        value={formData.observations}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+              </Tab>
+            </Tabs>
+          </div>
         </Card.Body>
       </Card>
     </Container>

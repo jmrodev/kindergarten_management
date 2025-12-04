@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Spinner, Alert, Button } from 'react-bootstrap';
 import { People, PersonCheck, Calendar, FileEarmarkMedical, JournalText, FileEarmarkCheck, PersonPlus } from 'react-bootstrap-icons';
+import { useNavigate } from 'react-router-dom';
 import studentService from '../api/studentService';
 import vaccinationService from '../api/vaccinationService';
 import documentReviewService from '../api/documentReviewService';
@@ -10,6 +11,7 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -79,198 +81,166 @@ const Dashboard = () => {
   }
 
   return (
-    <Container fluid className="py-4">
-      <Row className="mb-4">
-        <Col>
-          <h1 className="h3 mb-0">
-            <People className="me-2" />
-            Dashboard - Jardín de Infantes
-          </h1>
-          <p className="text-muted">Resumen del sistema y estadísticas generales</p>
-        </Col>
-      </Row>
+    <div className="dashboard-container">
+      <div className="dashboard-header">
+        <h1>
+          <People style={{verticalAlign: 'middle'}} />
+          Dashboard - Jardín de Infantes
+        </h1>
+        <p>Resumen del sistema y estadísticas generales</p>
+      </div>
 
-      {error && <Alert variant="danger">{error}</Alert>}
+      {error && <div className="alert alert-danger">{error}</div>}
 
       {stats && (
         <>
           {/* Summary Cards */}
-          <Row className="mb-4">
-            <Col md={3} sm={6} className="mb-3">
-              <Card className="text-center stat-card">
-                <Card.Body>
+          <div className="cards-row">
+            <div className="card-col">
+              <div
+                className="stat-card clickable-card"
+                onClick={() => navigate('/students')}
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="card-content">
                   <div className="number">{stats.totalStudents}</div>
                   <div className="label">
-                    <PersonCheck className="me-1" />
+                    <PersonCheck style={{verticalAlign: 'middle'}} />
                     Alumnos Totales
                   </div>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col md={3} sm={6} className="mb-3">
-              <Card className="text-center stat-card">
-                <Card.Body>
+                </div>
+              </div>
+            </div>
+            <div className="card-col">
+              <div className="stat-card active">
+                <div className="card-content">
                   <div className="number">{stats.activeStudents}</div>
-                  <div className="label text-success">
-                    <PersonCheck className="me-1" />
+                  <div className="label">
+                    <PersonCheck style={{verticalAlign: 'middle'}} />
                     Alumnos Activos
                   </div>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col md={3} sm={6} className="mb-3">
-              <Card className="text-center stat-card">
-                <Card.Body>
+                </div>
+              </div>
+            </div>
+            <div className="card-col">
+              <div className="stat-card active">
+                <div className="card-content">
                   <div className="number">{stats.vaccinationComplete}</div>
-                  <div className="label text-success">
-                    <FileEarmarkMedical className="me-1" />
+                  <div className="label">
+                    <FileEarmarkMedical style={{verticalAlign: 'middle'}} />
                     Vacunas Completas
                   </div>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col md={3} sm={6} className="mb-3">
-              <Card className="text-center stat-card">
-                <Card.Body>
+                </div>
+              </div>
+            </div>
+            <div className="card-col">
+              <div className="stat-card warning">
+                <div className="card-content">
                   <div className="number">{stats.pendingDocuments}</div>
-                  <div className="label text-warning">
-                    <FileEarmarkCheck className="me-1" />
+                  <div className="label">
+                    <FileEarmarkCheck style={{verticalAlign: 'middle'}} />
                     Documentos Pendientes
                   </div>
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Additional Stats */}
-          <Row className="mb-4">
-            <Col md={3} sm={6} className="mb-3">
-              <Card className="text-center stat-card">
-                <Card.Body>
+          <div className="cards-row">
+            <div className="card-col">
+              <div className="stat-card warning">
+                <div className="card-content">
                   <div className="number">{stats.preinscriptoStudents}</div>
-                  <div className="label text-warning">
-                    <JournalText className="me-1" />
+                  <div className="label">
+                    <JournalText style={{verticalAlign: 'middle'}} />
                     Preinscriptos
                   </div>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col md={3} sm={6} className="mb-3">
-              <Card className="text-center stat-card">
-                <Card.Body>
+                </div>
+              </div>
+            </div>
+            <div className="card-col">
+              <div className="stat-card info">
+                <div className="card-content">
                   <div className="number">{stats.inscriptoStudents}</div>
-                  <div className="label text-primary">
-                    <JournalText className="me-1" />
+                  <div className="label">
+                    <JournalText style={{verticalAlign: 'middle'}} />
                     Inscriptos
                   </div>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col md={3} sm={6} className="mb-3">
-              <Card className="text-center stat-card">
-                <Card.Body>
+                </div>
+              </div>
+            </div>
+            <div className="card-col">
+              <div className="stat-card danger">
+                <div className="card-content">
                   <div className="number">{stats.vaccinationIncomplete}</div>
-                  <div className="label text-danger">
-                    <FileEarmarkMedical className="me-1" />
+                  <div className="label">
+                    <FileEarmarkMedical style={{verticalAlign: 'middle'}} />
                     Vacunas Incompletas
                   </div>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col md={3} sm={6} className="mb-3">
-              <Card className="text-center stat-card">
-                <Card.Body>
+                </div>
+              </div>
+            </div>
+            <div className="card-col">
+              <div className="stat-card info">
+                <div className="card-content">
                   <div className="number">{stats.todayEvents}</div>
-                  <div className="label text-info">
-                    <Calendar className="me-1" />
+                  <div className="label">
+                    <Calendar style={{verticalAlign: 'middle'}} />
                     Eventos Hoy
                   </div>
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Quick Actions */}
-          <Row className="mb-4">
-            <Col>
-              <Card>
-                <Card.Header>
-                  <h5 className="mb-0">Acciones Rápidas</h5>
-                </Card.Header>
-                <Card.Body>
-                  <Row>
-                    <Col md={3} sm={6} className="mb-3">
-                      <Button 
-                        variant="outline-primary" 
-                        className="w-100 h-100 d-flex flex-column align-items-center justify-content-center"
-                        href="/students/new"
-                      >
-                        <PersonPlus className="mb-2" size={32} />
-                        Nuevo Alumno
-                      </Button>
-                    </Col>
-                    <Col md={3} sm={6} className="mb-3">
-                      <Button 
-                        variant="outline-success" 
-                        className="w-100 h-100 d-flex flex-column align-items-center justify-content-center"
-                        href="/attendance"
-                      >
-                        <FileEarmarkMedical className="mb-2" size={32} />
-                        Registrar Asistencia
-                      </Button>
-                    </Col>
-                    <Col md={3} sm={6} className="mb-3">
-                      <Button 
-                        variant="outline-info" 
-                        className="w-100 h-100 d-flex flex-column align-items-center justify-content-center"
-                        href="/calendar"
-                      >
-                        <Calendar className="mb-2" size={32} />
-                        Calendario
-                      </Button>
-                    </Col>
-                    <Col md={3} sm={6} className="mb-3">
-                      <Button 
-                        variant="outline-warning" 
-                        className="w-100 h-100 d-flex flex-column align-items-center justify-content-center"
-                        href="/document-reviews"
-                      >
-                        <FileEarmarkCheck className="mb-2" size={32} />
-                        Revisar Documentos
-                      </Button>
-                    </Col>
-                  </Row>
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
+          <div className="quick-actions-card">
+            <div className="card-header">
+              <h5>Acciones Rápidas</h5>
+            </div>
+            <div className="quick-actions-grid">
+              <a href="/students/new" className="quick-action-btn">
+                <PersonPlus size={32} style={{display: 'block', marginBottom: '0.75rem'}} />
+                Nuevo Alumno
+              </a>
+              <a href="/attendance" className="quick-action-btn">
+                <FileEarmarkMedical size={32} style={{display: 'block', marginBottom: '0.75rem'}} />
+                Registrar Asistencia
+              </a>
+              <a href="/calendar" className="quick-action-btn">
+                <Calendar size={32} style={{display: 'block', marginBottom: '0.75rem'}} />
+                Calendario
+              </a>
+              <a href="/document-reviews" className="quick-action-btn">
+                <FileEarmarkCheck size={32} style={{display: 'block', marginBottom: '0.75rem'}} />
+                Revisar Documentos
+              </a>
+            </div>
+          </div>
 
           {/* Recent Activity */}
-          <Row>
-            <Col md={6} className="mb-3">
-              <Card>
-                <Card.Header>
-                  <h5 className="mb-0">Últimos Alumnos Registrados</h5>
-                </Card.Header>
-                <Card.Body>
-                  <p className="text-muted">No hay alumnos recientes registrados.</p>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col md={6} className="mb-3">
-              <Card>
-                <Card.Header>
-                  <h5 className="mb-0">Próximos Eventos</h5>
-                </Card.Header>
-                <Card.Body>
-                  <p className="text-muted">No hay eventos programados próximamente.</p>
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
+          <div style={{display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '1.5rem'}}>
+            <div className="activity-card" style={{flex: '1', minWidth: '300px', marginBottom: '1rem'}}>
+              <div className="card-header">
+                <h5>Últimos Alumnos Registrados</h5>
+              </div>
+              <div className="card-body">
+                <p>No hay alumnos recientes registrados.</p>
+              </div>
+            </div>
+            <div className="activity-card" style={{flex: '1', minWidth: '300px', marginBottom: '1rem'}}>
+              <div className="card-header">
+                <h5>Próximos Eventos</h5>
+              </div>
+              <div className="card-body">
+                <p>No hay eventos programados próximamente.</p>
+              </div>
+            </div>
+          </div>
         </>
       )}
-    </Container>
+    </div>
   );
 };
 

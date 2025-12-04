@@ -82,8 +82,8 @@ const ClassroomList = () => {
 
       {error && <Alert variant="danger">{error}</Alert>}
 
-      <Card className="mb-4">
-        <Card.Header>
+      <Card className="form-container mb-4">
+        <Card.Header className="form-header">
           <Row className="align-items-center">
             <Col>
               <h5 className="mb-0">Filtros de Búsqueda</h5>
@@ -96,12 +96,12 @@ const ClassroomList = () => {
             </Col>
           </Row>
         </Card.Header>
-        <Card.Body>
+        <Card.Body className="form-body">
           <Form>
             <Row>
               <Col md={4}>
-                <Form.Group>
-                  <Form.Label>Buscar por nombre</Form.Label>
+                <Form.Group className="form-group">
+                  <Form.Label className="form-label">Buscar por nombre</Form.Label>
                   <Form.Control
                     type="text"
                     placeholder="Nombre de la sala..."
@@ -111,8 +111,8 @@ const ClassroomList = () => {
                 </Form.Group>
               </Col>
               <Col md={4}>
-                <Form.Group>
-                  <Form.Label>Capacidad</Form.Label>
+                <Form.Group className="form-group">
+                  <Form.Label className="form-label">Capacidad</Form.Label>
                   <Form.Select
                     value={filters.capacity}
                     onChange={(e) => handleFilterChange('capacity', e.target.value)}
@@ -127,8 +127,8 @@ const ClassroomList = () => {
                 </Form.Group>
               </Col>
               <Col md={4}>
-                <Form.Group>
-                  <Form.Label>Turno</Form.Label>
+                <Form.Group className="form-group">
+                  <Form.Label className="form-label">Turno</Form.Label>
                   <Form.Select
                     value={filters.shift}
                     onChange={(e) => handleFilterChange('shift', e.target.value)}
@@ -145,11 +145,11 @@ const ClassroomList = () => {
         </Card.Body>
       </Card>
 
-      <Card>
-        <Card.Header>
+      <Card className="table-container">
+        <Card.Header className="table-header">
           <h5 className="mb-0">Listado de Salas</h5>
         </Card.Header>
-        <Card.Body className="p-0">
+        <Card.Body className="table-body p-0">
           <div className="table-responsive">
             <Table className="mb-0" striped hover>
               <thead className="table-light">
@@ -192,24 +192,24 @@ const ClassroomList = () => {
                         {classroom.assigned_students_count || 0}/{classroom.capacity}
                       </td>
                       <td>
-                        <Button 
-                          variant="outline-primary" 
-                          size="sm" 
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
                           className="me-2"
                           href={`/classrooms/edit/${classroom.id}`}
                         >
                           <Pencil size={16} />
                         </Button>
-                        <Button 
-                          variant="outline-info" 
-                          size="sm" 
+                        <Button
+                          variant="outline-info"
+                          size="sm"
                           className="me-2"
                           href={`/classrooms/${classroom.id}`}
                         >
                           <Eye size={16} />
                         </Button>
-                        <Button 
-                          variant="outline-danger" 
+                        <Button
+                          variant="outline-danger"
                           size="sm"
                           onClick={() => {
                             setClassroomToDelete(classroom);

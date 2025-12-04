@@ -7,8 +7,10 @@ import Login from './views/auth/Login.jsx';
 import GoogleAuth from './views/auth/GoogleAuth.jsx';
 import ParentDashboard from './views/ParentDashboard.jsx';
 import RegisterChildForm from './views/RegisterChildForm.jsx';
+import RegisterChildFormWizard from './views/RegisterChildFormWizard.jsx';
 import StudentList from './views/students/StudentList.jsx';
 import StudentForm from './views/students/StudentForm.jsx';
+import StudentFormWizard from './views/students/StudentFormWizard.jsx';
 import ClassroomList from './views/classrooms/ClassroomList.jsx';
 import ClassroomForm from './views/classrooms/ClassroomForm.jsx';
 import StaffList from './views/staff/StaffList.jsx';
@@ -18,6 +20,7 @@ import GuardianForm from './views/guardians/GuardianForm.jsx';
 import AttendanceList from './views/attendance/AttendanceList.jsx';
 import CalendarView from './views/calendar/CalendarView.jsx';
 import VaccinationList from './views/vaccinations/VaccinationList.jsx';
+import VaccinationForm from './views/vaccinations/VaccinationForm.jsx';
 import DocumentReviewList from './views/documentReviews/DocumentReviewList.jsx';
 import MeetingMinutesList from './views/meetingMinutes/MeetingMinutesList.jsx';
 import ActivityList from './views/activities/ActivityList.jsx';
@@ -54,8 +57,11 @@ function AppContent() {
 
             {/* Rutas de alumnos */}
             <Route path="students" element={<StudentList />} />
-            <Route path="students/new" element={<StudentForm />} />
+            <Route path="students/new" element={<StudentFormWizard />} />
             <Route path="students/edit/:id" element={<StudentForm />} />
+            <Route path="students/:id/vaccinations" element={<VaccinationList />} />
+            <Route path="students/:studentId/vaccinations/new" element={<VaccinationForm />} />
+            <Route path="students/:studentId/vaccinations/:id/edit" element={<VaccinationForm />} />
 
             {/* Rutas de salas */}
             <Route path="classrooms" element={<ClassroomList />} />
@@ -92,7 +98,7 @@ function AppContent() {
 
             {/* Rutas para padres */}
             <Route path="parent-dashboard" element={<ParentDashboard />} />
-            <Route path="register-child" element={<RegisterChildForm />} />
+            <Route path="register-child" element={<RegisterChildFormWizard />} />
           </Route>
 
           {/* Redirección por defecto */}

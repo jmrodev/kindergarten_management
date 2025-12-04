@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus } from 'react-bootstrap-icons';
+import { Plus, FileEarmarkPlus } from 'react-bootstrap-icons';
+import { useNavigate } from 'react-router-dom';
+import OfficeRibbonWithTitle from '../../components/atoms/OfficeRibbonWithTitle';
 import OfficeTable from '../../components/organisms/OfficeTable';
 import TableCell from '../../components/atoms/TableCell';
 import TableRow from '../../components/molecules/TableRow';
@@ -23,6 +25,7 @@ const ClassroomList = () => {
   const [error, setError] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [classroomToDelete, setClassroomToDelete] = useState(null);
+  const navigate = useNavigate();
 
   const fetchClassrooms = useCallback(async () => {
     try {
@@ -77,8 +80,20 @@ const ClassroomList = () => {
       {error && <Alert variant="danger">{error}</Alert>}
 
       <Card className="border-0 m-0" style={{marginTop: '0', paddingTop: '0', border: 'none'}}>
-        <Card.Header className="p-1" style={{padding: '2px', borderBottom: '1px solid #dee2e6'}}>
-          <h5 className="mb-0" style={{fontSize: '0.9rem', padding: '4px 8px'}}>Listado de Salas</h5>
+        <Card.Header className="p-1 office-ribbon" style={{padding: '2px', borderBottom: '1px solid #dee2e6'}}>
+          <OfficeRibbonWithTitle
+            title="Listado de Salas"
+            menuItems={[
+              {
+                label: "Nueva Sala",
+                icon: <FileEarmarkPlus size={16} />,
+                onClick: () => navigate('/classrooms/new')
+              }
+            ]}
+            onClose={() => navigate('/dashboard')}
+            navigate={navigate}
+            showTitle={false} // Hide the title as requested
+          />
         </Card.Header>
         <Card.Body className="p-0" style={{padding: '0'}}>
           <OfficeTable

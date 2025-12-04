@@ -17,8 +17,8 @@ const GuardianForm = () => {
         </Col>
       </Row>
 
-      <Card>
-        <Card.Header>
+      <Card className="form-container">
+        <Card.Header className="form-header">
           <Link to="/guardians" className="btn btn-outline-secondary btn-sm me-2">
             <ArrowLeft className="me-1" />
             Volver
@@ -27,18 +27,18 @@ const GuardianForm = () => {
             Guardar Responsable
           </Button>
         </Card.Header>
-        <Card.Body>
+        <Card.Body className="form-body">
           <Form>
             <Row>
               <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Nombre(s)</Form.Label>
+                <Form.Group className="form-group mb-3">
+                  <Form.Label className="form-label">Nombre(s)</Form.Label>
                   <Form.Control type="text" placeholder="Ingrese nombre(s)" />
                 </Form.Group>
               </Col>
               <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Apellido Paterno</Form.Label>
+                <Form.Group className="form-group mb-3">
+                  <Form.Label className="form-label">Apellido Paterno</Form.Label>
                   <Form.Control type="text" placeholder="Ingrese apellido paterno" />
                 </Form.Group>
               </Col>

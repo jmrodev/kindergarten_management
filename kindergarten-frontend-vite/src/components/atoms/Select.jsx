@@ -1,4 +1,5 @@
 import React from 'react';
+// Removed local CSS import since we're using global atomic styles
 
 const Select = ({
   label,
@@ -14,13 +15,18 @@ const Select = ({
   className = '',
   ...props
 }) => {
-  const selectClass = `form-select ${error ? 'form-select-error' : ''} ${className}`.trim();
-  const labelClass = `form-label ${required ? 'form-label-required' : ''}`;
+  // Determinar si el campo tiene contenido para aplicar clases CSS
+  const hasValue = value !== '' && value != null;
+  const selectFieldClass = [
+    'select-field',
+    error ? 'error' : '',
+    hasValue ? 'filled' : (required && !hasValue ? 'empty' : ''),
+  ].filter(Boolean).join(' ');
 
   return (
-    <div className="form-group">
+    <div className={`select-container ${className}`.trim()}>
       {label && (
-        <label htmlFor={name} className={labelClass}>
+        <label htmlFor={name} className={`select-label ${required ? 'required' : ''}`}>
           {label}
         </label>
       )}
@@ -31,7 +37,7 @@ const Select = ({
         onChange={onChange}
         required={required}
         disabled={disabled}
-        className={selectClass}
+        className={`${selectFieldClass} ${className}`.trim()}
         {...props}
       >
         {placeholder && <option value="">{placeholder}</option>}
@@ -41,8 +47,8 @@ const Select = ({
           </option>
         ))}
       </select>
-      {error && <div className="form-error">{error}</div>}
-      {helpText && !error && <div className="form-help">{helpText}</div>}
+      {error && <div className="select-error">{error}</div>}
+      {helpText && !error && <div className="select-help">{helpText}</div>}
     </div>
   );
 };

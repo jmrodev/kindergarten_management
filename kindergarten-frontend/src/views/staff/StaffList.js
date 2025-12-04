@@ -143,11 +143,11 @@ const StaffList = () => {
         </Card.Body>
       </Card>
 
-      <Card>
-        <Card.Header>
+      <Card className="table-container">
+        <Card.Header className="table-header">
           <h5 className="mb-0">Listado de Personal</h5>
         </Card.Header>
-        <Card.Body className="p-0">
+        <Card.Body className="table-body p-0">
           <div className="table-responsive">
             <Table className="mb-0" striped hover>
               <thead className="table-light">
@@ -189,30 +189,30 @@ const StaffList = () => {
                         </span>
                       </td>
                       <td>
-                        {staffMember.last_login 
-                          ? new Date(staffMember.last_login).toLocaleDateString() 
+                        {staffMember.last_login
+                          ? new Date(staffMember.last_login).toLocaleDateString()
                           : 'Nunca'
                         }
                       </td>
                       <td>
-                        <Button 
-                          variant="outline-primary" 
-                          size="sm" 
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
                           className="me-2"
                           href={`/staff/edit/${staffMember.id}`}
                         >
                           <Pencil size={16} />
                         </Button>
-                        <Button 
-                          variant="outline-info" 
-                          size="sm" 
+                        <Button
+                          variant="outline-info"
+                          size="sm"
                           className="me-2"
                           href={`/staff/${staffMember.id}`}
                         >
                           <Eye size={16} />
                         </Button>
-                        <Button 
-                          variant="outline-danger" 
+                        <Button
+                          variant="outline-danger"
                           size="sm"
                           onClick={() => {
                             setStaffToDelete(staffMember);
