@@ -1,0 +1,932 @@
+import React, { useState, useEffect } from 'react';
+import { GearFill, InfoCircleFill, FolderFill, ShieldLock, KeyFill, ClipboardDataFill, ShieldCheck, Shield, CheckCircle, XCircle } from 'react-bootstrap-icons';
+import { usePermissions } from '../contexts/PermissionsContext.jsx';
+import { useAuth } from '../contexts/AuthContext.jsx';
+import api from '../api/api.js';
+
+const ConfiguracionPage = () => {
+  const { canRole, reloadPermissions } = usePermissions();
+  const { currentUser } = useAuth();
+
+  // Check if user is authorized to access configuration
+  const isAdminOrDirector = currentUser &&
+    (currentUser.role_name === 'Administrator' || currentUser.role_name === 'Director' ||
+     currentUser.role === 'Administrator' || currentUser.role === 'Director');
+
+  if (!isAdminOrDirector) {
+    return (
+      <div className="container-fluid">
+        <div className="row">
+          <div className="col-12">
+            <div className="alert alert-danger mt-3">
+              <h5>Acceso Denegado</h5>
+              <p>Solo Administradores y Directores pueden acceder a la configuración del sistema.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const [roles, setRoles] = useState([]);
+  const [modules, setModules] = useState([]);
+  const [actions, setActions] = useState([]);
+  const [permissions, setPermissions] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState('');
+
+  useEffect(() => {
+    loadConfigData();
+  }, []);
+
+  const loadConfigData = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch all necessary data in parallel
+      const [permissionsRes, modulesRes, actionsRes, rolesRes] = await Promise.all([
+        api.get('/permissions'),
+        api.get('/permissions/modules'),
+        api.get('/permissions/actions'),
+        api.get('/roles') // Fetch roles separately
+      ]);
+
+      setModules(modulesRes.data);
+      setActions(actionsRes.data);
+
+      // Organize permissions by role and module
+      const organizedPerms = {};
+
+      permissionsRes.data.forEach(perm => {
+        const role = perm.role_name;
+        const module = perm.module_key;
+        const action = perm.action_key;
+
+        if (!organizedPerms[role]) {
+          organizedPerms[role] = {};
+        }
+        if (!organizedPerms[role][module]) {
+          organizedPerms[role][module] = {};
+        }
+
+        organizedPerms[role][module][action] = perm.has_permission;
+      });
+
+      setPermissions(organizedPerms);
+      setRoles(rolesRes.data);
+    } catch (err) {
+      // If roles endpoint fails, we can still get roles from permissions data as fallback
+      if (err.response?.status === 403 || err.response?.status === 401) {
+        // User doesn't have permission to get roles, use data from permissions response
+        const permissionsRes = await api.get('/permissions');
+        const modulesRes = await api.get('/permissions/modules');
+        const actionsRes = await api.get('/permissions/actions');
+
+        setModules(modulesRes.data);
+        setActions(actionsRes.data);
+
+        // Organize permissions and extract unique roles
+        const organizedPerms = {};
+        const uniqueRoles = [];
+
+        permissionsRes.data.forEach(perm => {
+          const role = perm.role_name;
+          const module = perm.module_key;
+          const action = perm.action_key;
+
+          if (!organizedPerms[role]) {
+            organizedPerms[role] = {};
+          }
+          if (!organizedPerms[role][module]) {
+            organizedPerms[role][module] = {};
+          }
+
+          organizedPerms[role][module][action] = perm.has_permission;
+
+          // Add role if not already in uniqueRoles
+          if (!uniqueRoles.some(r => r.role_name === role)) {
+            uniqueRoles.push({ id: perm.role_id, role_name: role });
+          }
+        });
+
+        setPermissions(organizedPerms);
+        setRoles(uniqueRoles);
+      } else {
+        setError('Error loading configuration data');
+        console.error('Error loading configuration:', err);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePermissionToggle = async (roleId, moduleId, actionId, isGranted) => {
+    try {
+      await api.post('/permissions/toggle', {
+        roleId,
+        moduleId,
+        actionId,
+        isGranted: !isGranted
+      });
+
+      // Update local state optimistically
+      const newPermissions = { ...permissions };
+      const roleObj = roles.find(r => r.id === roleId);
+      const roleName = roleObj?.role_name;
+      const module = modules.find(m => m.id === moduleId)?.module_key;
+      const action = actions.find(a => a.id === actionId)?.action_key;
+
+      if (roleName && module && action) {
+        if (!newPermissions[roleName]) newPermissions[roleName] = {};
+        if (!newPermissions[roleName][module]) newPermissions[roleName][module] = {};
+        newPermissions[roleName][module][action] = !isGranted;
+        setPermissions(newPermissions);
+      }
+
+      // Reload permissions to ensure consistency
+      reloadPermissions();
+    } catch (err) {
+      setError('Error updating permission');
+      console.error('Error updating permission:', err);
+    }
+  };
+
+  const isProtectedPermission = (roleName, moduleKey) => {
+    const protectedModules = ['personal', 'configuracion', 'roles'];
+    const protectedRoles = ['Administrator', 'Director'];
+    return protectedRoles.includes(roleName) && protectedModules.includes(moduleKey);
+  };
+
+  // Determine which modules should be visible for a given role
+  const getVisibleModulesForRole = (roleName) => {
+    // Normalize role name for comparison
+    const normalizedRoleName = roleName ? roleName.trim().toLowerCase() : '';
+
+    // Define which modules each role should have access to
+    const roleModuleMap = {
+      'tutor': ['alumnos', 'inscripciones', 'vacunas', 'asistencias'],
+      'teacher': ['alumnos', 'inscripciones', 'vacunas', 'asistencias', 'salas'],
+      'secretaria': ['alumnos', 'asistencia', 'responsables', 'mensajes', 'salas'],
+      'secretary': ['alumnos', 'asistencia', 'responsables', 'mensajes', 'salas'], // In case it's stored as "Secretary"
+      'administrative': ['alumnos', 'inscripciones', 'vacunas', 'asistencias', 'personal', 'salas'],
+      'director': ['alumnos', 'inscripciones', 'vacunas', 'asistencias', 'salas'], // Removed 'personal', 'configuracion'
+      'administrator': ['alumnos', 'inscripciones', 'vacunas', 'asistencias', 'salas'] // Removed 'personal', 'configuracion', 'roles'
+    };
+
+    // If a specific role mapping exists, use it; otherwise, show all modules
+    return roleModuleMap[normalizedRoleName] || modules.map(module => module.module_key);
+  };
+
+
+  if (loading) {
+    return (
+      <div className="configuracion-page">
+        <div className="loading d-flex justify-content-center align-items-center" style={{ height: '60vh' }}>
+          <div className="text-center">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Cargando...</span>
+            </div>
+            <p className="mt-2 mb-0">Cargando configuración...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="configuracion-page">
+        <div className="alert alert-danger m-3" role="alert">
+          <h5 className="alert-heading">Error</h5>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="configuracion-page">
+      <style>{`
+        .configuracion-page {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          padding: 1.5rem 1rem;
+          background-color: #f8f9fa;
+        }
+        .configuracion-card {
+          border: none;
+          border-radius: 12px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+          margin-top: 1.25rem;
+          overflow: hidden;
+          background: white;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .configuracion-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 25px rgba(0,0,0,0.12);
+        }
+        .configuracion-card-header {
+          background: linear-gradient(135deg, #2b579a 0%, #1a3d77 100%);
+          color: white;
+          padding: 1rem 1.5rem;
+          font-weight: 600;
+          font-size: 1.25rem;
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+        .configuracion-card-header i {
+          font-size: 1.5rem;
+        }
+        .configuracion-card-body {
+          padding: 1.5rem;
+        }
+        .permissions-matrix {
+          width: 100%;
+          border-collapse: separate;
+          border-spacing: 0;
+          font-size: 0.875rem;
+          background-color: white;
+        }
+        .permissions-matrix th {
+          background-color: #2b579a;
+          color: white;
+          border: 1px solid #e0e0e0;
+          padding: 14px 10px;
+          text-align: center;
+          font-weight: 600;
+          min-width: 140px;
+          position: relative;
+        }
+        .permissions-matrix th:first-child {
+          background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+          color: #333;
+          border-right: 2px solid #d0d0d0;
+        }
+        .permissions-matrix tr th:first-child,
+        .permissions-matrix tr td:first-child {
+          background-color: #f8f9fa;
+          position: sticky;
+          left: 0;
+          z-index: 10;
+          min-width: 180px;
+          border-right: 2px solid #d0d0d0;
+          font-weight: 600;
+          color: #2b579a;
+        }
+        .permissions-matrix tr td:first-child {
+          font-weight: 600;
+          text-align: center;
+          vertical-align: middle;
+          background: linear-gradient(135deg, #f8f9fa 0%, #eef2f7 100%);
+        }
+        .permissions-matrix td {
+          border: 1px solid #e0e0e0;
+          padding: 12px 10px;
+          vertical-align: top;
+          text-align: center;
+          background-color: #fcfdfe;
+        }
+        .permissions-matrix tr:nth-child(even) td:not(:first-child) {
+          background-color: #f9fbfd;
+        }
+        .permissions-matrix td:hover {
+          background-color: #f0f7ff;
+        }
+        .role-name-cell {
+          background: linear-gradient(135deg, #f8f9fa 0%, #eef2f7 100%);
+          font-weight: 600;
+          text-align: center;
+          min-width: 180px;
+          color: #2b579a;
+        }
+        .permission-column {
+          min-width: 160px;
+          text-align: center;
+        }
+        .permission-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          padding: 6px;
+          min-height: 120px;
+        }
+        .role-permission-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+          gap: 1.25rem;
+          width: 100%;
+        }
+        .module-permission-section {
+          background: #f8fafd;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 1.25rem;
+          transition: all 0.2s ease;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+        }
+        .module-permission-section:hover {
+          background: #ffffff;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .module-title {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: #2b579a;
+          margin: 0 0 1rem 0;
+          padding-bottom: 0.75rem;
+          border-bottom: 2px solid #e2e8f0;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .module-title i {
+          font-size: 1.2rem;
+        }
+        .module-actions {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          flex: 1;
+        }
+        .permission-item {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.4rem 0;
+          border-radius: 6px;
+          transition: background-color 0.15s;
+        }
+        .permission-item:hover {
+          background-color: #e6f0ff;
+          padding-left: 0.5rem;
+        }
+        .permission-item .form-check-input {
+          margin: 0;
+          width: 18px;
+          height: 18px;
+          accent-color: #2b579a;
+          cursor: pointer;
+        }
+        .permission-label {
+          margin: 0;
+          font-size: 0.9rem;
+          white-space: nowrap;
+          line-height: 1.3;
+          color: #444;
+          flex: 1;
+          cursor: pointer;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .permission-item:hover .permission-label {
+          color: #2b579a;
+        }
+        .protected-indicator {
+          color: #e59e0b;
+          font-size: 0.85rem;
+          margin-left: 0.25rem;
+        }
+        .module-header {
+          background: linear-gradient(135deg, #e3eeff 0%, #d1e4ff 100%);
+          font-weight: 600;
+          font-size: 0.85rem;
+          padding: 8px 0;
+          color: #1a3d77;
+        }
+        .legend-checkbox {
+          accent-color: #2b579a;
+        }
+        .info-alert {
+          background-color: #f0f7ff;
+          border-left: 4px solid #2b579a;
+          padding: 12px;
+          margin: 15px 0;
+          border-radius: 0 4px 4px 0;
+        }
+        .access-denied-card {
+          max-width: 600px;
+          margin: 50px auto;
+          text-align: center;
+        }
+        .table-responsive {
+          overflow-x: auto;
+        }
+        .page-header {
+          margin-bottom: 1.5rem;
+          padding-bottom: 1rem;
+          border-bottom: 1px solid #e9ecef;
+        }
+        .page-title {
+          font-size: 1.75rem;
+          font-weight: 700;
+          color: #212529;
+          margin: 0;
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+        .page-subtitle {
+          font-size: 1rem;
+          color: #6c757d;
+          margin-top: 0.25rem;
+        }
+        .section-title {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: #212529;
+          margin-bottom: 1rem;
+        }
+        .legend-item {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.25rem 0;
+        }
+        .role-badge {
+          display: inline-block;
+          padding: 0.25rem 0.75rem;
+          border-radius: 12px;
+          font-size: 0.8rem;
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .role-badge-admin {
+          background-color: #dc3545;
+          color: white;
+        }
+        .role-badge-director {
+          background-color: #ffc107;
+          color: #212529;
+        }
+        .role-badge-teacher {
+          background-color: #28a745;
+          color: white;
+        }
+        .role-badge-secretary {
+          background-color: #17a2b8;
+          color: white;
+        }
+        .role-badge-tutor {
+          background-color: #007bff;
+          color: white;
+        }
+        @media (max-width: 768px) {
+          .role-permission-grid {
+            grid-template-columns: 1fr;
+          }
+          .permission-label {
+            font-size: 0.8rem;
+          }
+          .module-permission-section {
+            padding: 1rem;
+          }
+        }
+        .role-grid-container {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+          gap: 1.5rem;
+          margin-bottom: 2rem;
+        }
+        .role-grid-container.filtered {
+          grid-template-columns: 1fr;
+        }
+        .role-grid-item {
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+          overflow: hidden;
+          transition: all 0.3s ease;
+          min-width: 300px;
+          display: flex;
+          flex-direction: column;
+        }
+        .role-grid-item:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+        }
+        .role-card-header {
+          background: linear-gradient(135deg, #3a66c1 0%, #2b579a 100%);
+          color: white;
+          padding: 1rem 1.25rem;
+          font-weight: 600;
+          font-size: 1.2rem;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+        .role-modules-container {
+          padding: 1.25rem;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+        }
+        .module-card {
+          background: #f8fafd;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 1rem;
+          margin-bottom: 1rem;
+        }
+        .module-card-title {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: #2b579a;
+          margin: 0 0 1rem 0;
+          padding-bottom: 0.5rem;
+          border-bottom: 1px solid #dbe4f0;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .action-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+          gap: 0.75rem;
+          align-content: flex-start;
+        }
+        .action-item {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem;
+          border-radius: 6px;
+          background-color: white;
+          border: 1px solid #e2e8f0;
+          transition: all 0.2s;
+          min-width: 0; /* Allows flex items to shrink below their content size */
+        }
+        .action-item:hover {
+          background-color: #e6f0ff;
+          border-color: #a3c6ff;
+        }
+        .action-checkbox {
+          margin: 0;
+          width: 18px;
+          height: 18px;
+          accent-color: #2b579a;
+          transition: all 0.2s;
+        }
+        .action-checkbox:checked {
+          background-color: #2b579a;
+          border-color: #2b579a;
+        }
+        .action-label {
+          margin: 0;
+          font-size: 0.85rem;
+          color: #333;
+          flex: 1;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          transition: color 0.2s;
+        }
+        .action-label:hover {
+          color: #2b579a;
+        }
+        .protected-badge {
+          background-color: #fff3cd;
+          color: #856404;
+          font-size: 0.65rem;
+          padding: 0.15rem 0.4rem;
+          border-radius: 4px;
+          margin-left: 0.25rem;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.25rem;
+        }
+        .role-badge {
+          display: inline-block;
+          padding: 0.3rem 0.8rem;
+          border-radius: 20px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          transition: all 0.3s ease;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .role-badge-admin {
+          background-color: #dc3545;
+          color: white;
+        }
+        .role-badge-director {
+          background-color: #ffc107;
+          color: #212529;
+        }
+        .role-badge-teacher {
+          background-color: #28a745;
+          color: white;
+        }
+        .role-badge-secretary {
+          background-color: #17a2b8;
+          color: white;
+        }
+        .role-badge-tutor {
+          background-color: #007bff;
+          color: white;
+        }
+        .legend-container {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 1.5rem;
+          padding: 1rem;
+          background-color: #f8f9fa;
+          border-radius: 8px;
+        }
+        .legend-item {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .legend-color-active {
+          color: #28a745;
+        }
+        .legend-color-inactive {
+          color: #dc3545;
+        }
+        .legend-color-protected {
+          color: #ffc107;
+        }
+        /* Additional visual enhancements */
+        .module-card-title svg {
+          color: #2b579a;
+        }
+        .role-grid-item {
+          border: 1px solid #e2e8f0;
+        }
+        .configuracion-card {
+          border: 1px solid #e2e8f0;
+        }
+        .badge {
+          font-size: 0.75em;
+        }
+        .form-select {
+          border: 1px solid #ced4da;
+          border-radius: 0.375rem;
+          padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+        }
+        .form-select:focus {
+          border-color: #86b7fe;
+          box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        .highlight-animation {
+          animation: highlight 2s ease-in-out;
+        }
+        @keyframes highlight {
+          0% { background-color: transparent; }
+          50% { background-color: #cce5ff; }
+          100% { background-color: transparent; }
+        }
+        /* Enhanced Responsive Design */
+        @media (max-width: 576px) {
+          .configuracion-page {
+            padding: 1rem 0.5rem;
+          }
+          .configuracion-card-header {
+            padding: 0.8rem 1rem;
+            font-size: 1.1rem;
+          }
+          .configuracion-card-body {
+            padding: 1rem;
+          }
+          .role-grid-container {
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+          }
+          .role-grid-item {
+            min-width: unset;
+          }
+          .role-card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+            padding: 0.8rem 1rem;
+          }
+          .role-modules-container {
+            padding: 1rem 0.75rem;
+          }
+          .module-card {
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+          }
+          .module-card-title {
+            font-size: 1rem;
+          }
+          .action-grid {
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.5rem;
+          }
+          .action-item {
+            padding: 0.4rem;
+          }
+          .action-label {
+            font-size: 0.8rem;
+          }
+          .page-title {
+            font-size: 1.5rem;
+          }
+          .page-subtitle {
+            font-size: 0.9rem;
+          }
+          .legend-container {
+            flex-direction: column;
+            gap: 0.75rem;
+            padding: 0.75rem;
+          }
+        }
+        @media (min-width: 577px) and (max-width: 768px) {
+          .role-grid-container {
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          }
+          .action-grid {
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+          }
+        }
+        @media (min-width: 769px) and (max-width: 992px) {
+          .role-grid-container {
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          }
+        }
+        @media (min-width: 993px) and (max-width: 1200px) {
+          .role-grid-container {
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+          }
+        }
+        @media (min-width: 1200px) {
+          .role-grid-container {
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+          }
+        }
+      `}</style>
+
+      <div className="container-fluid px-3 px-md-4">
+        <div className="page-header">
+          <h1 className="page-title">
+            <GearFill className="me-2" />
+            Configuración del Sistema
+          </h1>
+          <p className="page-subtitle">
+            Gestión de permisos y roles del personal
+          </p>
+        </div>
+
+        <div className="alert alert-info mb-4" role="alert">
+          <InfoCircleFill className="me-2" />
+          Esta sección solo es visible para <strong>Administradores</strong> y <strong>Directores</strong>.
+          Haz clic en los interruptores para cambiar permisos.
+        </div>
+
+        {/* Role Filter */}
+        <div className="mb-4">
+          <label htmlFor="roleFilter" className="form-label fw-bold">Filtrar por Rol:</label>
+          <select
+            id="roleFilter"
+            className="form-select w-auto"
+            value={selectedRoleFilter}
+            onChange={(e) => {
+              setSelectedRoleFilter(e.target.value);
+            }}
+          >
+            <option value="">Ver todos los roles</option>
+            {roles.map(role => {
+              const roleName = role.role_name || role;
+              return (
+                <option key={`filter-${roleName}`} value={roleName}>
+                  {roleName}
+                </option>
+              );
+            })}
+          </select>
+        </div>
+
+        <div className={`role-grid-container ${selectedRoleFilter ? 'filtered' : ''}`}>
+          {roles
+            .filter(role => {
+              if (!selectedRoleFilter) return true;
+              const roleName = role.role_name || role;
+              return roleName === selectedRoleFilter;
+            })
+            .map(role => {
+            const roleName = role.role_name || role;
+            const visibleModules = getVisibleModulesForRole(roleName);
+            const roleNormalized = roleName.toLowerCase();
+
+            // Determine role badge class based on role name
+            let roleBadgeClass = 'role-badge';
+            if (roleNormalized.includes('admin')) roleBadgeClass += ' role-badge-admin';
+            else if (roleNormalized.includes('direct')) roleBadgeClass += ' role-badge-director';
+            else if (roleNormalized.includes('teacher')) roleBadgeClass += ' role-badge-teacher';
+            else if (roleNormalized.includes('secret')) roleBadgeClass += ' role-badge-secretary';
+            else if (roleNormalized.includes('tutor')) roleBadgeClass += ' role-badge-tutor';
+
+            return (
+              <div key={roleName} id={`role-card-${roleName}`} className="role-grid-item">
+                <div className="role-card-header">
+                  <span>{roleName}</span>
+                  <span className={roleBadgeClass}>{roleName}</span>
+                </div>
+                <div className="role-modules-container">
+                  {modules
+                    .filter(module => visibleModules.includes(module.module_key))
+                    .map(module => (
+                      <div key={`${roleName}-${module.id}`} className="module-card">
+                        <h5 className="module-card-title">
+                          <FolderFill className="me-2" />
+                          {module.module_name}
+                        </h5>
+                        <div className="action-grid">
+                          {actions.map(action => {
+                            const isGranted = permissions[roleName]?.[module.module_key]?.[action.action_key];
+                            const isProtected = isProtectedPermission(roleName, module.module_key);
+                            const roleId = typeof role === 'object' ? role.id : roles.find(r => r.role_name === roleName)?.id;
+                            const moduleId = module.id;
+                            const actionId = action.id;
+
+                            return (
+                              <div
+                                key={`${roleName}-${module.module_key}-${action.action_key}`}
+                                className={`action-item ${isGranted ? 'text-success' : 'text-muted'}`}
+                                title={isProtected
+                                  ? `${action.action_name}: Permiso protegido (no modificable)`
+                                  : `${action.action_name}: ${isGranted ? 'Activo' : 'Inactivo'}`}
+                              >
+                                <input
+                                  className="action-checkbox"
+                                  type="checkbox"
+                                  id={`${roleName}-${module.module_key}-${action.action_key}`}
+                                  checked={!!isGranted}
+                                  disabled={isProtected}
+                                  onChange={() => handlePermissionToggle(roleId, moduleId, actionId, isGranted)}
+                                />
+                                <label
+                                  className="action-label"
+                                  htmlFor={`${roleName}-${module.module_key}-${action.action_key}`}
+                                >
+                                  {action.action_name}
+                                  {isProtected && (
+                                    <span className="protected-badge" title="Permiso protegido">
+                                      <ShieldLock className="me-1" size={10} /> Protegido
+                                    </span>
+                                  )}
+                                </label>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Legend Section */}
+        <div className="configuracion-card mt-4">
+          <div className="configuracion-card-header">
+            <KeyFill className="me-2" />
+            Leyenda
+          </div>
+          <div className="configuracion-card-body">
+            <div className="legend-container">
+              <div className="legend-item">
+                <CheckCircle className="legend-color-active me-2" />
+                <span>Permiso activo</span>
+              </div>
+              <div className="legend-item">
+                <XCircle className="legend-color-inactive me-2" />
+                <span>Permiso inactivo</span>
+              </div>
+              <div className="legend-item">
+                <Shield className="legend-color-protected me-2" />
+                <span>Permiso protegido (no modificable)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Audit Log Section */}
+        <div className="configuracion-card mt-4">
+          <div className="configuracion-card-header">
+            <ClipboardDataFill className="me-2" />
+            Registro de Auditoría
+          </div>
+          <div className="configuracion-card-body">
+            <p className="text-muted mb-0">
+              <InfoCircleFill className="me-2" />
+              Próximamente: Vista de cambios de permisos y registro de auditoría detallado
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ConfiguracionPage;
