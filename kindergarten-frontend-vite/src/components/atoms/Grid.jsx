@@ -9,15 +9,8 @@ const Row = ({
   const rowClass = `custom-row ${className}`.trim();
   
   return (
-    <div 
-      className={rowClass} 
-      style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        marginRight: '-15px',
-        marginLeft: '-15px',
-        ...style
-      }}
+    <div
+      className={rowClass}
       {...props}
     >
       {children}
@@ -58,16 +51,8 @@ const Col = ({
   const colClass = getColClass();
   
   return (
-    <div 
-      className={colClass} 
-      style={{
-        position: 'relative',
-        width: '100%',
-        paddingRight: '15px',
-        paddingLeft: '15px',
-        flex: getFlexValue(xs),
-        ...style
-      }}
+    <div
+      className={colClass}
       {...props}
     >
       {children}

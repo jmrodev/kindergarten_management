@@ -1,8 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
 import { ArrowLeft, Save, People } from 'react-bootstrap-icons';
 import classroomService from '../../api/classroomService';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import OfficeRibbonWithTitle from '../../components/atoms/OfficeRibbonWithTitle';
+import Container from '../../components/atoms/Container';
+import { Row, Col } from '../../components/atoms/Grid';
+import Card from '../../components/atoms/Card';
+import Form from '../../components/atoms/Form';
+import Input from '../../components/atoms/Input';
+import Select from '../../components/atoms/Select';
+import Button from '../../components/atoms/Button';
+import Toggle from '../../components/atoms/Toggle';
+import Spinner from '../../components/atoms/Spinner';
 
 const ClassroomForm = () => {
   const { id } = useParams();
@@ -52,7 +61,7 @@ const ClassroomForm = () => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' || type === 'switch' ? checked : value
     }));
   };
 
@@ -90,9 +99,9 @@ const ClassroomForm = () => {
       <Container fluid className="py-4">
         <Row className="justify-content-center">
           <Col xs="auto">
-            <div className="spinner-border" role="status">
+            <Spinner role="status">
               <span className="visually-hidden">Cargando...</span>
-            </div>
+            </Spinner>
           </Col>
         </Row>
       </Container>
@@ -100,158 +109,138 @@ const ClassroomForm = () => {
   }
 
   return (
-    <Container fluid className="py-4">
-      <Row className="mb-4">
-        <Col>
-          <h1 className="h3 mb-0">
-            {isEdit ? (
-              <><People className="me-2" /> Editar Sala</>
-            ) : (
-              <><People className="me-2" /> Nueva Sala</>
-            )}
-          </h1>
-          <p className="text-muted">
-            {isEdit 
-              ? 'Modificar la información de la sala' 
-              : 'Agregar una nueva sala al jardín'
-            }
-          </p>
-        </Col>
-      </Row>
+    <Container fluid className="office-form-container">
+      <OfficeRibbonWithTitle
+        title={isEdit ? 'Editar Sala' : 'Nueva Sala'}
+        menuItems={[
+          {
+            label: "Volver",
+            icon: <ArrowLeft size={16} />,
+            onClick: () => navigate('/classrooms')
+          },
+          {
+            label: isEdit ? 'Actualizar Sala' : 'Guardar Sala',
+            icon: <Save size={16} />,
+            onClick: handleSubmit,
+            variant: "primary"
+          }
+        ]}
+        onClose={() => navigate('/dashboard')}
+        navigate={navigate}
+      />
 
-      {error && <Alert variant="danger">{error}</Alert>}
+      {error && <div className="alert alert-danger office-alert">{error}</div>}
 
-      <Card>
-        <Card.Header>
-          <Link to="/classrooms" className="btn btn-outline-secondary btn-sm me-2">
-            <ArrowLeft className="me-1" />
-            Volver
-          </Link>
-          <Button 
-            variant="primary" 
-            onClick={handleSubmit}
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                Guardando...
-              </>
-            ) : (
-              <>
-                <Save className="me-2" />
-                {isEdit ? 'Actualizar' : 'Guardar'} Sala
-              </>
-            )}
-          </Button>
-        </Card.Header>
-        <Card.Body>
+      <Card className="office-form-card">
+        <Card.Body className="office-form-card-body">
           <Form onSubmit={handleSubmit}>
             <Row>
               <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Nombre de la Sala *</Form.Label>
-                  <Form.Control
+                <div className="form-group">
+                  <label className="input-label required">Nombre de la Sala *</label>
+                  <Input
                     type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    required
+                    className="input-field"
                     placeholder="Ej: Sala de 3 años A"
+                    required
                   />
-                </Form.Group>
+                </div>
               </Col>
               <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Capacidad *</Form.Label>
-                  <Form.Control
+                <div className="form-group">
+                  <label className="input-label required">Capacidad *</label>
+                  <Input
                     type="number"
                     name="capacity"
                     value={formData.capacity}
                     onChange={handleChange}
+                    className="input-field"
+                    placeholder="Cantidad máxima de alumnos"
                     required
                     min="1"
                     max="50"
-                    placeholder="Cantidad máxima de alumnos"
                   />
-                </Form.Group>
+                </div>
               </Col>
             </Row>
-            
+
             <Row>
               <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Turno *</Form.Label>
-                  <Form.Select
+                <div className="form-group">
+                  <label className="input-label required">Turno *</label>
+                  <Select
                     name="shift"
                     value={formData.shift}
                     onChange={handleChange}
+                    className="select-field"
                     required
                   >
                     <option value="">Seleccione un turno</option>
                     <option value="Mañana">Mañana</option>
                     <option value="Tarde">Tarde</option>
                     <option value="Completo">Completo</option>
-                  </Form.Select>
-                </Form.Group>
+                  </Select>
+                </div>
               </Col>
               <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Año Académico *</Form.Label>
-                  <Form.Control
+                <div className="form-group">
+                  <label className="input-label required">Año Académico *</label>
+                  <Input
                     type="number"
                     name="academic_year"
                     value={formData.academic_year}
                     onChange={handleChange}
+                    className="input-field"
                     required
                     min="2000"
                     max="2100"
                   />
-                </Form.Group>
+                </div>
               </Col>
             </Row>
-            
+
             <Row>
               <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Grupo de Edad *</Form.Label>
-                  <Form.Control
+                <div className="form-group">
+                  <label className="input-label required">Grupo de Edad *</label>
+                  <Input
                     type="number"
                     name="age_group"
                     value={formData.age_group}
                     onChange={handleChange}
+                    className="input-field"
+                    placeholder="Edad promedio de los alumnos (en años)"
                     required
                     min="1"
                     max="10"
-                    placeholder="Edad promedio de los alumnos (en años)"
                   />
-                </Form.Group>
+                </div>
               </Col>
               <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label className="d-block">Estado</Form.Label>
-                  <Form.Check
-                    type="switch"
-                    id="is_active"
-                    label={formData.is_active ? 'Activa' : 'Inactiva'}
+                <div className="form-group">
+                  <Toggle
                     name="is_active"
                     checked={formData.is_active}
                     onChange={handleChange}
+                    label={formData.is_active ? 'Activa' : 'Inactiva'}
                   />
-                </Form.Group>
+                </div>
               </Col>
             </Row>
-            
+
             <div className="mt-4">
-              <Button 
-                variant="primary" 
+              <Button
+                variant="primary"
                 onClick={handleSubmit}
                 disabled={loading}
                 className="me-2"
               >
                 {loading ? (
                   <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    <span className="spinner spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                     Guardando...
                   </>
                 ) : (
@@ -261,11 +250,14 @@ const ClassroomForm = () => {
                   </>
                 )}
               </Button>
-              
-              <Link to="/classrooms" className="btn btn-outline-secondary">
+
+              <Button
+                variant="outline-secondary"
+                onClick={() => navigate('/classrooms')}
+              >
                 <ArrowLeft className="me-2" />
                 Volver al listado
-              </Link>
+              </Button>
             </div>
           </Form>
         </Card.Body>

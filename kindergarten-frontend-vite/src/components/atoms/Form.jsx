@@ -1,5 +1,4 @@
 import React, { useState, useCallback } from 'react';
-import { StudentFormValidator } from '../../utils/formValidation';
 import Card from '../atoms/Card';
 
 const Form = ({ 
@@ -67,21 +66,29 @@ const Form = ({
         )}
         <Card.Body>
           {React.Children.map(children, (child) => {
-            return React.isValidElement(child) 
-              ? React.cloneElement(child, { 
-                  onChange: handleChange,
-                  errors,
-                  setErrors
-                })
-              : child;
+            if (React.isValidElement(child)) {
+              // Pass form state and handlers to children that need them
+              // but avoid passing props that aren't meant for DOM elements
+              return React.cloneElement(child, {
+                onChange: (e) => {
+                  handleChange(e);
+                  // Call original onChange if it exists
+                  if (child.props.onChange) {
+                    child.props.onChange(e);
+                  }
+                },
+                errors,
+              });
+            }
+            return child;
           })}
         </Card.Body>
         {onSubmit && (
           <Card.Body className="form-footer">
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={loading || disabled}
-              className="form-submit-btn"
+              className="btn btn-primary"
             >
               {loading ? 'Cargando...' : submitText}
             </button>

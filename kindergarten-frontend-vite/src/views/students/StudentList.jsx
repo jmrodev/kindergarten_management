@@ -1,55 +1,40 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, PersonCircle, FileEarmarkPlus } from 'react-bootstrap-icons';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import OfficeRibbonWithTitle from '../../components/atoms/OfficeRibbonWithTitle';
-import OfficeTable from '../../components/organisms/OfficeTable';
-import TableCell from '../../components/atoms/TableCell';
-import TableRow from '../../components/molecules/TableRow';
-import TableHeaderCell from '../../components/atoms/TableHeaderCell';
-import Badge from '../../components/atoms/Badge';
-import Icon from '../../components/atoms/Icon';
-import Container from '../../components/atoms/Container';
-import { Row, Col } from '../../components/atoms/Grid';
+import { Eye, Pencil, Trash, Plus } from 'react-bootstrap-icons';
 import Card from '../../components/atoms/Card';
 import Button from '../../components/atoms/Button';
-import Spinner from '../../components/atoms/Spinner';
-import VaccinationStatusWithLink from '../../components/atoms/VaccinationStatusWithLink';
+import TableHeaderCell from '../../components/atoms/TableHeaderCell';
+import TableCell from '../../components/atoms/TableCell';
+import OfficeRibbonWithTitle from '../../components/atoms/OfficeRibbonWithTitle';
 import ConfirmationModal from '../../components/molecules/ConfirmationModal';
-import FormModal from '../../components/molecules/FormModal';
-import StudentDetails from '../../components/organisms/StudentDetails';
-import Alert from 'react-bootstrap/Alert'; // Por ahora mantendremos Alert
-import { safeExtractData, getColorVariantById, normalizeName } from '../../utils/apiResponseHandler';
-import studentService from '../../api/studentService';
+import { studentService } from '../../api/studentService';
 
 const StudentList = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showViewModal, setShowViewModal] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState(null);
-  const [studentToView, setStudentToView] = useState(null);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const navigate = useNavigate();
 
-  const fetchStudents = useCallback(async () => {
-    try {
-      setError(null);
-      setLoading(true);
+  useEffect(() => {
+    fetchStudents();
+  }, []);
 
-      // Fetch all students without filters
-      const response = await studentService.getAll();
-      setStudents(safeExtractData(response));
+  const fetchStudents = async () => {
+    try {
+      setLoading(true);
+      const data = await studentService.getAll();
+      setStudents(data);
+      setError(null);
     } catch (err) {
-      setError('Error al cargar los alumnos: ' + err.message);
+      setError('Error al cargar la lista de alumnos');
       console.error('Error fetching students:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  useEffect(() => {
-    fetchStudents();
-  }, [fetchStudents]);
+  };
 
   const handleDelete = async () => {
     if (!studentToDelete) return;
@@ -60,187 +45,254 @@ const StudentList = () => {
       setShowDeleteModal(false);
       setStudentToDelete(null);
     } catch (err) {
-      setError('Error al eliminar el alumno: ' + err.message);
+      setError('Error al eliminar el alumno');
+      console.error('Error deleting student:', err);
     }
+  };
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedStudents = React.useMemo(() => {
+    if (!students || !Array.isArray(students)) return [];
+
+    if (!sortConfig.key) return students;
+
+    return [...students].sort((a, b) => {
+      const aValue = a[sortConfig.key];
+      const bValue = b[sortConfig.key];
+
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }, [students, sortConfig]);
+
+  const menuItems = [
+    {
+      label: 'Nuevo Alumno',
+      icon: <Plus size={16} />,
+      onClick: () => navigate('/students/new')
+    }
+  ];
+
+  const handleView = (student) => {
+    navigate(`/students/${student.id}/view`);
+  };
+
+  const handleEdit = (student) => {
+    navigate(`/students/${student.id}/edit`);
+  };
+
+  const handleDeleteClick = (student) => {
+    setStudentToDelete(student);
+    setShowDeleteModal(true);
   };
 
   if (loading) {
     return (
-      <Container fluid className="py-4">
-        <Row className="justify-content-center">
-          <Col xs="auto">
-            <Spinner animation="border" role="status">
-              <span className="visually-hidden">Cargando...</span>
-            </Spinner>
-          </Col>
-        </Row>
-      </Container>
+      <div className="d-flex justify-content-center align-items-center min-h-200">
+        <div className="spinner-border" role="status">
+          <span className="visually-hidden">Cargando...</span>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Container fluid className="p-0 m-0" style={{padding: '0', margin: '0', marginTop: '0', paddingTop: '0'}}>
+    <div className="student-list-container">
+      <OfficeRibbonWithTitle
+        title="Alumnos"
+        menuItems={menuItems}
+        backPath="/dashboard"
+      />
 
-      <Card className="border-0 m-0" style={{marginTop: '0', paddingTop: '0', border: 'none'}}>
-        <Card.Header className="p-1 office-ribbon" style={{padding: '2px', borderBottom: '1px solid #dee2e6'}}>
-          <OfficeRibbonWithTitle
-            title="Listado de Alumnos"
-            menuItems={[
-              {
-                label: "Nuevo",
-                icon: <FileEarmarkPlus size={16} />,
-                onClick: () => navigate('/students/new')
-              }
-            ]}
-            onClose={() => navigate('/dashboard')}
-            navigate={navigate}
-            showTitle={false} // Hide the title as requested
-          />
-        </Card.Header>
-        <Card.Body className="p-0" style={{padding: '0'}}>
-          <OfficeTable
-            headers={[
-              { label: 'Foto' },
-              { label: 'Nombre' },
-              { label: 'DNI' },
-              { label: 'Fecha Nacimiento' },
-              { label: 'Sala' },
-              { label: 'Turno' },
-              { label: 'Estado' },
-              { label: 'Vacunas' },
-              { label: 'Acciones' }
-            ]}
-            data={students}
-            renderRow={(student) => (
-              <>
-                <TableCell>
-                  <div className="d-flex align-items-center justify-content-center">
-                    {student.photo_path ? (
-                      <img
-                        src={student.photo_path}
-                        alt="Foto del alumno"
-                        className="rounded-circle"
-                        style={{ width: '40px', height: '40px', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <div className="rounded-circle bg-light d-flex align-items-center justify-content-center"
-                           style={{ width: '40px', height: '40px' }}>
-                        <PersonCircle size={20} />
-                      </div>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {normalizeName(student.first_name)} {normalizeName(student.paternal_surname)} {normalizeName(student.maternal_surname)}
-                </TableCell>
-                <TableCell>{student.dni}</TableCell>
-                <TableCell>{new Date(student.birth_date).toLocaleDateString()}</TableCell>
-                <TableCell>
-                  {student.classroom_name ? (
-                    <Badge type="classroom" variant={getColorVariantById(student.classroom_id || student.classroom_name)} capitalize="uppercase">
-                      {student.classroom_name}
-                    </Badge>
-                  ) : (
-                    <Badge type="classroom" variant="default" capitalize="uppercase">
-                      Sin sala
-                    </Badge>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {student.shift ? (
-                    <Badge type="classroom" variant={getColorVariantById(student.shift_id || student.shift)} capitalize="uppercase">
-                      {student.shift}
-                    </Badge>
-                  ) : (
-                    <Badge type="classroom" variant="default" capitalize="uppercase">
-                      Sin turno
-                    </Badge>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Badge type="status" variant={getColorVariantById(student.status_id || student.status)} capitalize="uppercase">
-                    {student.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <VaccinationStatusWithLink
-                    studentId={student.id}
-                    status={student.vaccination_status}
-                  />
-                </TableCell>
-                <TableCell>
-                  <div className="office-actions-container">
-                    <span
-                      onClick={() => navigate(`/students/edit/${student.id}`)}
-                      title="Editar"
-                      style={{ cursor: 'pointer', margin: '0.25rem', textDecoration: 'none', color: 'inherit' }}
-                    >
-                      <Icon type="edit" size={18} title="Editar" />
-                    </span>
-                    <span
-                      onClick={async () => {
-                        try {
-                          // Get the complete student record (with emergency contact info included)
-                          const studentResponse = await studentService.getById(student.id);
-                          const fullStudentData = studentResponse.data.data;
-
-                          setStudentToView(fullStudentData);
-                          setShowViewModal(true);
-                        } catch (err) {
-                          console.error('Error loading student data:', err);
-                          // Fallback to basic student data
-                          setStudentToView(student);
-                          setShowViewModal(true);
-                        }
-                      }}
-                      title="Ver Detalles"
-                      style={{ cursor: 'pointer', margin: '0.25rem', textDecoration: 'none', color: 'inherit' }}
-                    >
-                      <Icon type="view" size={18} title="Ver Detalles" />
-                    </span>
-                    <span
-                      onClick={() => {
-                        setStudentToDelete(student);
-                        setShowDeleteModal(true);
-                      }}
-                      title="Eliminar"
-                      style={{ cursor: 'pointer', margin: '0.25rem' }}
-                    >
-                      <Icon type="delete" size={18} title="Eliminar" />
-                    </span>
-                  </div>
-                </TableCell>
-              </>
+      <div className="main-content-with-ribbon">
+        <Card>
+          <Card.Header>
+            <div className="d-flex justify-content-between align-items-center">
+              <h3>Lista de Alumnos</h3>
+              <Button 
+                variant="primary" 
+                onClick={() => navigate('/students/new')}
+              >
+                <Plus size={16} className="me-2" />
+                Nuevo Alumno
+              </Button>
+            </div>
+          </Card.Header>
+          
+          <Card.Body>
+            {error && !students && (
+              <div className="alert alert-danger" role="alert">
+                {error}
+              </div>
             )}
-            emptyMessage="No se encontraron alumnos"
-          />
-        </Card.Body>
-      </Card>
+
+            <div className="table-responsive">
+              <table className="table table-striped">
+                <thead>
+                  <tr>
+                    <TableHeaderCell 
+                      onClick={() => handleSort('first_name')}
+                      className={sortConfig.key === 'first_name' ? sortConfig.direction : ''}
+                    >
+                      Nombre
+                    </TableHeaderCell>
+                    <TableHeaderCell 
+                      onClick={() => handleSort('paternal_surname')}
+                      className={sortConfig.key === 'paternal_surname' ? sortConfig.direction : ''}
+                    >
+                      Apellido
+                    </TableHeaderCell>
+                    <TableHeaderCell 
+                      onClick={() => handleSort('dni')}
+                      className={sortConfig.key === 'dni' ? sortConfig.direction : ''}
+                    >
+                      DNI
+                    </TableHeaderCell>
+                    <TableHeaderCell 
+                      onClick={() => handleSort('birth_date')}
+                      className={sortConfig.key === 'birth_date' ? sortConfig.direction : ''}
+                    >
+                      Fecha Nacimiento
+                    </TableHeaderCell>
+                    <TableHeaderCell 
+                      onClick={() => handleSort('classroom_name')}
+                      className={sortConfig.key === 'classroom_name' ? sortConfig.direction : ''}
+                    >
+                      Sala
+                    </TableHeaderCell>
+                    <TableHeaderCell 
+                      onClick={() => handleSort('status')}
+                      className={sortConfig.key === 'status' ? sortConfig.direction : ''}
+                    >
+                      Estado
+                    </TableHeaderCell>
+                    <TableHeaderCell>
+                      Acciones
+                    </TableHeaderCell>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedStudents && sortedStudents.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="text-center">
+                        No hay alumnos registrados
+                      </td>
+                    </tr>
+                  ) : (
+                    sortedStudents.map((student) => (
+                      <tr key={student.id}>
+                        <TableCell>
+                          {student.first_name} {student.middle_name_optional || ''}
+                        </TableCell>
+                        <TableCell>
+                          {student.paternal_surname} {student.maternal_surname || ''}
+                        </TableCell>
+                        <TableCell>
+                          {student.dni}
+                        </TableCell>
+                        <TableCell>
+                          {student.birth_date ? new Date(student.birth_date).toLocaleDateString() : '-'}
+                        </TableCell>
+                        <TableCell>
+                          {student.classroom_name || 'Sin sala'}
+                        </TableCell>
+                        <TableCell>
+                          <span className={`badge bg-${getStatusVariant(student.status)}`}>
+                            {getStatusDisplay(student.status)}
+                          </span>
+                        </TableCell>
+                        <TableCell className="actions-container">
+                          <button
+                            className="action-btn action-view"
+                            onClick={() => handleView(student)}
+                            title="Ver"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            className="action-btn action-edit"
+                            onClick={() => handleEdit(student)}
+                            title="Editar"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            className="action-btn action-delete"
+                            onClick={() => handleDeleteClick(student)}
+                            title="Eliminar"
+                          >
+                            <Trash size={16} />
+                          </button>
+                        </TableCell>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card.Body>
+        </Card>
+      </div>
 
       <ConfirmationModal
         show={showDeleteModal}
         onHide={() => setShowDeleteModal(false)}
         onConfirm={handleDelete}
         title="Confirmar Eliminación"
-        message={`¿Está seguro de que desea eliminar al alumno ${studentToDelete?.first_name && normalizeName(studentToDelete.first_name)} ${studentToDelete?.paternal_surname && normalizeName(studentToDelete.paternal_surname)}? Esta acción no se puede deshacer.`}
+        message={`¿Está seguro de que desea eliminar al alumno ${studentToDelete?.first_name} ${studentToDelete?.paternal_surname}?`}
         confirmText="Eliminar"
         cancelText="Cancelar"
         variant="danger"
       />
-
-      <FormModal
-        show={showViewModal}
-        onHide={() => {
-          setShowViewModal(false);
-          setStudentToView(null);
-        }}
-        title={`Detalles de ${studentToView ? normalizeName(studentToView.first_name) + ' ' + normalizeName(studentToView.paternal_surname) : ''}`}
-        size="lg"
-      >
-        <StudentDetails student={studentToView} />
-      </FormModal>
-    </Container>
+    </div>
   );
+};
+
+// Helper functions
+const getStatusVariant = (status) => {
+  switch (status) {
+    case 'activo':
+      return 'success';
+    case 'inactivo':
+      return 'secondary';
+    case 'preinscripto':
+      return 'warning';
+    case 'inscripto':
+      return 'info';
+    case 'egresado':
+      return 'dark';
+    default:
+      return 'light';
+  }
+};
+
+const getStatusDisplay = (status) => {
+  switch (status) {
+    case 'activo':
+      return 'Activo';
+    case 'inactivo':
+      return 'Inactivo';
+    case 'preinscripto':
+      return 'Preinscripto';
+    case 'inscripto':
+      return 'Inscripto';
+    case 'egresado':
+      return 'Egresado';
+    default:
+      return status || 'Sin estado';
+  }
 };
 
 export default StudentList;

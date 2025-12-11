@@ -42,6 +42,8 @@ const Icon = ({
     return null;
   }
 
+  const iconClass = `office-icon ${onClick ? 'clickable' : ''} ${className}`.trim();
+
   return (
     <svg
       width={size}
@@ -49,10 +51,9 @@ const Icon = ({
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={`office-icon ${className}`.trim()}
+      className={iconClass}
       onClick={onClick}
       title={title}
-      style={{ cursor: onClick ? 'pointer' : 'default' }}
       {...props}
     >
       <path d={iconPath} fill={iconColor} />

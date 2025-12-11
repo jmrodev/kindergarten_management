@@ -128,11 +128,17 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  // Función para iniciar sesión con Google
+  const initiateGoogleLogin = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/auth/google`;
+  };
+
   const value = {
     currentUser,
     login,
     logout,
-    register
+    register,
+    initiateGoogleLogin
   };
 
   return (

@@ -44,14 +44,13 @@ const DocumentStatusWithLink = ({ studentId, status, className = '' }) => {
   
   const handleClick = (e) => {
     e.stopPropagation();
-    navigate(`/students/${studentId}/documents`);
+    // navigate(`/students/${studentId}/documents`); // Eliminado - funcionalidad de alumnos removida
   };
 
   return (
-    <span 
+    <span
       className={`document-status-link badge bg-${config.variant} text-capitalize ${className}`}
       onClick={handleClick}
-      style={{ cursor: 'pointer', textDecoration: 'underline' }}
       title={config.title}
     >
       {config.icon}

@@ -21,6 +21,7 @@ import PersonalPage from './pages/PersonalPage';
 import ConfiguracionPage from './pages/ConfiguracionPage';
 import GuardiansPage from './pages/GuardiansPage';
 import ParentPortalPage from './pages/ParentPortalPage';
+import ParentDashboard from './pages/ParentDashboard';
 import RoleManagementPage from './pages/RoleManagementPage';
 import EnrollmentsManagementPage from './pages/EnrollmentsManagementPage';
 import LotteryManagementPage from './pages/LotteryManagementPage';
@@ -326,7 +327,7 @@ function AppContent() {
                     >
                         <span className="material-icons" style={{fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>badge</span> Personal
                     </Button>
-                    <Button 
+                    <Button
                         variant={isActive('/responsables') ? 'primary' : 'outline-primary'}
                         onClick={() => navigate('/responsables')}
                         className="py-2"
@@ -342,6 +343,24 @@ function AppContent() {
                     >
                         <span className="material-icons" style={{fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>family_restroom</span> Responsables
                     </Button>
+                    {(user.role === 'Parent') && (
+                        <Button
+                            variant={isActive('/parent-dashboard') ? 'primary' : 'outline-primary'}
+                            onClick={() => navigate('/parent-dashboard')}
+                            className="py-2"
+                            style={{
+                                transition: 'all 0.2s ease',
+                                borderWidth: '1.5px',
+                                fontWeight: '500',
+                                fontSize: '0.95rem',
+                                background: isActive('/parent-dashboard') ? '#667eea' : 'transparent',
+                                borderColor: '#667eea',
+                                color: isActive('/parent-dashboard') ? 'white' : '#667eea'
+                            }}
+                        >
+                            <span className="material-icons" style={{fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.3rem'}}>account_circle</span> Portal de Padres
+                        </Button>
+                    )}
                     {(user.role === 'Administrator' || user.role === 'Directivo') && ( // Updated role names
                         <Button 
                             variant={isActive('/configuracion') ? 'primary' : 'outline-primary'}
@@ -525,6 +544,14 @@ function AppContent() {
                                                             element={
                                                                 <ProtectedRoute>
                                                                     <LotteryManagementPage darkMode={darkMode} />
+                                                                </ProtectedRoute>
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="/parent-dashboard"
+                                                            element={
+                                                                <ProtectedRoute>
+                                                                    <ParentDashboard />
                                                                 </ProtectedRoute>
                                                             }
                                                         />

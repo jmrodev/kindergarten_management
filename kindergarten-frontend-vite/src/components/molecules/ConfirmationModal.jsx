@@ -21,7 +21,7 @@ const ConfirmationModal = ({
     <Modal show={show} onHide={onHide} title={title}>
       <div className="confirmation-modal-body">
         <p>{message}</p>
-        <div className="confirmation-modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
+        <div className="confirmation-modal-footer">
           <Button 
             variant="secondary" 
             onClick={onHide}

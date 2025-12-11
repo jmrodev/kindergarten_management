@@ -13,9 +13,7 @@ const SQL_PATTERNS = [
     // Comentarios SQL
     /(--|\*|\/\*|\*\/)/g,
     // Operadores SQL sospechosos
-    /(UNION|OR|AND)\s+[\d\w']/gi,
-    // Comillas y punto y coma
-    /[;'"]/g
+    /(UNION|OR|AND)\s+[\d\w']/gi
 ];
 
 /**

@@ -11,9 +11,7 @@ import { Row, Col } from '../../components/atoms/Grid';
 import Card from '../../components/atoms/Card';
 import Button from '../../components/atoms/Button';
 import Spinner from '../../components/atoms/Spinner';
-import Modal from 'react-bootstrap/Modal';
-import Form from 'react-bootstrap/Form';
-import Alert from 'react-bootstrap/Alert';
+import ConfirmationModal from '../../components/molecules/ConfirmationModal';
 import { safeExtractData, getColorVariantById, normalizeName } from '../../utils/apiResponseHandler';
 import staffService from '../../api/staffService';
 
@@ -73,7 +71,7 @@ const StaffList = () => {
       <Container fluid className="py-4">
         <Row className="justify-content-center">
           <Col xs="auto">
-            <Spinner animation="border" role="status">
+            <Spinner role="status">
               <span className="visually-hidden">Cargando...</span>
             </Spinner>
           </Col>
@@ -83,13 +81,13 @@ const StaffList = () => {
   }
 
   return (
-    <Container fluid className="p-0 m-0" style={{padding: '0', margin: '0', marginTop: '0', paddingTop: '0'}}>
+    <Container fluid className="p-0 m-0">
 
-      <Card className="border-0 m-0" style={{marginTop: '0', paddingTop: '0', border: 'none'}}>
-        <Card.Header className="p-1" style={{padding: '2px', borderBottom: '1px solid #dee2e6'}}>
-          <h5 className="mb-0" style={{fontSize: '0.9rem', padding: '4px 8px'}}>Listado de Personal</h5>
+      <Card className="border-0 m-0">
+        <Card.Header className="card-header p-1">
+          <h5 className="mb-0">Listado de Personal</h5>
         </Card.Header>
-        <Card.Body className="p-0" style={{padding: '0'}}>
+        <Card.Body className="p-0">
           <OfficeTable
             headers={[
               { label: 'Nombre' },
@@ -152,11 +150,11 @@ const StaffList = () => {
                   }
                 </TableCell>
                 <TableCell>
-                  <div className="office-actions-container">
-                    <a href={`/staff/edit/${staffMember.id}`} title="Editar" style={{ textDecoration: 'none', color: 'inherit', margin: '0.25rem' }}>
+                  <div className="actions-container">
+                    <a href={`/staff/edit/${staffMember.id}`} title="Editar" className="action-btn action-edit">
                       <Icon type="edit" size={18} title="Editar" />
                     </a>
-                    <a href={`/staff/${staffMember.id}`} title="Ver Detalles" style={{ textDecoration: 'none', color: 'inherit', margin: '0.25rem' }}>
+                    <a href={`/staff/${staffMember.id}`} title="Ver Detalles" className="action-btn action-view">
                       <Icon type="view" size={18} title="Ver Detalles" />
                     </a>
                     <span
@@ -165,7 +163,7 @@ const StaffList = () => {
                         setShowDeleteModal(true);
                       }}
                       title="Eliminar"
-                      style={{ cursor: 'pointer', margin: '0.25rem' }}
+                      className="action-btn action-delete"
                     >
                       <Icon type="delete" size={18} title="Eliminar" />
                     </span>
@@ -179,24 +177,16 @@ const StaffList = () => {
       </Card>
 
       {/* Modal de confirmación de eliminación */}
-      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Confirmar Eliminación</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          ¿Está seguro de que desea eliminar al personal <strong>
-            {staffToDelete?.first_name && normalizeName(staffToDelete.first_name)} {staffToDelete?.paternal_surname && normalizeName(staffToDelete.paternal_surname)}
-          </strong>? Esta acción no se puede deshacer.
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-            Cancelar
-          </Button>
-          <Button variant="danger" onClick={handleDelete}>
-            Eliminar
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <ConfirmationModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+        title="Confirmar Eliminación"
+        message={`¿Está seguro de que desea eliminar al personal ${staffToDelete?.first_name && normalizeName(staffToDelete.first_name)} ${staffToDelete?.paternal_surname && normalizeName(staffToDelete.paternal_surname)}? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+      />
     </Container>
   );
 };

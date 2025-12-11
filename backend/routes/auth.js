@@ -82,32 +82,45 @@ router.get('/me', protect, async (req, res, next) => {
     const pool = req.app.get('pool');
 
     try {
-        const rows = await pool.query(
-            `SELECT s.id, s.first_name, s.middle_name_optional, 
-                    s.paternal_surname, s.maternal_surname, s.email, 
-                    s.phone, s.last_login, r.role_name as role
-             FROM staff s
-             LEFT JOIN role r ON s.role_id = r.id
-             WHERE s.id = ?`,
-            [req.user.id]
-        );
+        // Verificar si es un usuario del portal de padres
+        if (req.user.parent_portal_user) {
+            // Para usuarios del portal de padres, devolver solo la información necesaria
+            res.json({
+                id: req.user.id,
+                email: req.user.email,
+                name: req.user.name,
+                parentPortalUser: true,
+                googleUser: true
+            });
+        } else {
+            // Para usuarios de staff, obtener información completa
+            const rows = await pool.query(
+                `SELECT s.id, s.first_name, s.middle_name_optional,
+                        s.paternal_surname, s.maternal_surname, s.email,
+                        s.phone, s.last_login, r.role_name as role
+                 FROM staff s
+                 LEFT JOIN role r ON s.role_id = r.id
+                 WHERE s.id = ?`,
+                [req.user.id]
+            );
 
-        if (rows.length === 0) {
-            return next(new AppError('Usuario no encontrado', 404));
+            if (rows.length === 0) {
+                return next(new AppError('Usuario no encontrado', 404));
+            }
+
+            const user = rows[0];
+            res.json({
+                id: user.id,
+                email: user.email,
+                firstName: user.first_name,
+                middleName: user.middle_name_optional,
+                paternalSurname: user.paternal_surname,
+                maternalSurname: user.maternal_surname,
+                phone: user.phone,
+                role: user.role,
+                lastLogin: user.last_login
+            });
         }
-
-        const user = rows[0];
-        res.json({
-            id: user.id,
-            email: user.email,
-            firstName: user.first_name,
-            middleName: user.middle_name_optional,
-            paternalSurname: user.paternal_surname,
-            maternalSurname: user.maternal_surname,
-            phone: user.phone,
-            role: user.role,
-            lastLogin: user.last_login
-        });
     } catch (error) {
         console.error('Error in /me:', error);
         next(new AppError('Error al obtener datos del usuario', 500));
@@ -173,6 +186,7 @@ router.post('/register', protect, async (req, res, next) => {
     }
 });
 
+
 // POST /api/auth/change-password - Cambiar contraseña
 router.post('/change-password', protect, async (req, res, next) => {
     const pool = req.app.get('pool');
@@ -213,5 +227,26 @@ router.post('/change-password', protect, async (req, res, next) => {
         next(new AppError('Error al cambiar la contraseña', 500));
     }
 });
+
+const { passport, isGoogleConfigured } = require('../config/passport'); // Import passport and isGoogleConfigured
+
+// Google OAuth routes (if configured)
+if (isGoogleConfigured) {
+    // Authenticate with Google
+    router.get('/google',
+        passport.authenticate('google', { scope: ['profile', 'email'] })
+    );
+
+    // Google OAuth callback
+    router.get('/google/callback',
+        passport.authenticate('google', { failureRedirect: process.env.FRONTEND_URL }),
+        (req, res) => {
+            // Successful authentication, generate JWT and redirect
+            // req.user contains the user object from the deserializeUser function in passport.js
+            const token = generateToken(req.user);
+            res.redirect(`${process.env.PARENT_PORTAL_REDIRECT_URL}?token=${token}`);
+        }
+    );
+}
 
 module.exports = router;

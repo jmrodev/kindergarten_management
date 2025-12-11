@@ -12,10 +12,12 @@ const generateToken = (user) => {
   };
 
   // Si es un usuario del portal de padres (con Google), incluir información específica
-  if (user.google_user) {
-    payload.google_user = user.google_user;
+  if (user.google_user || user.google_id) {
+    payload.google_user = true;
+    payload.google_id = user.google_id;
     payload.email = user.email;
     payload.name = user.name;
+    payload.parent_portal_user = true; // Indicar que es un usuario del portal de padres
   } else {
     // Para usuarios normales del sistema (staff), usar la información tradicional
     payload.email = user.email;
@@ -40,17 +42,42 @@ const protect = async (req, res, next) => {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'kindergarten_secret');
 
-      // Convertir decoded.id a BigInt si es necesario para la consulta
-      const userId = typeof decoded.id === 'number' ? BigInt(decoded.id) : decoded.id;
+      // Check if it's a parent portal user token (has google_user flag)
+      if (decoded.parent_portal_user) {
+        // Get parent portal user from database
+        const conn = await getConnection();
+        try {
+          const result = await conn.query(
+            'SELECT * FROM parent_portal_users WHERE id = ?',
+            [typeof decoded.id === 'number' ? BigInt(decoded.id) : decoded.id]
+          );
 
-      // Get user from token
-      const user = await Staff.getById(userId);
+          if (result.length === 0) {
+            return next(new AppError('No parent portal user found with this token', 401));
+          }
 
-      if (!user || !user.is_active) {
-        return next(new AppError('No staff found with this token', 401));
+          req.user = {
+            id: result[0].id,
+            email: result[0].email,
+            name: result[0].name,
+            google_id: result[0].google_id,
+            parent_portal_user: true
+          };
+        } finally {
+          conn.release();
+        }
+      } else {
+        // Get staff user from database (original behavior)
+        const userId = typeof decoded.id === 'number' ? BigInt(decoded.id) : decoded.id;
+        const user = await Staff.getById(userId);
+
+        if (!user || !user.is_active) {
+          return next(new AppError('No staff found with this token', 401));
+        }
+
+        req.user = user;
       }
 
-      req.user = user;
       next();
     } catch (error) {
       return next(new AppError('Not authorized, token failed', 401));

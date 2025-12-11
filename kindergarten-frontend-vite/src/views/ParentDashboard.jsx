@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Alert, Spinner } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
 import { PersonFill, Pencil, Calendar, FileMedical, PersonCheck } from 'react-bootstrap-icons';
 import api from '../api/api.js';
+import { Row, Col } from '../components/atoms/Grid';
+import Card from '../components/atoms/Card';
+import Button from '../components/atoms/Button';
+import Spinner from '../components/atoms/Spinner';
 
 const ParentDashboard = () => {
   const { currentUser, logout } = useAuth();
@@ -25,12 +28,12 @@ const ParentDashboard = () => {
         setLoading(true);
 
         // Get parent info from parent portal users
-        const parentResponse = await api.get(`/parents/portal-user/${currentUser.id}`);
+        const parentResponse = await api.get(`/parent-portal/portal-user/${currentUser.id}`);
         setParentInfo(parentResponse.data.data);
 
         // Get children associated with this parent
-        const childrenResponse = await api.get(`/students/by-parent/${currentUser.id}`);
-        setChildren(childrenResponse.data.data);
+        const childrenResponse = await api.get(`/parent-portal/children/parent/${currentUser.id}`);
+        setChildren(childrenResponse.data.children || []);
       } catch (err) {
         setError('Error al cargar la información: ' + err.message);
         console.error('Error loading parent data:', err);
@@ -42,22 +45,20 @@ const ParentDashboard = () => {
     loadParentData();
   }, [currentUser, navigate]);
 
-  const handleRegisterChild = () => {
-    navigate('/register-child');
-  };
+  // Eliminado el manejo de registro de niños ya que el formulario ha sido eliminado
 
   if (loading) {
     return (
-      <Container fluid className="d-flex align-items-center justify-content-center min-vh-100">
-        <Spinner animation="border" role="status">
+      <div className="d-flex align-items-center justify-content-center min-vh-100">
+        <Spinner role="status">
           <span className="visually-hidden">Cargando...</span>
         </Spinner>
-      </Container>
+      </div>
     );
   }
 
   return (
-    <Container fluid className="py-4">
+    <div className="dashboard-container">
       <Row className="mb-4">
         <Col>
           <h1 className="h3 mb-0">
@@ -75,7 +76,7 @@ const ParentDashboard = () => {
       {error && (
         <Row className="mb-4">
           <Col>
-            <Alert variant="danger">{error}</Alert>
+            <div className="alert alert-danger">{error}</div>
           </Col>
         </Row>
       )}
@@ -87,21 +88,21 @@ const ParentDashboard = () => {
               <h5 className="mb-0">Información del Padre</h5>
             </Card.Header>
             <Card.Body>
-              <p><strong>Nombre:</strong> {currentUser.name}</p>
-              <p><strong>Email:</strong> {currentUser.email}</p>
-              <p><strong>Registrado desde:</strong> {currentUser.created_at ? new Date(currentUser.created_at).toLocaleDateString() : 'N/A'}</p>
+              <p><strong>Nombre:</strong> {parentInfo?.name || currentUser.name}</p>
+              <p><strong>Email:</strong> {parentInfo?.email || currentUser.email}</p>
+              <p><strong>Registrado desde:</strong> {parentInfo?.created_at ? new Date(parentInfo.created_at).toLocaleDateString() : 'N/A'}</p>
             </Card.Body>
           </Card>
         </Col>
         <Col md={4}>
           <Card className="h-100">
             <Card.Body className="d-flex flex-column justify-content-center align-items-center">
-              <Button variant="primary" onClick={handleRegisterChild} className="w-100">
+              <Button variant="outline-secondary" className="w-100" disabled>
                 <Pencil className="me-2" />
-                Inscribir Nuevo Hijo
+                Inscripciones Temporalmente Cerradas
               </Button>
               <small className="text-muted mt-2">
-                Iniciar proceso de inscripción para un nuevo alumno
+                Contactar al jardín para iniciar proceso de inscripción
               </small>
             </Card.Body>
           </Card>
@@ -131,22 +132,17 @@ const ParentDashboard = () => {
                     <tbody>
                       {children.map((child) => (
                         <tr key={child.id}>
-                          <td>{child.first_name} {child.paternal_surname} {child.maternal_surname}</td>
+                          <td>{child.nombre} {child.apellidoPaterno} {child.apellidoMaterno}</td>
                           <td>{child.dni}</td>
-                          <td>{child.birth_date ? new Date(child.birth_date).toLocaleDateString() : 'N/A'}</td>
+                          <td>{child.fechaNacimiento ? new Date(child.fechaNacimiento).toLocaleDateString() : 'N/A'}</td>
                           <td>
-                            <span className={`badge ${
-                              child.status === 'activo' ? 'bg-success' :
-                              child.status === 'inscripto' ? 'bg-info' :
-                              child.status === 'preinscripto' ? 'bg-warning' :
-                              'bg-secondary'
-                            }`}>
-                              {child.status}
+                            <span className="badge">
+                              {child.estado}
                             </span>
                           </td>
-                          <td>{child.classroom_name || 'No asignado'}</td>
+                          <td>{child['sala.nombre'] || 'No asignado'}</td>
                           <td>
-                            <Button variant="outline-primary" size="sm" onClick={() => navigate(`/children/${child.id}`)}>
+                            <Button variant="outline-primary" size="sm" disabled>
                               Ver detalles
                             </Button>
                           </td>
@@ -156,7 +152,7 @@ const ParentDashboard = () => {
                   </table>
                 </div>
               ) : (
-                <p className="text-center text-muted">Aún no tiene hijos registrados en el sistema. Puede inscribir uno usando el botón anterior.</p>
+                <p className="text-center text-muted">Aún no tiene hijos registrados en el sistema. Para iniciar el proceso de inscripción, contacte al jardín.</p>
               )}
             </Card.Body>
           </Card>
@@ -201,7 +197,7 @@ const ParentDashboard = () => {
           </Card>
         </Col>
       </Row>
-    </Container>
+    </div>
   );
 };
 

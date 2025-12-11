@@ -54,27 +54,14 @@ const Badge = ({
     return `${baseClasses} ${className}`.trim();
   };
 
-  const badgeStyle = customColor ? {
-    backgroundColor: customColor,
-    color: '#ffffff',
-    padding: '0.35em 0.65em',
-    fontSize: '0.75em',
-    fontWeight: 700,
-    lineHeight: 1,
-    textAlign: 'center',
-    whiteSpace: 'nowrap',
-    verticalAlign: 'baseline',
-    borderRadius: '0.375rem',
-    border: '1px solid transparent'
-  } : {};
-
-  // Para salas, usar color basado en el texto si no hay un turnos específico
-  if (type === 'classroom' && variant === 'default' && typeof children === 'string') {
+  const badgeVars = {};
+  if (customColor) {
+    badgeVars['--badge-bg'] = customColor;
+    badgeVars['--badge-color'] = '#ffffff';
+  } else if (type === 'classroom' && variant === 'default' && typeof children === 'string') {
     const classroomBasedColor = getColorBasedOnText(children);
-    if (!customColor) {
-      badgeStyle.backgroundColor = classroomBasedColor;
-      badgeStyle.color = '#ffffff';
-    }
+    badgeVars['--badge-bg'] = classroomBasedColor;
+    badgeVars['--badge-color'] = '#ffffff';
   }
 
   const getCapitalizedChildren = () => {
@@ -99,7 +86,7 @@ const Badge = ({
   };
 
   return (
-    <span className={getBadgeClasses()} style={badgeStyle} {...props}>
+    <span className={getBadgeClasses()} style={badgeVars} {...props}>
       {getCapitalizedChildren()}
     </span>
   );

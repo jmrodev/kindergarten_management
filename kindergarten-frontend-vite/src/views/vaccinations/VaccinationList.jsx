@@ -16,10 +16,8 @@ import ConfirmationModal from '../../components/molecules/ConfirmationModal';
 import FormModal from '../../components/molecules/FormModal';
 import VaccinationDetails from '../../components/organisms/VaccinationDetails';
 import VaccinationForm from './VaccinationForm'; // Assuming we have a form component
-import Alert from 'react-bootstrap/Alert'; // Por ahora mantendremos Alert
 import { safeExtractData, getColorVariantById, normalizeName } from '../../utils/apiResponseHandler';
 import vaccinationService from '../../api/vaccinationService';
-import studentService from '../../api/studentService';
 import OfficeRibbonWithTitle from '../../components/atoms/OfficeRibbonWithTitle';
 
 const VaccinationList = () => {
@@ -46,13 +44,6 @@ const VaccinationList = () => {
         const response = await vaccinationService.getByStudentId(studentId);
         setVaccinations(safeExtractData(response));
 
-        // Also fetch student information
-        try {
-          const studentResponse = await studentService.getById(studentId);
-          setStudent(studentResponse.data.data);
-        } catch (err) {
-          console.error('Error fetching student data:', err);
-        }
       } else {
         // Fetch all vaccinations (general view)
         const response = await vaccinationService.getAll();
@@ -88,7 +79,7 @@ const VaccinationList = () => {
     {
       label: studentId ? "Nueva Vacuna" : "Registrar Vacuna",
       icon: <Plus size={16} />,
-      onClick: () => navigate(studentId ? `/students/${studentId}/vaccinations/new` : "/vaccinations/new")
+      onClick: () => navigate("/vaccinations/new")
     }
   ];
 
@@ -107,12 +98,12 @@ const VaccinationList = () => {
   }
 
   return (
-    <Container fluid className="p-0 m-0" style={{padding: '0', margin: '0', marginTop: '0', paddingTop: '0'}}>
+    <Container fluid className="p-0 m-0">
 
-      {error && <Alert variant="danger">{error}</Alert>}
+      {error && <div className="alert alert-danger">{error}</div>}
 
-      <Card className="border-0 m-0" style={{marginTop: '0', paddingTop: '0', border: 'none'}}>
-        <Card.Header className="p-1 office-ribbon" style={{padding: '2px', borderBottom: '1px solid #dee2e6'}}>
+      <Card className="border-0 m-0">
+        <Card.Header className="card-header p-1 office-ribbon">
           <OfficeRibbonWithTitle
             title={studentId ?
               `Vacunas de ${student ? normalizeName(student.first_name) + ' ' + normalizeName(student.paternal_surname) : 'Alumno'}`
@@ -121,17 +112,17 @@ const VaccinationList = () => {
             menuItems={menuItems}
             onClose={() => {
               if (studentId) {
-                navigate('/students'); // Go back to student list if we came from there
+                navigate('/dashboard'); // Go back to dashboard
               } else {
                 navigate('/dashboard'); // Otherwise go back to dashboard
               }
             }}
             navigate={navigate}
             showTitle={false} // Hide the title as requested
-            backPath={fromPath || (studentId ? '/students' : '/dashboard')}
+            backPath={fromPath || '/dashboard'}
           />
         </Card.Header>
-        <Card.Body className="p-0" style={{padding: '0'}}>
+        <Card.Body className="p-0">
           <OfficeTable
             headers={studentId
               ? [
@@ -178,18 +169,12 @@ const VaccinationList = () => {
                   <TableCell>
                     {vaccination.student_id ? (
                       <span
-                        onClick={async () => {
-                          try {
-                            const studentResponse = await studentService.getById(vaccination.student_id);
-                            setVaccinationToView({...vaccination, student: studentResponse.data.data});
-                            setShowViewModal(true);
-                          } catch (err) {
-                            setError('Error al cargar los datos del alumno: ' + err.message);
-                            console.error('Error loading student for vaccination view:', err);
-                          }
+                        onClick={() => {
+                          setVaccinationToView(vaccination);
+                          setShowViewModal(true);
                         }}
                         title="Ver detalles"
-                        style={{ cursor: 'pointer', margin: '0.25rem', textDecoration: 'none', color: 'inherit' }}
+                        className="no-text-decoration action-link-margin cursor-pointer"
                       >
                         <Icon type="view" size={18} title="Ver detalles" />
                       </span>
@@ -204,7 +189,7 @@ const VaccinationList = () => {
                         setShowViewModal(true);
                       }}
                       title="Ver detalles"
-                      style={{ cursor: 'pointer', margin: '0.25rem', textDecoration: 'none', color: 'inherit' }}
+                      className="no-text-decoration action-link-margin cursor-pointer"
                     >
                       <Icon type="view" size={18} title="Ver detalles" />
                     </span>
@@ -214,7 +199,7 @@ const VaccinationList = () => {
                         setShowDeleteConfirmation(true);
                       }}
                       title="Eliminar"
-                      style={{ cursor: 'pointer', margin: '0.25rem' }}
+                      className="action-link-margin cursor-pointer"
                     >
                       <Icon type="delete" size={18} title="Eliminar" />
                     </span>

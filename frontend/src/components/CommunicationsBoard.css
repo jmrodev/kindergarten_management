@@ -1,0 +1,71 @@
+.communications-board {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.communications-board h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.communications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.communication-item {
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+  background-color: #f8f9fa;
+}
+
+.communication-item.evento {
+  border-left-color: #ffc107;
+  background-color: #fff3cd;
+}
+
+.communication-item.aviso {
+  border-left-color: #fd7e14;
+  background-color: #ffeaa7;
+}
+
+.communication-item.progreso {
+  border-left-color: #28a745;
+  background-color: #d4edda;
+}
+
+.communication-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.communication-header h4 {
+  margin: 0;
+  color: #333;
+}
+
+.date {
+  font-size: 12px;
+  color: #666;
+  white-space: nowrap;
+  margin-left: 16px;
+}
+
+.message {
+  margin: 0;
+  color: #555;
+  line-height: 1.5;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}

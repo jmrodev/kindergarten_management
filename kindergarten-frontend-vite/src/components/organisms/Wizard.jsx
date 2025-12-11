@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Card, Button, Row, Col } from 'react-bootstrap';
 import { ArrowLeft, ArrowRight, Check } from 'react-bootstrap-icons';
+import Card from '../atoms/Card';
+import Button from '../atoms/Button';
+import { Row, Col } from '../atoms/Grid';
 
 const Wizard = ({ steps, initialValues = {}, onSubmit, onCancel, submitButtonText = "Guardar" }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -67,23 +69,23 @@ const Wizard = ({ steps, initialValues = {}, onSubmit, onCancel, submitButtonTex
         </div>
       </Card.Header>
       <Card.Body>
-        <StepComponent 
-          data={formData} 
-          onChange={handleInputChange} 
+        <StepComponent
+          data={formData}
+          onChange={handleInputChange}
           errors={null} // Se puede pasar desde el componente padre si se implementa validación
         />
       </Card.Body>
       <Card.Footer className="d-flex justify-content-between">
-        <Button 
-          variant="secondary" 
+        <Button
+          variant="secondary"
           onClick={onCancel}
         >
           Cancelar
         </Button>
         <div className="d-flex gap-2">
           {!isFirstStep && (
-            <Button 
-              variant="outline-secondary" 
+            <Button
+              variant="outline-secondary"
               onClick={handlePrevious}
             >
               <ArrowLeft size={16} className="me-1" />
@@ -91,16 +93,16 @@ const Wizard = ({ steps, initialValues = {}, onSubmit, onCancel, submitButtonTex
             </Button>
           )}
           {!isLastStep ? (
-            <Button 
-              variant="primary" 
+            <Button
+              variant="primary"
               onClick={handleNext}
             >
               Siguiente
               <ArrowRight size={16} className="ms-1" />
             </Button>
           ) : (
-            <Button 
-              variant="success" 
+            <Button
+              variant="success"
               onClick={handleSubmit}
             >
               <Check size={16} className="me-1" />

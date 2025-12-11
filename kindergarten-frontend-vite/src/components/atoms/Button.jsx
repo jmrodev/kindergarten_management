@@ -61,23 +61,8 @@ const Button = ({
   const buttonClass = `custom-btn ${getVariantClass()} ${getSizeClass()} ${className}`.trim();
   
   return (
-    <button 
-      className={buttonClass} 
-      style={{
-        display: 'inline-block',
-        fontWeight: '400',
-        textAlign: 'center',
-        verticalAlign: 'middle',
-        userSelect: 'none',
-        border: '1px solid transparent',
-        padding: '0.375rem 0.75rem',
-        fontSize: '1rem',
-        lineHeight: '1.5',
-        borderRadius: '0.375rem',
-        transition: 'color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out',
-        cursor: 'pointer',
-        ...style
-      }}
+    <button
+      className={buttonClass}
       {...props}
     >
       {children}

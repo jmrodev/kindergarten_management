@@ -45,6 +45,12 @@ router.get('/portal-user/:id', protect, ParentPortalController.getParentUser);
 // Get students by parent - protegido con JWT
 router.get('/students/:parentId', protect, ParentPortalController.getStudentsByParent);
 
+// Get children by parent (for dashboard) - protected with JWT
+router.get('/children/parent/:parentId', protect, ParentPortalController.getChildrenByParent);
+
+// Get attendance by child ID (for dashboard) - protected with JWT
+router.get('/attendance/child/:childId', protect, ParentPortalController.getAttendanceByChildId);
+
 // Get enrollment status (unprotected, for frontend display)
 router.get('/enrollment-status', ParentPortalController.getEnrollmentStatus);
 

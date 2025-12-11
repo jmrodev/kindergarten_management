@@ -1,28 +1,16 @@
 import React from 'react';
 
-const Card = ({ 
-  children, 
-  className = '', 
+const Card = ({
+  children,
+  className = '',
   style = {},
-  ...props 
+  ...props
 }) => {
   const cardClass = `custom-card ${className}`.trim();
-  
+
   return (
-    <div 
-      className={cardClass} 
-      style={{
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        minWidth: '0',
-        wordWrap: 'break-word',
-        backgroundColor: 'var(--office-white)',
-        backgroundClip: 'border-box',
-        border: '1px solid var(--pastel-border)',
-        borderRadius: '0.5rem',
-        ...style
-      }}
+    <div
+      className={cardClass}
       {...props}
     >
       {children}
@@ -30,24 +18,17 @@ const Card = ({
   );
 };
 
-const CardHeader = ({ 
-  children, 
-  className = '', 
+const CardHeader = ({
+  children,
+  className = '',
   style = {},
-  ...props 
+  ...props
 }) => {
   const headerClass = `custom-card-header ${className}`.trim();
-  
+
   return (
-    <div 
-      className={headerClass} 
-      style={{
-        padding: '0.75rem 1.25rem',
-        marginBottom: '0',
-        backgroundColor: 'var(--pastel-header)',
-        borderBottom: '1px solid var(--pastel-border)',
-        ...style
-      }}
+    <div
+      className={headerClass}
       {...props}
     >
       {children}
@@ -55,22 +36,35 @@ const CardHeader = ({
   );
 };
 
-const CardBody = ({ 
-  children, 
-  className = '', 
+const CardBody = ({
+  children,
+  className = '',
   style = {},
-  ...props 
+  ...props
 }) => {
   const bodyClass = `custom-card-body ${className}`.trim();
-  
+
   return (
-    <div 
-      className={bodyClass} 
-      style={{
-        flex: '1 1 auto',
-        padding: '1.25rem',
-        ...style
-      }}
+    <div
+      className={bodyClass}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+};
+
+const CardFooter = ({
+  children,
+  className = '',
+  style = {},
+  ...props
+}) => {
+  const footerClass = `custom-card-footer ${className}`.trim();
+
+  return (
+    <div
+      className={footerClass}
       {...props}
     >
       {children}
@@ -80,5 +74,6 @@ const CardBody = ({
 
 Card.Header = CardHeader;
 Card.Body = CardBody;
+Card.Footer = CardFooter;
 
 export default Card;

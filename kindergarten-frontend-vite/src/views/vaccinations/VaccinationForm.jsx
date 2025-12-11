@@ -12,7 +12,6 @@ import Button from '../../components/atoms/Button';
 import Spinner from '../../components/atoms/Spinner';
 import { safeExtractData, normalizeName } from '../../utils/apiResponseHandler';
 import vaccinationService from '../../api/vaccinationService';
-import studentService from '../../api/studentService';
 
 const VaccinationForm = () => {
   const { id: vaccinationId, studentId } = useParams();
@@ -76,40 +75,12 @@ const VaccinationForm = () => {
     loadVaccination();
   }, [vaccinationId, studentId]);
 
-  // Load list of students
+  // Eliminado el manejo de alumnos ya que la funcionalidad ha sido removida
   useEffect(() => {
-    const loadStudents = async () => {
-      if (!studentId) { // Only load students if we're not already focused on a specific student
-        try {
-          setLoadingStudents(true);
-          const response = await studentService.getAll();
-          setStudents(safeExtractData(response) || []);
-        } catch (err) {
-          console.error('Error loading students:', err);
-        } finally {
-          setLoadingStudents(false);
-        }
-      }
-    };
-
-    loadStudents();
+    if (!studentId) {
+      setStudents([]);
+    }
   }, [studentId]);
-
-  // Load student data if student_id is available
-  useEffect(() => {
-    const loadStudent = async () => {
-      if (formData.student_id) {
-        try {
-          const response = await studentService.getById(formData.student_id);
-          setStudent(response.data.data);
-        } catch (err) {
-          console.error('Error loading student data:', err);
-        }
-      }
-    };
-
-    loadStudent();
-  }, [formData.student_id]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -123,7 +94,8 @@ const VaccinationForm = () => {
         if (fromPath) {
           navigate(fromPath);
         } else {
-          navigate(`/students/${formData.student_id}/vaccinations`);
+          // Eliminado redirección a alumnos
+          navigate('/vaccinations');
         }
       } else {
         // Create new vaccination
@@ -132,7 +104,8 @@ const VaccinationForm = () => {
         if (fromPath) {
           navigate(fromPath);
         } else if (studentId) {
-          navigate(`/students/${studentId}/vaccinations`);
+          // Eliminado redirección a alumnos
+          navigate('/vaccinations');
         } else {
           navigate('/vaccinations');
         }
@@ -185,7 +158,7 @@ const VaccinationForm = () => {
   }
 
   return (
-    <Container fluid className="p-0 m-0" style={{padding: '0', margin: '0', marginTop: '0', paddingTop: '0'}}>
+    <Container fluid className="p-0 m-0">
       {error && (
         <Card className="mb-3">
           <Card.Body>
@@ -194,8 +167,8 @@ const VaccinationForm = () => {
         </Card>
       )}
 
-      <Card className="border-0 m-0" style={{marginTop: '0', paddingTop: '0', border: 'none'}}>
-        <Card.Header className="p-1 office-ribbon" style={{padding: '2px', borderBottom: '1px solid #dee2e6'}}>
+      <Card className="border-0 m-0">
+        <Card.Header className="card-header p-1 office-ribbon">
           <OfficeRibbonWithTitle
             title={vaccinationId ?
               `Editar Vacuna - ${student ? normalizeName(student.first_name) + ' ' + normalizeName(student.paternal_surname) : 'Alumno'}`
@@ -207,37 +180,12 @@ const VaccinationForm = () => {
             onClose={handleCancel}
             navigate={navigate}
             showTitle={false} // Hide the title as used in other forms
-            backPath={fromPath || (studentId ? `/students/${studentId}/vaccinations` : '/vaccinations')}
+            backPath={fromPath || '/vaccinations'}
           />
         </Card.Header>
-        <Card.Body className="p-0" style={{padding: '0', margin: '0', marginTop: '0', paddingTop: '0'}}>
+        <Card.Body className="p-0">
           <form onSubmit={handleSubmit} className="p-3">
             <Row>
-              {!studentId && (
-                <Col md={6}>
-                  <Select
-                    label="Alumno"
-                    name="student_id"
-                    value={formData.student_id}
-                    onChange={handleChange}
-                    required
-                    disabled={loadingStudents}
-                    options={[
-                      { value: '', label: 'Seleccione un alumno' },
-                      ...students.map(student => ({
-                        value: student.id,
-                        label: `${normalizeName(student.first_name)} ${normalizeName(student.paternal_surname)}`
-                      }))
-                    ]}
-                  />
-                  {loadingStudents && (
-                    <div className="mt-2">
-                      <Spinner as="span" size="sm" role="status" className="me-2" />
-                      Cargando alumnos...
-                    </div>
-                  )}
-                </Col>
-              )}
               <Col md={6}>
                 <Input
                   label="Nombre de la Vacuna"

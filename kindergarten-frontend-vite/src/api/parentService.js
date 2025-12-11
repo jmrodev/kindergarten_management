@@ -9,7 +9,7 @@ const parentService = {
 
   // Get children associated with a parent
   getChildrenByParent: async (parentId) => {
-    const response = await api.get(`/parent-portal/students/${parentId}`);
+    const response = await api.get(`/parent-portal/children/parent/${parentId}`);
     return response;
   },
 

@@ -318,6 +318,12 @@ class ParentPortalController {
         try {
             const pool = req.app.get('pool');
             const parentId = req.params.id;
+
+            // Verificar que el usuario esté autenticado y que el ID coincida o tenga permisos adecuados
+            if (req.user.id != parentId) {
+                return res.status(403).json({ error: 'Forbidden' });
+            }
+
             conn = await pool.getConnection();
 
             const rows = await conn.query(
@@ -425,6 +431,128 @@ class ParentPortalController {
                 fileName: req.file.originalname
             });
         });
+    }
+
+    async getChildrenByParent(req, res) {
+        let conn;
+        try {
+            const pool = req.app.get('pool');
+            const parentId = req.params.parentId;
+            conn = await pool.getConnection();
+
+            // Verificar que solo el padre mismo pueda acceder a sus hijos
+            if (req.user.id != parentId) {
+                return res.status(403).json({ error: 'Forbidden' });
+            }
+
+            // Consulta para obtener los alumnos asociados a un padre a través de la tabla student_guardian
+            const rows = await conn.query(
+                `SELECT
+                    s.id,
+                    s.first_name as nombre,
+                    s.paternal_surname as apellidoPaterno,
+                    s.maternal_surname as apellidoMaterno,
+                    s.dni,
+                    s.birth_date as fechaNacimiento,
+                    s.shift as turno,
+                    s.classroom_id,
+                    s.status as estado,
+                    s.health_insurance as obraSocial,
+                    s.blood_type as grupoSanguineo,
+                    s.allergies as alergias,
+                    s.medications as medicacion,
+                    s.medical_observations as observacionesMedicas,
+                    s.emergency_contact_id,
+                    c.name as 'sala.nombre'
+                 FROM student s
+                 LEFT JOIN classroom c ON s.classroom_id = c.id
+                 JOIN student_guardian sg ON s.id = sg.student_id
+                 JOIN guardian g ON sg.guardian_id = g.id
+                 WHERE g.parent_portal_user_id = ?`,
+                [parentId]
+            );
+
+            // Para cada alumno, calcular la edad
+            const children = rows.map(child => {
+                if (child.fechaNacimiento) {
+                    const birthDate = new Date(child.fechaNacimiento);
+                    const today = new Date();
+                    let age = today.getFullYear() - birthDate.getFullYear();
+                    const monthDiff = today.getMonth() - birthDate.getMonth();
+                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                        age--;
+                    }
+                    child.edad = age;
+                }
+                return child;
+            });
+
+            res.json({
+                success: true,
+                children: children
+            });
+        } catch (error) {
+            console.error('Get children by parent error:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Error getting children for parent',
+                details: error.message
+            });
+        } finally {
+            if (conn) conn.release();
+        }
+    }
+
+    async getAttendanceByChildId(req, res) {
+        let conn;
+        try {
+            const pool = req.app.get('pool');
+            const childId = req.params.childId;
+            const parentId = req.user.id;
+            conn = await pool.getConnection();
+
+            // Verificar que el niño esté asociado al padre
+            const associationCheck = await conn.query(
+                `SELECT 1
+                 FROM student s
+                 JOIN student_guardian sg ON s.id = sg.student_id
+                 JOIN guardian g ON sg.guardian_id = g.id
+                 WHERE s.id = ? AND g.parent_portal_user_id = ?`,
+                [childId, parentId]
+            );
+
+            if (associationCheck.length === 0) {
+                return res.status(403).json({ error: 'Forbidden' });
+            }
+
+            // Consulta para obtener la asistencia del niño
+            const rows = await conn.query(
+                `SELECT
+                    a.date,
+                    a.status,
+                    a.leave_type_optional as observation,
+                    a.created_at
+                 FROM attendance a
+                 WHERE a.student_id = ?
+                 ORDER BY a.date DESC
+                 LIMIT 30`, // Limitar a los últimos 30 registros
+                [childId]
+            );
+
+            res.json({
+                success: true,
+                attendance: rows
+            });
+        } catch (error) {
+            console.error('Get attendance by child error:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Error getting attendance for child',
+                details: error.message
+            });
+        } finally {
+            if (conn) conn.release();
+        }
     }
 }
 

@@ -25,17 +25,22 @@ const Input = ({
 
     if (normalize && ['first_name', 'paternal_surname', 'maternal_surname', 'nickname_optional'].includes(name)) {
       processedValue = normalizeName(processedValue);
-    }
-
-    if (onChange) {
-      onChange({
-        ...e,
-        target: {
-          ...e.target,
-          name,
-          value: processedValue
-        }
-      });
+      if (onChange) {
+        // Crear un evento synthetic personalizado para mantener compatibilidad
+        const customEvent = {
+          ...e,
+          target: {
+            ...e.target,
+            name,
+            value: processedValue
+          }
+        };
+        onChange(customEvent);
+      }
+    } else {
+      if (onChange) {
+        onChange(e);
+      }
     }
   };
 

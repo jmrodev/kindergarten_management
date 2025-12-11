@@ -10,16 +10,8 @@ const Container = ({
   const containerClass = `custom-container ${fluid ? 'custom-container-fluid' : ''} ${className}`.trim();
   
   return (
-    <div 
-      className={containerClass} 
-      style={{
-        width: '100%',
-        paddingRight: '15px',
-        paddingLeft: '15px',
-        marginRight: 'auto',
-        marginLeft: 'auto',
-        ...style
-      }}
+    <div
+      className={containerClass}
       {...props}
     >
       {children}

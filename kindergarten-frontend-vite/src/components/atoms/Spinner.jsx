@@ -9,33 +9,18 @@ const Spinner = ({
 }) => {
   const spinnerClass = `custom-spinner ${animation === 'border' ? 'custom-spinner-border' : ''} ${size === 'sm' ? 'custom-spinner-sm' : ''} ${className}`.trim();
   
-  const spinnerStyle = {
-    display: 'inline-block',
-    verticalAlign: 'text-bottom',
-    width: size === 'sm' ? '1rem' : '2rem',
-    height: size === 'sm' ? '1rem' : '2rem',
-    ...style
-  };
-
   if (animation === 'border') {
     return (
-      <span 
-        className={spinnerClass} 
-        style={{
-          ...spinnerStyle,
-          border: '0.25em solid currentColor',
-          borderRightColor: 'transparent',
-          borderRadius: '50%'
-        }}
+      <span
+        className={spinnerClass}
         {...props}
       />
     );
   }
 
   return (
-    <span 
-      className={spinnerClass} 
-      style={spinnerStyle}
+    <span
+      className={spinnerClass}
       {...props}
     />
   );

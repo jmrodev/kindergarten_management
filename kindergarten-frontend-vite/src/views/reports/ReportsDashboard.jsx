@@ -1,6 +1,9 @@
 // views/reports/ReportsDashboard.js - Placeholder
 import React from 'react';
-import { Container, Row, Col, Card, Button, Table } from 'react-bootstrap';
+import Container from '../../components/atoms/Container';
+import { Row, Col } from '../../components/atoms/Grid';
+import Card from '../../components/atoms/Card';
+import Button from '../../components/atoms/Button';
 import { BarChart, PieChart, FileBarGraph, Calendar } from 'react-bootstrap-icons';
 
 const ReportsDashboard = () => {
@@ -100,7 +103,7 @@ const ReportsDashboard = () => {
               <h5 className="mb-0">Reporte de Asistencia Reciente</h5>
             </Card.Header>
             <Card.Body className="p-0">
-              <Table className="mb-0" striped hover>
+              <table className="table mb-0">
                 <thead className="table-light">
                   <tr>
                     <th>Fecha</th>
@@ -116,7 +119,7 @@ const ReportsDashboard = () => {
                     </td>
                   </tr>
                 </tbody>
-              </Table>
+              </table>
             </Card.Body>
           </Card>
         </Col>
@@ -126,7 +129,7 @@ const ReportsDashboard = () => {
               <h5 className="mb-0">Documentos Pendientes</h5>
             </Card.Header>
             <Card.Body className="p-0">
-              <Table className="mb-0" striped hover>
+              <table className="table mb-0">
                 <thead className="table-light">
                   <tr>
                     <th>Tipo</th>
@@ -141,7 +144,7 @@ const ReportsDashboard = () => {
                     </td>
                   </tr>
                 </tbody>
-              </Table>
+              </table>
             </Card.Body>
           </Card>
         </Col>

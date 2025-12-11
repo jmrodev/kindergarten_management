@@ -49,69 +49,6 @@ const Modal = ({ show, onHide, title, children, size = 'md' }) => {
           {children}
         </div>
       </div>
-      <style jsx>{`
-        .modal-backdrop {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background-color: rgba(0, 0, 0, 0.5);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          z-index: 1050;
-        }
-        
-        .modal-content {
-          background: white;
-          border-radius: 8px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-          max-height: 90vh;
-          overflow-y: auto;
-          width: 90%;
-          max-width: 500px;
-        }
-        
-        .modal-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 1rem 1.5rem;
-          border-bottom: 1px solid #e9ecef;
-        }
-        
-        .modal-title {
-          margin: 0;
-          font-size: 1.25rem;
-        }
-        
-        .modal-close-button {
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 0;
-          width: 30px;
-          height: 30px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 4px;
-        }
-        
-        .modal-close-button:hover {
-          background-color: #f8f9fa;
-        }
-        
-        .modal-body {
-          padding: 1.5rem;
-        }
-        
-        .modal-sm { max-width: 300px; }
-        .modal-md { max-width: 500px; }
-        .modal-lg { max-width: 800px; }
-        .modal-xl { max-width: 1140px; }
-      `}</style>
     </div>
   );
 };

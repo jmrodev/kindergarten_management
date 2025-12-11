@@ -182,7 +182,7 @@ const ConfiguracionPage = () => {
   if (loading) {
     return (
       <div className="configuracion-page">
-        <div className="loading d-flex justify-content-center align-items-center" style={{ height: '60vh' }}>
+        <div className="loading d-flex justify-content-center align-items-center loading-height-60">
           <div className="text-center">
             <div className="spinner-border text-primary" role="status">
               <span className="visually-hidden">Cargando...</span>

@@ -11,7 +11,7 @@ const FormSection = ({
   const sectionClass = `form-section ${className}`.trim();
   
   return (
-    <div className={sectionClass} style={style} {...props}>
+    <div className={sectionClass} {...props}>
       {(title || subtitle) && (
         <div className="form-section-header">
           {title && <h3 className="form-section-title">{title}</h3>}

@@ -23,7 +23,7 @@ const attendanceRoutes = require('./routes/attendanceRoutes');
 const calendarRoutes = require('./routes/calendarRoutes');
 const activityRoutes = require('./routes/activityRoutes');
 const { AppError, errorHandler } = require('./middleware/errorHandler'); // Import AppError and errorHandler
-const { passport, isGoogleConfigured } = require('./config/passport');
+const { initializePassport, passport, isGoogleConfigured } = require('./config/passport');
 const { jsonSerializer } = require('./utils/serialization'); // Import jsonSerializer
 const path = require('path');
 
@@ -44,6 +44,11 @@ const pool = mariadb.createPool({
 
 // Make pool available to routes
 app.set('pool', pool);
+
+// Initialize Passport with the pool
+if (isGoogleConfigured) {
+    initializePassport(pool);
+}
 
 // Test database connection
 pool.getConnection()
