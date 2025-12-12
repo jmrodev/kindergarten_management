@@ -5,7 +5,7 @@ import Card from '../../components/atoms/Card';
 import Button from '../../components/atoms/Button';
 import TableHeaderCell from '../../components/atoms/TableHeaderCell';
 import TableCell from '../../components/atoms/TableCell';
-import OfficeRibbonWithTitle from '../../components/organisms/OfficeRibbonWithTitle';
+import { OfficeRibbonWithTitle } from '../../components/organisms';
 import ConfirmationModal from '../../components/molecules/ConfirmationModal';
 import { studentService } from '../../api/studentService';
 

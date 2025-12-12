@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, PersonCircle } from 'react-bootstrap-icons';
 import { useNavigate, useParams } from 'react-router-dom';
-import OfficeRibbonWithTitle from '../../components/organisms/OfficeRibbonWithTitle';
+import { OfficeRibbonWithTitle } from '../../components/organisms';
 import Container from '../../components/atoms/Container';
 import { Row, Col } from '../../components/atoms/Grid';
 import Card from '../../components/atoms/Card';

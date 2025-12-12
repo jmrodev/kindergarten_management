@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Check, X, Plus, FileMedical } from 'react-bootstrap-icons';
-import OfficeRibbonWithTitle from '../../components/organisms/OfficeRibbonWithTitle';
+import { OfficeRibbonWithTitle } from '../../components/organisms';
 import Input from '../../components/atoms/Input';
 import Select from '../../components/atoms/Select';
 import TextArea from '../../components/atoms/TextArea';

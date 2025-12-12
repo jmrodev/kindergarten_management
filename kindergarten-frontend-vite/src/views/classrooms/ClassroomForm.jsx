@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, Save, People } from 'react-bootstrap-icons';
 import classroomService from '../../api/classroomService';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import OfficeRibbonWithTitle from '../../components/organisms/OfficeRibbonWithTitle';
+import { OfficeRibbonWithTitle } from '../../components/organisms';
 import Container from '../../components/atoms/Container';
 import { Row, Col } from '../../components/atoms/Grid';
 import Card from '../../components/atoms/Card';

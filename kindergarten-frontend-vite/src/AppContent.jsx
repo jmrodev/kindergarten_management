@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext.jsx';
 import { PermissionsProvider } from './contexts/PermissionsContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
-import RibbonLayout from './components/organisms/RibbonLayout.jsx';
+import { RibbonLayout } from './components/organisms';
 import Dashboard from './views/Dashboard.jsx';
 import Login from './views/auth/Login.jsx';
 import GoogleAuth from './views/auth/GoogleAuth.jsx';
@@ -22,7 +22,7 @@ import MeetingMinutesList from './views/meetingMinutes/MeetingMinutesList.jsx';
 import ActivityList from './views/activities/ActivityList.jsx';
 import ConfiguracionPage from './views/ConfiguracionPage.jsx';
 import StudentList from './views/students/StudentList.jsx';
-import StudentForm from './components/organisms/StudentForm';
+import { StudentForm } from './components/organisms';
 import StudentDetailsView from './views/students/StudentDetailsView.jsx';
 
 function AppContent() {

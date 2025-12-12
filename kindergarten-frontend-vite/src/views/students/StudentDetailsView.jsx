@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Pencil, Trash } from 'react-bootstrap-icons';
 import Card from '../../components/atoms/Card';
 import Button from '../../components/atoms/Button';
-import OfficeRibbonWithTitle from '../../components/organisms/OfficeRibbonWithTitle';
+import { OfficeRibbonWithTitle } from '../../components/organisms';
 import ConfirmationModal from '../../components/molecules/ConfirmationModal';
 import { studentService } from '../../api/studentService';
 import { normalizeName } from '../../utils/apiResponseHandler';

@@ -1,8 +1,7 @@
 // views/attendance/AttendanceList.js - Updated to use atomic design
 import React from 'react';
 import { FileEarmarkMedical, Plus } from 'react-bootstrap-icons';
-import OfficeRibbonWithTitle from '../../components/organisms/OfficeRibbonWithTitle';
-import OfficeTable from '../../components/organisms/OfficeTable';
+import { OfficeRibbonWithTitle, OfficeTable } from '../../components/organisms';
 import TableCell from '../../components/atoms/TableCell';
 import TableHeaderCell from '../../components/atoms/TableHeaderCell';
 import Container from '../../components/atoms/Container';

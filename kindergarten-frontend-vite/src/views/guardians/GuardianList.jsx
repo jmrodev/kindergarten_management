@@ -2,7 +2,7 @@
 import React from 'react';
 import { PersonCircle, Plus } from 'react-bootstrap-icons';
 import { useNavigate } from 'react-router-dom';
-import OfficeTable from '../../components/organisms/OfficeTable';
+import { OfficeTable } from '../../components/organisms';
 import TableCell from '../../components/atoms/TableCell';
 import TableHeaderCell from '../../components/atoms/TableHeaderCell';
 import Container from '../../components/atoms/Container';

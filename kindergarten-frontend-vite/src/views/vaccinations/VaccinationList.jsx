@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Plus, FileEarmarkMedical } from 'react-bootstrap-icons';
-import OfficeTable from '../../components/organisms/OfficeTable';
+import { OfficeTable } from '../../components/organisms';
 import TableCell from '../../components/atoms/TableCell';
 import TableRow from '../../components/molecules/TableRow';
 import TableHeaderCell from '../../components/atoms/TableHeaderCell';
@@ -14,11 +14,11 @@ import Button from '../../components/atoms/Button';
 import Spinner from '../../components/atoms/Spinner';
 import ConfirmationModal from '../../components/molecules/ConfirmationModal';
 import FormModal from '../../components/molecules/FormModal';
-import VaccinationDetails from '../../components/organisms/VaccinationDetails';
+import { VaccinationDetails } from '../../components/organisms';
 import VaccinationForm from './VaccinationForm'; // Assuming we have a form component
 import { safeExtractData, getColorVariantById, normalizeName } from '../../utils/apiResponseHandler';
 import vaccinationService from '../../api/vaccinationService';
-import OfficeRibbonWithTitle from '../../components/organisms/OfficeRibbonWithTitle';
+import { OfficeRibbonWithTitle } from '../../components/organisms';
 
 const VaccinationList = () => {
   const { id: studentId } = useParams();
