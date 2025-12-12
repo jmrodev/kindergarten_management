@@ -1,10 +1,9 @@
 import React from 'react';
 
-const TableCell = ({ children, className = "", style = {}, ...props }) => {
+const TableCell = ({ children, className = "", ...props }) => {
   return (
     <td 
       className={`office-table-cell ${className}`} 
-      style={style}
       {...props}
     >
       {children}

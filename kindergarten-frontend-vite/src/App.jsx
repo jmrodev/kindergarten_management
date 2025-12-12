@@ -26,6 +26,8 @@ import StudentForm from './components/organisms/StudentForm';
 import StudentDetailsView from './views/students/StudentDetailsView.jsx';
 import OfficeRibbon from './components/organisms/OfficeRibbon.jsx';
 
+import RibbonLayout from './components/organisms/RibbonLayout.jsx';
+
 // Componente para rutas protegidas
 function App() {
   return (
@@ -53,215 +55,54 @@ function AppContent() {
 
             {/* Rutas protegidas */}
             <Route path="/" element={<ProtectedRoute />}>
-              <Route index element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <Navigate to="/dashboard" />
-                  </div>
-                </>
-              } />
-              <Route path="dashboard" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <Dashboard />
-                  </div>
-                </>
-              } />
+              <Route index element={<RibbonLayout><Navigate to="/dashboard" /></RibbonLayout>} />
+              <Route path="dashboard" element={<RibbonLayout><Dashboard /></RibbonLayout>} />
 
 
               {/* Rutas de salas */}
-              <Route path="classrooms" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <ClassroomList />
-                  </div>
-                </>
-              } />
-              <Route path="classrooms/new" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <ClassroomForm />
-                  </div>
-                </>
-              } />
-              <Route path="classrooms/edit/:id" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <ClassroomForm />
-                  </div>
-                </>
-              } />
+              <Route path="classrooms" element={<RibbonLayout><ClassroomList /></RibbonLayout>} />
+              <Route path="classrooms/new" element={<RibbonLayout><ClassroomForm /></RibbonLayout>} />
+              <Route path="classrooms/edit/:id" element={<RibbonLayout><ClassroomForm /></RibbonLayout>} />
 
               {/* Rutas de personal */}
-              <Route path="staff" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <StaffList />
-                  </div>
-                </>
-              } />
-              <Route path="staff/new" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <StaffForm />
-                  </div>
-                </>
-              } />
-              <Route path="staff/edit/:id" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <StaffForm />
-                  </div>
-                </>
-              } />
+              <Route path="staff" element={<RibbonLayout><StaffList /></RibbonLayout>} />
+              <Route path="staff/new" element={<RibbonLayout><StaffForm /></RibbonLayout>} />
+              <Route path="staff/edit/:id" element={<RibbonLayout><StaffForm /></RibbonLayout>} />
 
               {/* Rutas de responsables */}
-              <Route path="guardians" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <GuardianList />
-                  </div>
-                </>
-              } />
-              <Route path="guardians/new" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <GuardianForm />
-                  </div>
-                </>
-              } />
-              <Route path="guardians/edit/:id" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <GuardianForm />
-                  </div>
-                </>
-              } />
+              <Route path="guardians" element={<RibbonLayout><GuardianList /></RibbonLayout>} />
+              <Route path="guardians/new" element={<RibbonLayout><GuardianForm /></RibbonLayout>} />
+              <Route path="guardians/edit/:id" element={<RibbonLayout><GuardianForm /></RibbonLayout>} />
 
               {/* Rutas de asistencia */}
-              <Route path="attendance" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <AttendanceList />
-                  </div>
-                </>
-              } />
+              <Route path="attendance" element={<RibbonLayout><AttendanceList /></RibbonLayout>} />
 
               {/* Ruta de calendario */}
-              <Route path="calendar" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <CalendarView />
-                  </div>
-                </>
-              } />
+              <Route path="calendar" element={<RibbonLayout><CalendarView /></RibbonLayout>} />
 
               {/* Rutas de vacunas */}
-              <Route path="vaccinations" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <VaccinationList />
-                  </div>
-                </>
-              } />
+              <Route path="vaccinations" element={<RibbonLayout><VaccinationList /></RibbonLayout>} />
 
               {/* Rutas de revisión de documentos */}
-              <Route path="document-reviews" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <DocumentReviewList />
-                  </div>
-                </>
-              } />
+              <Route path="document-reviews" element={<RibbonLayout><DocumentReviewList /></RibbonLayout>} />
 
               {/* Rutas de actas de reuniones */}
-              <Route path="meeting-minutes" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <MeetingMinutesList />
-                  </div>
-                </>
-              } />
+              <Route path="meeting-minutes" element={<RibbonLayout><MeetingMinutesList /></RibbonLayout>} />
 
               {/* Rutas de actividades */}
-              <Route path="activities" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <ActivityList />
-                  </div>
-                </>
-              } />
+              <Route path="activities" element={<RibbonLayout><ActivityList /></RibbonLayout>} />
 
               {/* Ruta de configuración */}
-              <Route path="configuracion" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <ConfiguracionPage />
-                  </div>
-                </>
-              } />
+              <Route path="configuracion" element={<RibbonLayout><ConfiguracionPage /></RibbonLayout>} />
 
               {/* Rutas para alumnos */}
-              <Route path="students" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <StudentList />
-                  </div>
-                </>
-              } />
-              <Route path="students/new" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <StudentForm />
-                  </div>
-                </>
-              } />
-              <Route path="students/:id/edit" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <StudentForm />
-                  </div>
-                </>
-              } />
-              <Route path="students/:id/view" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <StudentDetailsView />
-                  </div>
-                </>
-              } />
+              <Route path="students" element={<RibbonLayout><StudentList /></RibbonLayout>} />
+              <Route path="students/new" element={<RibbonLayout><StudentForm /></RibbonLayout>} />
+              <Route path="students/:id/edit" element={<RibbonLayout><StudentForm /></RibbonLayout>} />
+              <Route path="students/:id/view" element={<RibbonLayout><StudentDetailsView /></RibbonLayout>} />
 
               {/* Rutas para padres */}
-              <Route path="parent-dashboard" element={
-                <>
-                  <OfficeRibbon />
-                  <div className="main-content-with-ribbon">
-                    <ParentDashboard />
-                  </div>
-                </>
-              } />
+              <Route path="parent-dashboard" element={<RibbonLayout><ParentDashboard /></RibbonLayout>} />
             </Route>
 
             {/* Redirección por defecto */}

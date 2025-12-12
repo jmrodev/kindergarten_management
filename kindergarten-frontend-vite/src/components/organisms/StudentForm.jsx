@@ -9,7 +9,7 @@ import TextArea from '../atoms/TextArea';
 import Toggle from '../atoms/Toggle';
 import FormSection from '../atoms/FormSection';
 import Spinner from '../atoms/Spinner';
-import OfficeRibbonWithTitle from '../atoms/OfficeRibbonWithTitle';
+import OfficeRibbonWithTitle from './OfficeRibbonWithTitle';
 import { normalizeName } from '../../utils/apiResponseHandler';
 import { studentService } from '../../api/studentService';
 import { ArrowLeft } from 'react-bootstrap-icons';

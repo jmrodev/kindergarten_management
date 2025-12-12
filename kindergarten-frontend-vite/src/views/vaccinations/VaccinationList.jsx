@@ -18,7 +18,7 @@ import VaccinationDetails from '../../components/organisms/VaccinationDetails';
 import VaccinationForm from './VaccinationForm'; // Assuming we have a form component
 import { safeExtractData, getColorVariantById, normalizeName } from '../../utils/apiResponseHandler';
 import vaccinationService from '../../api/vaccinationService';
-import OfficeRibbonWithTitle from '../../components/atoms/OfficeRibbonWithTitle';
+import OfficeRibbonWithTitle from '../../components/organisms/OfficeRibbonWithTitle';
 
 const VaccinationList = () => {
   const { id: studentId } = useParams();

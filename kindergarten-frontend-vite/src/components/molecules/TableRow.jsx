@@ -1,6 +1,6 @@
 import React from 'react';
 
-const TableRow = ({ children, className = "", style = {}, status = null, isOdd = false, ...props }) => {
+const TableRow = ({ children, className = "", status = null, isOdd = false, ...props }) => {
   const getStatusClass = () => {
     switch (status) {
       case 'active':
@@ -25,7 +25,6 @@ const TableRow = ({ children, className = "", style = {}, status = null, isOdd =
   return (
     <tr
       className={`office-table-row ${getStatusClass()} ${getEvenOddClass()} ${className}`}
-      style={style}
       {...props}
     >
       {children}

@@ -8,11 +8,10 @@ const OfficeTable = ({
   renderRow, 
   emptyMessage = "No hay datos para mostrar", 
   className = "",
-  style = {},
   ...props 
 }) => {
   return (
-    <div className="office-table-wrapper" style={style}>
+    <div className="office-table-wrapper">
       <div className="office-table-responsive">
         <table className={`office-table ${className}`} {...props}>
           <thead className="office-table-thead">
