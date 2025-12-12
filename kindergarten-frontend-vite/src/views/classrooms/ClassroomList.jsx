@@ -2,9 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, FileEarmarkPlus } from 'react-bootstrap-icons';
 import { useNavigate } from 'react-router-dom';
 import { OfficeTable } from '../../components/organisms';
-import TableRow from '../../components/molecules/TableRow';
+import { TableRow } from '../../components/molecules';
 import { TableCell, TableHeaderCell, Badge, Icon, Container, Row, Col, Card, Button, Spinner } from '../../components/atoms';
-import ConfirmationModal from '../../components/molecules/ConfirmationModal';
+import { ConfirmationModal } from '../../components/molecules';
 import { safeExtractData, getColorVariantById, normalizeName } from '../../utils/apiResponseHandler';
 import classroomService from '../../api/classroomService';
 

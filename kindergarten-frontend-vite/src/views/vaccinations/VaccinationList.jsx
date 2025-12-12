@@ -2,10 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Plus, FileEarmarkMedical } from 'react-bootstrap-icons';
 import { OfficeTable } from '../../components/organisms';
-import TableRow from '../../components/molecules/TableRow';
+import { TableRow, ConfirmationModal, FormModal } from '../../components/molecules';
 import { TableCell, TableHeaderCell, Badge, Icon, Container, Row, Col, Card, Button, Spinner } from '../../components/atoms';
-import ConfirmationModal from '../../components/molecules/ConfirmationModal';
-import FormModal from '../../components/molecules/FormModal';
 import { VaccinationDetails } from '../../components/organisms';
 import VaccinationForm from './VaccinationForm'; // Assuming we have a form component
 import { safeExtractData, getColorVariantById, normalizeName } from '../../utils/apiResponseHandler';

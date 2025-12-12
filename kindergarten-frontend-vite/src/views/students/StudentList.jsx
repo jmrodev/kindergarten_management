@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, Pencil, Trash, Plus } from 'react-bootstrap-icons';
 import { Card, Button, TableHeaderCell, TableCell } from '../../components/atoms';
 import { OfficeRibbonWithTitle } from '../../components/organisms';
-import ConfirmationModal from '../../components/molecules/ConfirmationModal';
+import { ConfirmationModal } from '../../components/molecules';
 import { studentService } from '../../api/studentService';
 
 const StudentList = () => {
