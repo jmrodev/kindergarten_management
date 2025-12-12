@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import useCurrentPath from '../../hooks/useCurrentPath'; // Path from components/organisms to hooks
+import * as ImportedIcons from '../icons';
+
 
 /**
  * =============================================================================
@@ -409,7 +411,7 @@ const OfficeRibbon = () => {
             onClick={() => handleAction(currentContext.primary.action)}
             title={currentContext.primary.label}
           >
-            {React.createElement(currentContext.primary.icon, { size: 24 })}
+            {(() => { const IconComp = ImportedIcons[currentContext.primary.icon?.name] || currentContext.primary.icon; return React.createElement(IconComp, { size: 24 }); })()}
             <span>{currentContext.primary.label}</span>
           </div>
 
@@ -419,7 +421,7 @@ const OfficeRibbon = () => {
           <div className="ribbon-small-actions">
             {currentContext.secondaries.slice(0, 3).map((sec, idx) => (
                <div key={idx} className="ribbon-btn-small" onClick={() => handleAction(sec.action)}>
-                 {React.createElement(sec.icon, { size: 14 })}
+                 {(() => { const IconComp = ImportedIcons[sec.icon?.name] || sec.icon; return React.createElement(IconComp, { size: 14 }); })()}
                  {sec.label}
                </div>
             ))}
@@ -434,7 +436,7 @@ const OfficeRibbon = () => {
           <div className="ribbon-small-actions">
             {currentContext.exportActions && currentContext.exportActions.map((action, idx) => (
                <div key={idx} className="ribbon-btn-small" onClick={() => handleAction(action.action)}>
-                 {React.createElement(action.icon, { size: 14 })}
+                 {(() => { const IconComp = ImportedIcons[action.icon?.name] || action.icon; return React.createElement(IconComp, { size: 14 }); })()}
                  {action.label}
                </div>
             ))}
