@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Pencil, Trash } from 'react-bootstrap-icons';
-import Card from '../../components/atoms/Card';
-import Button from '../../components/atoms/Button';
+import { Card, Button } from '../../components/atoms';
 import { OfficeRibbonWithTitle } from '../../components/organisms';
 import ConfirmationModal from '../../components/molecules/ConfirmationModal';
 import { studentService } from '../../api/studentService';

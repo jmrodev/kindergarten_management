@@ -3,14 +3,7 @@ import { ArrowLeft, Save, Shield, Phone, Envelope, House, PersonFill, Calendar }
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import staffService from '../../api/staffService';
 import { OfficeRibbonWithTitle } from '../../components/organisms';
-import Container from '../../components/atoms/Container';
-import { Row, Col } from '../../components/atoms/Grid';
-import Card from '../../components/atoms/Card';
-import Form from '../../components/atoms/Form';
-import Input from '../../components/atoms/Input';
-import Select from '../../components/atoms/Select';
-import Button from '../../components/atoms/Button';
-import Toggle from '../../components/atoms/Toggle';
+import { Container, Row, Col, Card, Form, Input, Select, Button, Toggle } from '../../components/atoms';
 import { safeExtractData } from '../../utils/apiResponseHandler';
 
 const StaffForm = () => {

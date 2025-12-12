@@ -3,10 +3,7 @@ import React from 'react';
 import { Calendar } from 'react-bootstrap-icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { OfficeRibbonWithTitle } from '../../components/organisms';
-import Container from '../../components/atoms/Container';
-import { Row, Col } from '../../components/atoms/Grid';
-import Card from '../../components/atoms/Card';
-import Button from '../../components/atoms/Button';
+import { Container, Row, Col, Card, Button } from '../../components/atoms';
 
 const CalendarView = () => {
   const navigate = useNavigate();

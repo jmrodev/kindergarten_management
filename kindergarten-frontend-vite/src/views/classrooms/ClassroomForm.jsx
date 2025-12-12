@@ -3,15 +3,7 @@ import { ArrowLeft, Save, People } from 'react-bootstrap-icons';
 import classroomService from '../../api/classroomService';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { OfficeRibbonWithTitle } from '../../components/organisms';
-import Container from '../../components/atoms/Container';
-import { Row, Col } from '../../components/atoms/Grid';
-import Card from '../../components/atoms/Card';
-import Form from '../../components/atoms/Form';
-import Input from '../../components/atoms/Input';
-import Select from '../../components/atoms/Select';
-import Button from '../../components/atoms/Button';
-import Toggle from '../../components/atoms/Toggle';
-import Spinner from '../../components/atoms/Spinner';
+import { Container, Row, Col, Card, Form, Input, Select, Button, Toggle, Spinner } from '../../components/atoms';
 
 const ClassroomForm = () => {
   const { id } = useParams();

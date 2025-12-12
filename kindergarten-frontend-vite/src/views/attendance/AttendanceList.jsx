@@ -2,12 +2,7 @@
 import React from 'react';
 import { FileEarmarkMedical, Plus } from 'react-bootstrap-icons';
 import { OfficeRibbonWithTitle, OfficeTable } from '../../components/organisms';
-import TableCell from '../../components/atoms/TableCell';
-import TableHeaderCell from '../../components/atoms/TableHeaderCell';
-import Container from '../../components/atoms/Container';
-import { Row, Col } from '../../components/atoms/Grid';
-import Card from '../../components/atoms/Card';
-import Button from '../../components/atoms/Button';
+import { TableCell, TableHeaderCell, Container, Row, Col, Card, Button } from '../../components/atoms';
 
 const AttendanceList = () => {
   return (

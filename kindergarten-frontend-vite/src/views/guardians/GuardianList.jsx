@@ -3,12 +3,7 @@ import React from 'react';
 import { PersonCircle, Plus } from 'react-bootstrap-icons';
 import { useNavigate } from 'react-router-dom';
 import { OfficeTable } from '../../components/organisms';
-import TableCell from '../../components/atoms/TableCell';
-import TableHeaderCell from '../../components/atoms/TableHeaderCell';
-import Container from '../../components/atoms/Container';
-import { Row, Col } from '../../components/atoms/Grid';
-import Card from '../../components/atoms/Card';
-import Button from '../../components/atoms/Button';
+import { TableCell, TableHeaderCell, Container, Row, Col, Card, Button } from '../../components/atoms';
 
 const GuardianList = () => {
   const navigate = useNavigate();

@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Pencil, Trash, Plus } from 'react-bootstrap-icons';
-import Card from '../../components/atoms/Card';
-import Button from '../../components/atoms/Button';
-import TableHeaderCell from '../../components/atoms/TableHeaderCell';
-import TableCell from '../../components/atoms/TableCell';
+import { Card, Button, TableHeaderCell, TableCell } from '../../components/atoms';
 import { OfficeRibbonWithTitle } from '../../components/organisms';
 import ConfirmationModal from '../../components/molecules/ConfirmationModal';
 import { studentService } from '../../api/studentService';

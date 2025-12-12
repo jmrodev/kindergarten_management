@@ -1,9 +1,6 @@
 // views/reports/ReportsDashboard.js - Placeholder
 import React from 'react';
-import Container from '../../components/atoms/Container';
-import { Row, Col } from '../../components/atoms/Grid';
-import Card from '../../components/atoms/Card';
-import Button from '../../components/atoms/Button';
+import { Container, Row, Col, Card, Button } from '../../components/atoms';
 import { BarChart, PieChart, FileBarGraph, Calendar } from 'react-bootstrap-icons';
 
 const ReportsDashboard = () => {

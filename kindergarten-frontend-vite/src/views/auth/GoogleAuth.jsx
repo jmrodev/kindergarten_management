@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
 import { PersonFill, CheckCircleFill } from 'react-bootstrap-icons';
 import api from '../../api/api.js';
-import Spinner from '../../components/atoms/Spinner';
+import { Spinner } from '../../components/atoms';
 
 const GoogleAuth = () => {
   const [error, setError] = useState('');
