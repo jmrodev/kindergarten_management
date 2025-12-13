@@ -10,6 +10,7 @@ import Spinner from '../components/atoms/Spinner';
 import ChildrenTable from './parent/ChildrenTable';
 import FeatureBlock from '../components/molecules/FeatureBlock';
 import RetryableErrorAlert from '../components/molecules/RetryableErrorAlert';
+import FeatureCardWrapper from '../components/molecules/FeatureCardWrapper';
 
 const ParentDashboard = () => {
   const { currentUser, logout } = useAuth();
@@ -132,9 +133,7 @@ const ParentDashboard = () => {
       </Row>
 
       <Row className="g-4">
-        <Col md={4}>
-          <Card className="h-100">
-            <Card.Body className="d-flex flex-column justify-content-center">
+        <FeatureCardWrapper>
               <FeatureBlock
                 Icon={Calendar}
                 title="Calendario Escolar"
@@ -145,12 +144,8 @@ const ParentDashboard = () => {
                   </Button>
                 }
               />
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={4}>
-          <Card className="h-100">
-            <Card.Body className="d-flex flex-column justify-content-center">
+            </FeatureCardWrapper>
+        <FeatureCardWrapper>
               <FeatureBlock
                 Icon={FileMedical}
                 title="Documentación"
@@ -161,12 +156,8 @@ const ParentDashboard = () => {
                   </Button>
                 }
               />
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={4}>
-          <Card className="h-100">
-            <Card.Body className="d-flex flex-column justify-content-center">
+            </FeatureCardWrapper>
+        <FeatureCardWrapper>
               <FeatureBlock
                 Icon={PersonCheck}
                 title="Asistencia"
@@ -177,9 +168,7 @@ const ParentDashboard = () => {
                   </Button>
                 }
               />
-            </Card.Body>
-          </Card>
-        </Col>
+            </FeatureCardWrapper>
       </Row>
     </div>
   );
