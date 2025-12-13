@@ -11,6 +11,10 @@ import ChildrenTable from './parent/ChildrenTable';
 import FeatureBlock from '../components/molecules/FeatureBlock';
 import RetryableErrorAlert from '../components/molecules/RetryableErrorAlert';
 import FeatureCardWrapper from '../components/molecules/FeatureCardWrapper';
+import ParentDashboardHeader from '../components/organisms/ParentDashboardHeader';
+import ParentInfoCard from '../components/organisms/ParentInfoCard';
+import TemporaryInscriptionStatusCard from '../components/molecules/TemporaryInscriptionStatusCard';
+import EnrolledChildrenCard from '../components/organisms/EnrolledChildrenCard';
 
 const ParentDashboard = () => {
   const { currentUser, logout } = useAuth();
@@ -63,19 +67,7 @@ const ParentDashboard = () => {
 
   return (
     <div className="dashboard-container">
-      <Row className="mb-4">
-        <Col>
-          <h1 className="h3 mb-0">
-            <PersonFill className="me-2" /> Portal de Padres
-          </h1>
-          <p className="text-muted">Bienvenido/a {currentUser.name || currentUser.email}</p>
-        </Col>
-        <Col xs="auto">
-          <Button variant="outline-secondary" onClick={logout}>
-            Cerrar Sesión
-          </Button>
-        </Col>
-      </Row>
+      <ParentDashboardHeader currentUser={currentUser} logout={logout} />
 
       {error && (
         <Row className="mb-4">
@@ -89,46 +81,16 @@ const ParentDashboard = () => {
 
       <Row className="mb-4">
         <Col md={8}>
-          <Card>
-            <Card.Header>
-              <h5 className="mb-0">Información del Padre</h5>
-            </Card.Header>
-            <Card.Body>
-              <p><strong>Nombre:</strong> {parentInfo?.name || currentUser.name}</p>
-              <p><strong>Email:</strong> {parentInfo?.email || currentUser.email}</p>
-              <p><strong>Registrado desde:</strong> {parentInfo?.created_at ? new Date(parentInfo.created_at).toLocaleDateString() : 'N/A'}</p>
-            </Card.Body>
-          </Card>
+          <ParentInfoCard parentInfo={parentInfo} currentUser={currentUser} />
         </Col>
         <Col md={4}>
-          <Card className="h-100">
-            <Card.Body className="d-flex flex-column justify-content-center align-items-center">
-              <Button variant="outline-secondary" className="w-100" disabled>
-                <Pencil className="me-2" />
-                Inscripciones Temporalmente Cerradas
-              </Button>
-              <small className="text-muted mt-2">
-                Contactar al jardín para iniciar proceso de inscripción
-              </small>
-            </Card.Body>
-          </Card>
+          <TemporaryInscriptionStatusCard />
         </Col>
       </Row>
 
       <Row className="mb-4">
         <Col>
-          <Card>
-            <Card.Header>
-              <h5 className="mb-0">Hijos Inscritos</h5>
-            </Card.Header>
-            <Card.Body>
-              {children && children.length > 0 ? (
-                <ChildrenTable children={children} />
-              ) : (
-                <p className="text-center text-muted">Aún no tiene hijos registrados en el sistema. Para iniciar el proceso de inscripción, contacte al jardín.</p>
-              )}
-            </Card.Body>
-          </Card>
+          <EnrolledChildrenCard children={children} />
         </Col>
       </Row>
 
