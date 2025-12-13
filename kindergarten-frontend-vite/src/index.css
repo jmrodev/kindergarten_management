@@ -1498,7 +1498,7 @@ div.weather-report-card.weather-default,
 }
 
 .card-col {
-  flex: 1;
+  flex: 0 0 25%;
   min-width: 220px;
   max-width: 25%;
 }
@@ -2853,7 +2853,7 @@ div.weather-report-card.weather-default,
 .cursor-pointer { cursor: pointer; }
 .icon-middle { vertical-align: middle; }
 .icon-block-mb { display: block; margin-bottom: 0.75rem; }
-.flex-gap-1-5-wrap { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.flex-gap-1-5-wrap { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: flex-start; }
 .flex-1-min400 { flex: 1; min-width: 300px; max-width: 400px; }
 .flex-2-min600 { flex: 2; min-width: 600px; }
 .flex-gap-1-wrap-mt-1-5 { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; }

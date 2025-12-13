@@ -7,6 +7,9 @@ import vaccinationService from '../api/vaccinationService';
 import documentReviewService from '../api/documentReviewService';
 import calendarService from '../api/calendarService';
 import WeatherReport from '../components/WeatherReport';
+import AllStats from './dashboard/AllStats';
+import QuickActions from './dashboard/QuickActions';
+import RecentActivity from './dashboard/RecentActivity';
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
@@ -145,158 +148,12 @@ const Dashboard = () => {
             <div className="flex-1-min400">
               <WeatherReport />
             </div>
-            <div className="flex-2-min600">
-              {/* Summary Cards */}
-              <div className="cards-row">
-                <div className="card-col">
-                  <div
-                    className="stat-card clickable-card cursor-pointer"
-                    onClick={() => navigate('/students')}
-                  >
-                    <div className="card-content">
-                      <div className="number">{stats.totalStudents}</div>
-                      <div className="label">
-                        <PersonCheck className="icon-middle" />
-                        Alumnos Totales
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="card-col">
-                  <div className="stat-card active">
-                    <div className="card-content">
-                      <div className="number">{stats.activeStudents}</div>
-                      <div className="label">
-                        <PersonCheck className="icon-middle" />
-                        Alumnos Activos
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="card-col">
-                  <div className="stat-card active">
-                    <div className="card-content">
-                      <div className="number">{stats.vaccinationComplete}</div>
-                      <div className="label">
-                        <FileEarmarkMedical className="icon-middle" />
-                        Vacunas Completas
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="card-col">
-                  <div className="stat-card warning">
-                    <div className="card-content">
-                      <div className="number">{stats.pendingDocuments}</div>
-                      <div className="label">
-                        <FileEarmarkCheck className="icon-middle" />
-                        Documentos Pendientes
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <AllStats stats={stats} navigate={navigate} />
           </div>
 
-          {/* Additional Stats */}
-          <div className="cards-row">
-            <div className="card-col">
-              <div className="stat-card warning">
-                <div className="card-content">
-                  <div className="number">{stats.preinscriptoStudents}</div>
-                  <div className="label">
-                    <JournalText className="icon-middle" />
-                    Preinscriptos
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="card-col">
-              <div className="stat-card info">
-                <div className="card-content">
-                  <div className="number">{stats.inscriptoStudents}</div>
-                  <div className="label">
-                    <JournalText className="icon-middle" />
-                    Inscriptos
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="card-col">
-              <div className="stat-card danger">
-                <div className="card-content">
-                  <div className="number">{stats.vaccinationIncomplete}</div>
-                  <div className="label">
-                    <FileEarmarkMedical className="icon-middle" />
-                    Vacunas Incompletas
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="card-col">
-              <div className="stat-card info">
-                <div className="card-content">
-                  <div className="number">{stats.todayEvents}</div>
-                  <div className="label">
-                    <Calendar className="icon-middle" />
-                    Eventos Hoy
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <QuickActions currentUser={currentUser} />
 
-          {/* Quick Actions */}
-          <div className="quick-actions-card">
-            <div className="card-header">
-              <h5>Acciones Rápidas</h5>
-            </div>
-            <div className="quick-actions-grid">
-              {(currentUser?.role === 'Administrator' || currentUser?.role === 'Director' || currentUser?.role === 'Secretary' || currentUser?.role === 'Teacher') && (
-                <a href="/attendance" className="quick-action-btn">
-                  <FileEarmarkMedical size={32} className="icon-block-mb" />
-                  Registrar Asistencia
-                </a>
-              )}
-              <a href="/calendar" className="quick-action-btn">
-                <Calendar size={32} className="icon-block-mb" />
-                Calendario
-              </a>
-              {(currentUser?.role === 'Administrator' || currentUser?.role === 'Director' || currentUser?.role === 'Secretary') && (
-                <a href="/document-reviews" className="quick-action-btn">
-                  <FileEarmarkCheck size={32} className="icon-block-mb" />
-                  Revisar Documentos
-                </a>
-              )}
-              {currentUser?.parentPortalUser && (
-                <a href="/parent-dashboard" className="quick-action-btn">
-                  <PersonCheck size={32} className="icon-block-mb" />
-                  Mi Panel
-                </a>
-              )}
-            </div>
-          </div>
-
-          {/* Recent Activity */}
-          <div className="flex-gap-1-wrap-mt-1-5">
-            <div className="activity-card activity-card-flex">
-              <div className="card-header">
-                <h5>Últimos Alumnos Registrados</h5>
-              </div>
-              <div className="card-body">
-                <p>No hay alumnos recientes registrados.</p>
-              </div>
-            </div>
-            <div className="activity-card activity-card-flex">
-              <div className="card-header">
-                <h5>Próximos Eventos</h5>
-              </div>
-              <div className="card-body">
-                <p>No hay eventos programados próximamente.</p>
-              </div>
-            </div>
-          </div>
+          <RecentActivity />
         </>
       )}
     </div>

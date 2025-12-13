@@ -9,7 +9,7 @@ export { default as Container } from './Container.jsx';
 export { default as TextArea } from './TextArea.jsx';
 export { default as Form } from './Form.jsx';
 export { default as Icon } from './Icon.jsx';
-export { default as OfficeRibbon } from './OfficeRibbon.jsx';
+export { OfficeMenuButton, OfficeDropdownItem, OfficeDropdownMenu } from './OfficeRibbon.jsx';
 export { default as DocumentStatusWithLink } from './DocumentStatusWithLink.jsx';
 export { default as TableHeaderCell } from './TableHeaderCell.jsx';
 export { default as Card } from './Card.jsx';
