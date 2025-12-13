@@ -11,54 +11,54 @@ const Button = ({
   const getVariantClass = () => {
     switch(variant) {
       case 'primary':
-        return 'custom-btn-primary';
+        return 'btn-primary';
       case 'secondary':
-        return 'custom-btn-secondary';
+        return 'btn-secondary';
       case 'success':
-        return 'custom-btn-success';
+        return 'btn-success';
       case 'danger':
-        return 'custom-btn-danger';
+        return 'btn-danger';
       case 'warning':
-        return 'custom-btn-warning';
+        return 'btn-warning';
       case 'info':
-        return 'custom-btn-info';
+        return 'btn-info';
       case 'light':
-        return 'custom-btn-light';
+        return 'btn-light';
       case 'dark':
-        return 'custom-btn-dark';
+        return 'btn-dark';
       case 'outline-primary':
-        return 'custom-btn-outline-primary';
+        return 'btn-outline-primary';
       case 'outline-secondary':
-        return 'custom-btn-outline-secondary';
+        return 'btn-outline-secondary';
       case 'outline-success':
-        return 'custom-btn-outline-success';
+        return 'btn-outline-success';
       case 'outline-danger':
-        return 'custom-btn-outline-danger';
+        return 'btn-outline-danger';
       case 'outline-warning':
-        return 'custom-btn-outline-warning';
+        return 'btn-outline-warning';
       case 'outline-info':
-        return 'custom-btn-outline-info';
+        return 'btn-outline-info';
       case 'outline-light':
-        return 'custom-btn-outline-light';
+        return 'btn-outline-light';
       case 'outline-dark':
-        return 'custom-btn-outline-dark';
+        return 'btn-outline-dark';
       default:
-        return 'custom-btn-primary';
+        return 'btn-primary';
     }
   };
 
   const getSizeClass = () => {
     switch(size) {
       case 'sm':
-        return 'custom-btn-sm';
+        return 'btn-sm';
       case 'lg':
-        return 'custom-btn-lg';
+        return 'btn-lg';
       default:
-        return 'custom-btn-md';
+        return 'btn-md';
     }
   };
 
-  const buttonClass = `custom-btn ${getVariantClass()} ${getSizeClass()} ${className}`.trim();
+  const buttonClass = `btn ${getVariantClass()} ${getSizeClass()} ${className}`.trim();
   
   return (
     <button

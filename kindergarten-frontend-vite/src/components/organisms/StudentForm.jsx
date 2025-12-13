@@ -13,7 +13,7 @@ import OfficeRibbonWithTitle from './OfficeRibbonWithTitle';
 import { normalizeName } from '../../utils/apiResponseHandler';
 import { studentService } from '../../api/studentService';
 import { ArrowLeft } from 'react-bootstrap-icons';
-import './StudentForm.css';
+
 
 const StudentForm = () => {
   const navigate = useNavigate();
@@ -323,7 +323,7 @@ const StudentForm = () => {
   const isFirstPage = currentPage === 0;
 
   return (
-    <div className="student-form-container">
+    <div className="">
       <OfficeRibbonWithTitle
         title={studentId ? `Editar Alumno: ${normalizeName(formData.first_name)} ${normalizeName(formData.paternal_surname)}` : 'Nuevo Alumno'}
         menuItems={menuItems}
@@ -331,10 +331,10 @@ const StudentForm = () => {
       />
 
       <div className="main-content-with-ribbon">
-        <Card className="student-form-card">
+        <Card className="form-card">
           <Card.Body>
-            <div className="form-header">
-              <h3 className="form-title">{currentSection?.title}</h3>
+            <div className="form-section-header form-header-responsive-column">
+              <h3 className="form-section-title">{currentSection?.title}</h3>
               <div className="form-progress">
                 <span className="form-progress-text">
                   Página {currentPage + 1} de {sections.length}
@@ -342,7 +342,7 @@ const StudentForm = () => {
               </div>
             </div>
 
-            <p className="form-subtitle">{currentSection?.subtitle}</p>
+            <p className="form-subtitle-italic">{currentSection?.subtitle}</p>
 
             {error && (
               <div className="alert alert-danger" role="alert">
@@ -350,10 +350,10 @@ const StudentForm = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="student-form">
-              <Row className="form-row">
+            <form onSubmit={handleSubmit}>
+              <Row className="custom-row">
                 {currentSection?.fields.map((field) => (
-                  <Col key={field.name} className={field.type === 'textarea' ? 'col-12' : 'col-md-6'}>
+                  <Col key={field.name} className={field.type === 'textarea' ? 'custom-col-12' : 'custom-col-md-6'}>
                     {field.type === 'checkbox' ? (
                       <Toggle
                         label={field.label}
@@ -398,14 +398,13 @@ const StudentForm = () => {
                 ))}
               </Row>
 
-              <div className="form-navigation">
-                <Button
-                  variant="secondary"
-                  onClick={isFirstPage ? handleCancel : goToPreviousSection}
-                  disabled={loading}
-                  className="nav-button prev-button"
-                >
-                  {isFirstPage ? 'Cancelar' : 'Anterior'}
+              <div className="form-navigation-container form-navigation-responsive-column">
+                                  <Button
+                                    variant="secondary"
+                                    onClick={isFirstPage ? handleCancel : goToPreviousSection}
+                                    disabled={loading}
+                                    className="btn btn-nav-full-width-sm prev-button"
+                                  >                  {isFirstPage ? 'Cancelar' : 'Anterior'}
                 </Button>
 
                 {isLastPage ? (
@@ -413,15 +412,15 @@ const StudentForm = () => {
                     variant="primary"
                     type="submit"
                     disabled={loading}
-                    className="nav-button submit-button"
+                    className="btn btn-nav-full-width-sm submit-button"
                   >
                     {loading ? (
                       <>
                         <Spinner size="sm" />
-                        <span className="button-text">Guardando...</span>
+                        <span>Guardando...</span>
                       </>
                     ) : (
-                      <span className="button-text">Guardar</span>
+                      <span>Guardar</span>
                     )}
                   </Button>
                 ) : (
@@ -429,9 +428,9 @@ const StudentForm = () => {
                     variant="primary"
                     onClick={goToNextSection}
                     disabled={loading}
-                    className="nav-button next-button"
+                    className="btn btn-nav-full-width-sm next-button"
                   >
-                    <span className="button-text">Siguiente</span>
+                    <span>Siguiente</span>
                   </Button>
                 )}
               </div>
