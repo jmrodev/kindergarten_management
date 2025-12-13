@@ -8,6 +8,8 @@ import Card from '../components/atoms/Card';
 import Button from '../components/atoms/Button';
 import Spinner from '../components/atoms/Spinner';
 import ChildrenTable from './parent/ChildrenTable';
+import FeatureBlock from '../components/molecules/FeatureBlock';
+import RetryableErrorAlert from '../components/molecules/RetryableErrorAlert';
 
 const ParentDashboard = () => {
   const { currentUser, logout } = useAuth();
@@ -76,15 +78,11 @@ const ParentDashboard = () => {
 
       {error && (
         <Row className="mb-4">
-          <Col>
-            <div className="alert alert-danger d-flex justify-content-between align-items-center">
-              <div>{error}</div>
-              <div>
-                <Button variant="outline-light" onClick={() => loadParentData()} className="me-2">Reintentar</Button>
-                <Button variant="outline-secondary" onClick={() => { setError(''); }}>Cerrar</Button>
-              </div>
-            </div>
-          </Col>
+          <RetryableErrorAlert
+            message={error}
+            onRetry={loadParentData}
+            onClose={() => setError('')}
+          />
         </Row>
       )}
 
@@ -136,37 +134,49 @@ const ParentDashboard = () => {
       <Row className="g-4">
         <Col md={4}>
           <Card className="h-100">
-            <Card.Body className="text-center">
-              <Calendar className="text-primary mb-3" size={48} />
-              <h5>Calendario Escolar</h5>
-              <p className="text-muted">Consulte las fechas importantes del calendario escolar</p>
-              <Button variant="outline-primary" disabled>
-                Próximamente
-              </Button>
+            <Card.Body className="d-flex flex-column justify-content-center">
+              <FeatureBlock
+                Icon={Calendar}
+                title="Calendario Escolar"
+                description="Consulte las fechas importantes del calendario escolar"
+                actionElement={
+                  <Button variant="outline-primary" disabled>
+                    Próximamente
+                  </Button>
+                }
+              />
             </Card.Body>
           </Card>
         </Col>
         <Col md={4}>
           <Card className="h-100">
-            <Card.Body className="text-center">
-              <FileMedical className="text-success mb-3" size={48} />
-              <h5>Documentación</h5>
-              <p className="text-muted">Suba y verifique la documentación requerida</p>
-              <Button variant="outline-success" disabled>
-                Próximamente
-              </Button>
+            <Card.Body className="d-flex flex-column justify-content-center">
+              <FeatureBlock
+                Icon={FileMedical}
+                title="Documentación"
+                description="Suba y verifique la documentación requerida"
+                actionElement={
+                  <Button variant="outline-success" disabled>
+                    Próximamente
+                  </Button>
+                }
+              />
             </Card.Body>
           </Card>
         </Col>
         <Col md={4}>
           <Card className="h-100">
-            <Card.Body className="text-center">
-              <PersonCheck className="text-info mb-3" size={48} />
-              <h5>Asistencia</h5>
-              <p className="text-muted">Consulte la asistencia de sus hijos</p>
-              <Button variant="outline-info" disabled>
-                Próximamente
-              </Button>
+            <Card.Body className="d-flex flex-column justify-content-center">
+              <FeatureBlock
+                Icon={PersonCheck}
+                title="Asistencia"
+                description="Consulte la asistencia de sus hijos"
+                actionElement={
+                  <Button variant="outline-info" disabled>
+                    Próximamente
+                  </Button>
+                }
+              />
             </Card.Body>
           </Card>
         </Col>
