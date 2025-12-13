@@ -159,78 +159,7 @@ const OfficeRibbon = () => {
 
   return (
     <>
-      {/* CSS INCRUSTADO: Estilos visuales del Ribbon */}
-      <style>{`
-        :root {
-          --office-primary: #2b579a;
-          --office-hover: #3e6db5;
-          --office-ribbon-bg: #f3f2f1;
-          --office-border: #d2d2d2;
-          --office-text: #444;
-          --office-file-tab: #2b579a;
-        }
-        .office-menu-container {
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          background-color: var(--office-ribbon-bg);
-          border-bottom: 1px solid var(--office-border);
-          position: relative;
-          z-index: 100;
-        }
-        .top-bar {
-          background-color: var(--office-primary);
-          padding: 0;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-        .tabs {
-          list-style: none; margin: 0; padding: 0; display: flex;
-        }
-        .tab {
-          padding: 8px 15px; color: white; cursor: pointer; font-size: 13px;
-          border: 1px solid transparent; transition: all 0.2s ease; user-select: none;
-        }
-        .tab:hover { background-color: var(--office-hover); }
-        .tab.file-trigger { background-color: var(--office-file-tab); font-weight: 600; }
-        .tab.file-trigger:hover {
-          background-color: #3e6db5; /* Softer hover color */
-          transition: all 0.2s ease;
-        }
-        .tab.file-trigger.active {
-          background-color: #1e3e70;
-          color: white;
-          border: none;
-          top: 0;
-        }
-        .tab.file-trigger {
-          background-color: var(--office-file-tab);
-          font-weight: 600;
-          transition: all 0.2s ease;
-        }
-        .tab.active {
-          background-color: var(--office-ribbon-bg); color: var(--office-primary);
-          border: 1px solid var(--office-border); border-bottom: 1px solid var(--office-ribbon-bg);
-          position: relative; top: 1px;
-        }
-        .user-email {
-          color: white;
-          font-size: 13px;
-          opacity: 0.8;
-        }
-        .logout-button {
-          background-color: #f44336; /* Red color for logout */
-          color: white;
-          border: none;
-          padding: 6px 12px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 13px;
-          transition: background-color 0.2s ease;
-        }
-        .logout-button:hover {
-          background-color: #d32f2f; /* Darker red on hover */
-        }
-      `}</style>
+
 
       {/* COMPONENTE VISUAL */}
       <div className="office-menu-container" ref={menuRef}>
