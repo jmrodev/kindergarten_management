@@ -7,6 +7,7 @@ import { Row, Col } from '../components/atoms/Grid';
 import Card from '../components/atoms/Card';
 import Button from '../components/atoms/Button';
 import Spinner from '../components/atoms/Spinner';
+import ChildrenTable from './parent/ChildrenTable';
 
 const ParentDashboard = () => {
   const { currentUser, logout } = useAuth();
@@ -16,34 +17,34 @@ const ParentDashboard = () => {
   const [children, setChildren] = useState([]);
   const [error, setError] = useState('');
 
+  const loadParentData = React.useCallback(async () => {
+    if (!currentUser) return;
+    try {
+      setError('');
+      setLoading(true);
+
+      // Get parent info from parent portal users
+      const parentResponse = await api.get(`/parent-portal/portal-user/${currentUser.id}`);
+      setParentInfo(parentResponse.data.data);
+
+      // Get children associated with this parent
+      const childrenResponse = await api.get(`/parent-portal/children/parent/${currentUser.id}`);
+      setChildren(childrenResponse.data.children || []);
+    } catch (err) {
+      setError('Error al cargar la información: ' + (err?.message || err));
+      console.error('Error loading parent data:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentUser]);
+
   useEffect(() => {
     if (!currentUser) {
       navigate('/login');
       return;
     }
-
-    // Load parent and children info
-    const loadParentData = async () => {
-      try {
-        setLoading(true);
-
-        // Get parent info from parent portal users
-        const parentResponse = await api.get(`/parent-portal/portal-user/${currentUser.id}`);
-        setParentInfo(parentResponse.data.data);
-
-        // Get children associated with this parent
-        const childrenResponse = await api.get(`/parent-portal/children/parent/${currentUser.id}`);
-        setChildren(childrenResponse.data.children || []);
-      } catch (err) {
-        setError('Error al cargar la información: ' + err.message);
-        console.error('Error loading parent data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadParentData();
-  }, [currentUser, navigate]);
+  }, [currentUser, navigate, loadParentData]);
 
   // Eliminado el manejo de registro de niños ya que el formulario ha sido eliminado
 
@@ -76,7 +77,13 @@ const ParentDashboard = () => {
       {error && (
         <Row className="mb-4">
           <Col>
-            <div className="alert alert-danger">{error}</div>
+            <div className="alert alert-danger d-flex justify-content-between align-items-center">
+              <div>{error}</div>
+              <div>
+                <Button variant="outline-light" onClick={() => loadParentData()} className="me-2">Reintentar</Button>
+                <Button variant="outline-secondary" onClick={() => { setError(''); }}>Cerrar</Button>
+              </div>
+            </div>
           </Col>
         </Row>
       )}
@@ -117,40 +124,7 @@ const ParentDashboard = () => {
             </Card.Header>
             <Card.Body>
               {children && children.length > 0 ? (
-                <div className="table-responsive">
-                  <table className="table table-striped">
-                    <thead>
-                      <tr>
-                        <th>Nombre</th>
-                        <th>DNI</th>
-                        <th>Fecha de Nacimiento</th>
-                        <th>Estado</th>
-                        <th>Sala</th>
-                        <th>Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {children.map((child) => (
-                        <tr key={child.id}>
-                          <td>{child.nombre} {child.apellidoPaterno} {child.apellidoMaterno}</td>
-                          <td>{child.dni}</td>
-                          <td>{child.fechaNacimiento ? new Date(child.fechaNacimiento).toLocaleDateString() : 'N/A'}</td>
-                          <td>
-                            <span className="badge">
-                              {child.estado}
-                            </span>
-                          </td>
-                          <td>{child['sala.nombre'] || 'No asignado'}</td>
-                          <td>
-                            <Button variant="outline-primary" size="sm" disabled>
-                              Ver detalles
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <ChildrenTable children={children} />
               ) : (
                 <p className="text-center text-muted">Aún no tiene hijos registrados en el sistema. Para iniciar el proceso de inscripción, contacte al jardín.</p>
               )}
