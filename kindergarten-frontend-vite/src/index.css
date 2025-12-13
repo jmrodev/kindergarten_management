@@ -3494,7 +3494,7 @@ body .mb-4 {
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
-  grid-auto-flow: dense; /* Allows smaller items to fill gaps */
+  grid-auto-flow: dense; /* Pack items more efficiently */
 }
 .role-grid-container.filtered {
   display: flex;
@@ -3508,10 +3508,28 @@ body .mb-4 {
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   overflow: hidden;
   transition: all 0.3s ease;
-  min-width: 300px;
+  height: fit-content; /* Only take necessary height */
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  height: fit-content; /* Make height fit to content */
+}
+
+.role-card-header {
+  background: linear-gradient(135deg, #3a66c1 0%, #2b579a 100%);
+  color: white;
+  padding: 1rem 1.25rem;
+  font-weight: 600;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.role-modules-container {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 auto; /* Allow to grow but not shrink below content */
 }
 .role-grid-item:hover {
   transform: translateY(-3px);
@@ -3992,4 +4010,6 @@ body .mb-4 {
   align-items: center;
   gap: 0.75rem;
 }
+
+
 
