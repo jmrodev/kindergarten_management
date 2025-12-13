@@ -3,4 +3,4 @@ import { GearFill, InfoCircleFill, FolderFill, ShieldLock, KeyFill, ClipboardDat
 import { usePermissions } from '../contexts/PermissionsContext.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import api from '../api/api.js';
-import './ConfiguracionPage.css'; // Import the external CSS file
+import '../index.css'; // Import the external CSS file
