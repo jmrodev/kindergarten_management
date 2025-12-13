@@ -16,13 +16,11 @@ const ConfiguracionPage = () => {
 
   if (!isAdminOrDirector) {
     return (
-      <div className="container-fluid">
-        <div className="row">
-          <div className="col-12">
-            <div className="alert alert-danger mt-3">
-              <h5>Acceso Denegado</h5>
-              <p>Solo Administradores y Directores pueden acceder a la configuración del sistema.</p>
-            </div>
+      <div className="configuracion-page">
+        <div className="access-denied-card">
+          <div className="alert-danger-custom">
+            <h5>Acceso Denegado</h5>
+            <p>Solo Administradores y Directores pueden acceder a la configuración del sistema.</p>
           </div>
         </div>
       </div>
@@ -183,9 +181,9 @@ const ConfiguracionPage = () => {
   if (loading) {
     return (
       <div className="configuracion-page">
-        <div className="loading d-flex justify-content-center align-items-center loading-height-60">
+        <div className="loading loading-center loading-height-60">
           <div className="text-center">
-            <div className="spinner-border text-primary" role="status">
+            <div className="spinner-border-custom text-primary">
               <span className="visually-hidden">Cargando...</span>
             </div>
             <p className="mt-2 mb-0">Cargando configuración...</p>
@@ -198,7 +196,7 @@ const ConfiguracionPage = () => {
   if (error) {
     return (
       <div className="configuracion-page">
-        <div className="alert alert-danger m-3" role="alert">
+        <div className="alert-danger-custom m-3">
           <h5 className="alert-heading">Error</h5>
           <p>{error}</p>
         </div>
@@ -209,28 +207,12 @@ const ConfiguracionPage = () => {
   return (
     <div className="configuracion-page">
       <div className="container-fluid px-3 px-md-4">
-        <div className="page-header">
-          <h1 className="page-title">
-            <GearFill className="me-2" />
-            Configuración del Sistema
-          </h1>
-          <p className="page-subtitle">
-            Gestión de permisos y roles del personal
-          </p>
-        </div>
-
-        <div className="alert alert-info mb-4" role="alert">
-          <InfoCircleFill className="me-2" />
-          Esta sección solo es visible para <strong>Administradores</strong> y <strong>Directores</strong>.
-          Haz clic en los interruptores para cambiar permisos.
-        </div>
-
         {/* Role Filter */}
         <div className="mb-4">
-          <label htmlFor="roleFilter" className="form-label fw-bold">Filtrar por Rol:</label>
+          <label htmlFor="roleFilter" className="form-label-custom fw-bold-custom">Filtrar por Rol:</label>
           <select
             id="roleFilter"
-            className="form-select w-auto"
+            className="form-select-custom w-auto-custom"
             value={selectedRoleFilter}
             onChange={(e) => {
               setSelectedRoleFilter(e.target.value);
@@ -330,39 +312,16 @@ const ConfiguracionPage = () => {
           })}
         </div>
 
-        {/* Legend Section */}
-        <div className="configuracion-card mt-4">
-          <div className="configuracion-card-header">
-            <KeyFill className="me-2" />
-            Leyenda
-          </div>
-          <div className="configuracion-card-body">
-            <div className="legend-container">
-              <div className="legend-item">
-                <CheckCircle className="legend-color-active me-2" />
-                <span>Permiso activo</span>
-              </div>
-              <div className="legend-item">
-                <XCircle className="legend-color-inactive me-2" />
-                <span>Permiso inactivo</span>
-              </div>
-              <div className="legend-item">
-                <Shield className="legend-color-protected me-2" />
-                <span>Permiso protegido (no modificable)</span>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Audit Log Section */}
         <div className="configuracion-card mt-4">
           <div className="configuracion-card-header">
-            <ClipboardDataFill className="me-2" />
+            <ClipboardDataFill className="me-2-custom" />
             Registro de Auditoría
           </div>
           <div className="configuracion-card-body">
-            <p className="text-muted mb-0">
-              <InfoCircleFill className="me-2" />
+            <p className="text-muted-custom mb-0">
+              <InfoCircleFill className="me-2-custom" />
               Próximamente: Vista de cambios de permisos y registro de auditoría detallado
             </p>
           </div>
