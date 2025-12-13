@@ -16,3 +16,6 @@ export { default as Card } from './Card.jsx';
 export { default as Button } from './Button.jsx';
 export { default as Toggle } from './Toggle.jsx';
 export { default as VaccinationStatusWithLink } from './VaccinationStatusWithLink.jsx';
+export { default as PermissionToggle } from './PermissionToggle.jsx';
+export { default as ProtectedBadge } from './ProtectedBadge.jsx';
+export { default as RoleBadge } from './RoleBadge.jsx';
