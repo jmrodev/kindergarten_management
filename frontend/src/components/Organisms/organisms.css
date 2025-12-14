@@ -1,0 +1,183 @@
+@import '../Atoms/atoms.css';
+
+/* Estilos específicos para organismos */
+.sidebar-menu {
+  width: 250px;
+}
+
+.sidebar-layout {
+  width: 250px;
+  background-color: var(--bg-primary);
+  border-right: 1px solid var(--border-color);
+  padding: var(--spacing-md);
+  height: 100vh;
+  overflow-y: auto;
+  transition: width 0.3s ease;
+  z-index: 1100; /* Asegura que esté por encima de todo */
+}
+
+.sidebar-layout-collapsed {
+  width: 60px;
+  z-index: 1100; /* Asegura que esté por encima de todo */
+}
+
+.menu-title {
+  margin-top: 0;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.menu-item-icon {
+  margin-right: var(--spacing-sm);
+  min-width: 18px;
+}
+
+.menu-item-text {
+  margin-left: var(--spacing-xs);
+}
+
+.app-layout {
+  min-height: 100vh;
+}
+
+.app-header {
+  padding: var(--spacing-md);
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 1050; /* Menor que el sidebar para que el sidebar pueda aparecer encima */
+}
+
+/* Estilos para el encabezado del sidebar */
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.sidebar-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0;
+  margin-left: var(--spacing-sm);
+}
+
+/* Estilos para el borde izquierdo del sidebar */
+.sidebar-edge {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  width: 250px;
+  transition: width 0.3s ease;
+  z-index: 1100; /* Asegura que esté por encima de todo */
+}
+
+.sidebar-edge-visible {
+  width: 250px; /* Ancho normal cuando está visible */
+}
+
+.sidebar-edge-hidden {
+  width: 60px; /* Ancho cuando está oculto - solo el borde celeste */
+}
+
+.sidebar-hidden {
+  position: fixed;
+  left: -190px; /* 250px - 60px = 190px para ocultar todo excepto los 60px del borde */
+  top: 0;
+  height: 100vh;
+  width: 250px;
+  transition: left 0.3s ease;
+  z-index: 1100; /* Asegura que esté por encima de todo */
+}
+
+/* Borde izquierdo celeste delgado cuando está completamente oculto */
+.sidebar-hidden-edge {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 6px; /* Borde delgado */
+  height: 100vh;
+  background-color: var(--primary-color); /* Color celeste del sistema */
+  cursor: pointer;
+  transition: width 0.2s ease;
+  z-index: 1100; /* Asegura que esté por encima de todo */
+}
+
+.sidebar-hidden-edge:hover {
+  width: 12px; /* Se agranda ligeramente al pasar el mouse */
+}
+
+.sidebar-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0;
+  margin-left: var(--spacing-sm);
+}
+
+/* Mobile Responsiveness for Organisms */
+@media (max-width: 768px) {
+  .sidebar-layout {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+  }
+
+  .sidebar-layout-collapsed {
+    width: 100%;
+  }
+
+  .menu-title {
+    margin-bottom: var(--spacing-md);
+  }
+
+  .sidebar-toggle-btn {
+    display: none; /* No se muestra el botón de colapso en móvil */
+  }
+
+  .app-header {
+    padding: var(--spacing-sm);
+  }
+
+  .app-layout {
+    min-height: 100vh;
+  }
+}
+
+/* Mobile-specific menu styles */
+@media (max-width: 768px) {
+  .menu-item-text {
+    display: inline-block;
+  }
+
+  .sidebar-menu {
+    width: 100%;
+  }
+
+  .layout-sidebar {
+    position: relative;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .menu-link {
+    padding: 1rem 1rem;
+  }
+
+  .menu-title {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+}

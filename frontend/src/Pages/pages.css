@@ -1,0 +1,106 @@
+/* Estilos para la página de estudiantes */
+.students-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+}
+
+.search-input {
+  max-width: 300px;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: white;
+  font-size: var(--font-size-sm);
+}
+
+.status-active {
+  background-color: var(--success-color);
+}
+
+.status-inactive {
+  background-color: var(--danger-color);
+}
+
+.status-presente {
+  background-color: var(--success-color);
+}
+
+.status-ausente {
+  background-color: var(--danger-color);
+}
+
+.status-tarde {
+  background-color: var(--warning-color);
+}
+
+.actions-cell {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.action-btn {
+  margin-right: 0 !important; /* Override any existing margins */
+}
+
+/* Estilos para la página de maestros */
+.teachers-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+}
+
+/* Estilos para la página de clases */
+.classes-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+}
+
+/* Estilos para la página de asistencia */
+.attendance-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+  gap: var(--spacing-md);
+}
+
+.attendance-filters {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.class-select, .date-input {
+  width: auto;
+}
+
+/* Estilos para la página de inscripciones */
+.enrollments-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+  gap: var(--spacing-md);
+}
+
+.enrollments-filters {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.status-pendiente {
+  background-color: var(--warning-color);
+}
+
+.status-aprobado {
+  background-color: var(--success-color);
+}
+
+.status-inscrito {
+  background-color: var(--info-color);
+}
+
+.status-rechazado {
+  background-color: var(--danger-color);
+}

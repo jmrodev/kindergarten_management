@@ -1,0 +1,21 @@
+import '../Atoms/atoms.css';
+
+const Sidebar = ({ children, collapsed = false, className = '', ...props }) => {
+  const baseClasses = 'sidebar-layout'; // Clase específica para sidebar en layout
+  const collapsedClass = collapsed ? 'sidebar-layout-collapsed' : '';
+  const customClasses = className;
+
+  const sidebarClasses = [
+    baseClasses,
+    collapsedClass,
+    customClasses
+  ].filter(Boolean).join(' ');
+
+  return (
+    <aside className={sidebarClasses} {...props}>
+      {children}
+    </aside>
+  );
+};
+
+export default Sidebar;
