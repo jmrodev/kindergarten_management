@@ -55,26 +55,13 @@ const Login = ({ onLogin }) => {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: '100vh',
-      backgroundColor: '#f5f5f5'
-    }}>
+    <div className="login-container">
       <LoginCard>
         <LoginForm onSubmit={handleSubmit}>
           <Text variant="h3" className="form-title">Bienvenido</Text>
           
           {error && (
-            <div style={{ 
-              color: 'var(--danger-color)', 
-              marginBottom: 'var(--spacing-md)',
-              padding: 'var(--spacing-sm)',
-              backgroundColor: 'rgba(220, 53, 69, 0.1)',
-              borderRadius: 'var(--border-radius)',
-              textAlign: 'center'
-            }}>
+            <div className="login-error">
               {error}
             </div>
           )}
@@ -101,7 +88,7 @@ const Login = ({ onLogin }) => {
             type="submit" 
             variant="primary" 
             disabled={loading}
-            style={{ width: '100%', marginTop: 'var(--spacing-md)' }}
+            className="login-submit-btn"
           >
             {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </Button>

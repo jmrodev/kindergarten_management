@@ -1393,6 +1393,29 @@
   transform: translateY(-8px) rotate(-45deg);
 }
 
+/* Header styles */
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.header-title-container {
+  flex: 1;
+  text-align: center;
+}
+
+.header-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+}
+
+.header-spacer {
+  min-width: 30px;
+}
+
 /* Hamburger menu visibility for mobile */
 @media (max-width: 768px) {
   .hamburger-btn {

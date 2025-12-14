@@ -149,7 +149,7 @@ function App() {
 
   // If still loading, show loading state
   if (loading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Cargando...</div>;
+    return <div className="app-loading">Cargando...</div>;
   }
 
   // If no user, show login

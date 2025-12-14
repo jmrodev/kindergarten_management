@@ -12,17 +12,17 @@ const HeaderWithMenu = ({ children, onMenuToggle, isMenuOpen, className = '', ti
 
   return (
     <header className={headerClasses} {...props}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-        <HamburgerMenu 
-          isOpen={isMenuOpen} 
-          onClick={onMenuToggle} 
+      <div className="header-content">
+        <HamburgerMenu
+          isOpen={isMenuOpen}
+          onClick={onMenuToggle}
           ariaLabel="Toggle navigation menu"
         />
-        <div style={{ flex: 1, textAlign: 'center' }}>
-          <h1 style={{ margin: 0, fontSize: 'var(--font-size-lg)', fontWeight: 500 }}>{title}</h1>
+        <div className="header-title-container">
+          <h1 className="header-title">{title}</h1>
         </div>
         {/* Empty div to maintain spacing */}
-        <div style={{ minWidth: '30px' }}></div>
+        <div className="header-spacer"></div>
       </div>
       {children}
     </header>
