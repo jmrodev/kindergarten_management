@@ -25,9 +25,10 @@ const Layout = ({ children, sidebar, header, className = '', isMobileMenuOpen = 
       <div className={layoutClasses}>
         {header && <header className="layout-header">{header}</header>}
         <div className="layout-body">
-          {sidebar && <aside className="layout-sidebar">{sidebar}</aside>}
           <main className={mainContentClasses}>{children}</main>
         </div>
+        {/* El sidebar está completamente fuera del flujo de layout */}
+        {sidebar && <aside className="layout-sidebar">{sidebar}</aside>}
       </div>
     </>
   );

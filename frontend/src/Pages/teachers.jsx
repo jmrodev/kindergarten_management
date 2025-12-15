@@ -98,7 +98,7 @@ const Teachers = () => {
         />
       </div>
 
-      <Table striped bordered responsive>
+      <Table striped bordered responsive responsiveStack>
         <TableHeader>
           <TableRow>
             <TableCell as="th">ID</TableCell>

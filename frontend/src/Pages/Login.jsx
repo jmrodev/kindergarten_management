@@ -17,35 +17,14 @@ const Login = ({ onLogin }) => {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const authService = await import('../services/authService');
+      const data = await authService.default.login({ email, password });
 
-      const data = await response.json();
+      // Store token and user data in localStorage
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
 
-      if (response.ok) {
-        // Store token and user data in localStorage
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        
-        // Add token to future requests
-        window.axios = {
-          defaults: {
-            headers: {
-              Authorization: `Bearer ${data.token}`,
-            },
-          },
-        };
-
-        // Call the onLogin callback to update app state
-        onLogin(data.user);
-      } else {
-        setError(data.message || 'Credenciales inválidas');
-      }
+      onLogin(data.user);
     } catch (err) {
       setError('Error de conexión con el servidor');
       console.error('Login error:', err);
@@ -59,13 +38,13 @@ const Login = ({ onLogin }) => {
       <LoginCard>
         <LoginForm onSubmit={handleSubmit}>
           <Text variant="h3" className="form-title">Bienvenido</Text>
-          
+
           {error && (
             <div className="login-error">
               {error}
             </div>
           )}
-          
+
           <Input
             label="Email"
             type="email"
@@ -74,7 +53,7 @@ const Login = ({ onLogin }) => {
             required
             placeholder="tu@email.com"
           />
-          
+
           <Input
             label="Contraseña"
             type="password"
@@ -83,10 +62,10 @@ const Login = ({ onLogin }) => {
             required
             placeholder="••••••••"
           />
-          
-          <Button 
-            type="submit" 
-            variant="primary" 
+
+          <Button
+            type="submit"
+            variant="primary"
             disabled={loading}
             className="login-submit-btn"
           >

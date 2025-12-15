@@ -2,55 +2,7 @@
  * Estilos base para componentes atómicos
  */
 
-/* Variables CSS para consistencia */
-:root {
-  /* Colores base */
-  --primary-color: #4a90e2;
-  --secondary-color: #6c757d;
-  --success-color: #28a745;
-  --danger-color: #dc3545;
-  --warning-color: #ffc107;
-  --info-color: #17a2b8;
-  --light-color: #f8f9fa;
-  --dark-color: #343a40;
-  
-  /* Colores de fondo */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --bg-tertiary: #e9ecef;
-  
-  /* Colores de texto */
-  --text-primary: #212529;
-  --text-secondary: #6c757d;
-  
-  /* Colores de borde */
-  --border-color: #dee2e6;
-  
-  /* Espaciado base */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  
-  /* Tamaños de fuente */
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-xxl: 1.5rem;
-  
-  /* Radios de borde */
-  --border-radius-sm: 0.125rem;
-  --border-radius: 0.25rem;
-  --border-radius-lg: 0.5rem;
-  
-  /* Sombra */
-  --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-  --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-  --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
-}
+/* Variables moved to `src/styles/variables.css` so they are available globally. */
 
 /* Estilos base para todos los átomos */
 .atom-container {
@@ -394,54 +346,94 @@
   margin-bottom: 0;
 }
 
-/* Table stacking for mobile */
-@media (max-width: 768px) {
+/* Table stacking for mobile - base mobile styles */
+.table-responsive-stack {
+  display: block;
+}
+
+.table-responsive-stack thead {
+  display: none;
+}
+
+.table-responsive-stack tbody,
+.table-responsive-stack tr {
+  display: flex;
+  flex-direction: column;
+}
+
+.table-responsive-stack tr {
+  border-bottom: 2px solid var(--border-color);
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm) 0;
+}
+
+.table-responsive-stack td {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: right;
+  border-bottom: 1px solid var(--border-color);
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.table-responsive-stack td:before {
+  content: attr(data-label);
+  float: left;
+  font-weight: bold;
+  text-align: left;
+  color: var(--text-primary);
+}
+
+.table-responsive-stack tr:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.table-responsive-stack td:last-child {
+  border-bottom: none;
+}
+
+/* Desktop table adjustments */
+@media (min-width: 769px) {
   .table-responsive-stack {
-    display: block;
-    width: 100%;
+    display: table;
   }
 
   .table-responsive-stack thead {
-    display: none;
+    display: table-header-group;
   }
 
-  .table-responsive-stack tbody,
-  .table-responsive-stack tr {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
+  .table-responsive-stack tbody {
+    display: table-row-group;
   }
 
   .table-responsive-stack tr {
-    border-bottom: 2px solid var(--border-color);
-    margin-bottom: var(--spacing-md);
-    padding: var(--spacing-sm) 0;
+    display: table-row;
+    border-bottom: none;
+    margin-bottom: 0;
+    padding: 0;
   }
 
   .table-responsive-stack td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    text-align: right;
+    display: table-cell;
+    justify-content: inherit;
+    align-items: inherit;
+    text-align: inherit;
     border-bottom: 1px solid var(--border-color);
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: 0.5rem 0.5rem;
   }
 
   .table-responsive-stack td:before {
-    content: attr(data-label);
-    float: left;
-    font-weight: bold;
-    text-align: left;
-    color: var(--text-primary);
+    content: none;
+    display: none;
   }
 
   .table-responsive-stack tr:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
+    border-bottom: 1px solid var(--border-color);
   }
 
   .table-responsive-stack td:last-child {
-    border-bottom: none;
+    border-bottom: 1px solid var(--border-color);
   }
 }
 
@@ -485,7 +477,7 @@
 }
 
 .checkbox-input:checked + .checkbox-display::after {
-  content: "✓";
+  content: '✓';
   color: white;
   font-size: 0.8rem;
 }
@@ -534,7 +526,7 @@
 }
 
 .radio-input:checked + .radio-display::after {
-  content: "";
+  content: '';
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -550,8 +542,9 @@
 .card {
   position: relative;
   display: flex;
-  flex-direction: column;
+  max-width: 95%;
   min-width: 0;
+  padding: 0;
   word-wrap: break-word;
   background-color: var(--bg-primary);
   background-clip: border-box;
@@ -561,16 +554,16 @@
 }
 
 .card-title {
-  margin: 0 0 1rem 0;
+  margin: 0;
   padding: 0;
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-xs);
   font-weight: 500;
   color: var(--text-primary);
 }
 
 .card-content {
   flex: 1 1 auto;
-  padding: var(--spacing-lg);
+  padding: var(--spacing-mobile-xs);
 }
 
 /* Formularios */
@@ -598,37 +591,59 @@
   margin-bottom: var(--spacing-md);
 }
 
-/* Mobile-friendly form adjustments */
-@media (max-width: 768px) {
+/* Mobile-friendly form adjustments - base mobile styles */
+.form-container {
+  padding: var(--spacing-sm);
+}
+
+.form-title {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--spacing-md);
+}
+
+.form-group,
+.mobile-form-group {
+  width: 100%;
+  margin-bottom: var(--spacing-md);
+}
+
+/* Ensure form elements take full width on mobile */
+.input-field,
+.select-field,
+.textarea-field {
+  width: 100%;
+  min-height: 44px;
+}
+
+/* Adjust label positioning for mobile */
+.input-label,
+.select-label,
+.textarea-label {
+  margin-bottom: var(--spacing-xs);
+  display: block;
+}
+
+/* Desktop form adjustments */
+@media (min-width: 769px) {
   .form-container {
-    padding: var(--spacing-sm);
+    padding: var(--spacing-md);
   }
 
   .form-title {
-    font-size: var(--font-size-xl);
-    margin-bottom: var(--spacing-md);
+    font-size: var(--font-size-xxl);
   }
 
   .form-group,
   .mobile-form-group {
     width: 100%;
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
   }
 
-  /* Ensure form elements take full width on mobile */
+  /* On desktop, inputs might have different sizing */
   .input-field,
   .select-field,
   .textarea-field {
-    width: 100%;
-    min-height: 44px;
-  }
-
-  /* Adjust label positioning for mobile */
-  .input-label,
-  .select-label,
-  .textarea-label {
-    margin-bottom: var(--spacing-xs);
-    display: block;
+    min-height: 40px;
   }
 }
 
@@ -774,10 +789,18 @@
   flex-direction: column;
 }
 
-.modal-sm { max-width: 300px; }
-.modal-md { max-width: 500px; }
-.modal-lg { max-width: 800px; }
-.modal-xl { max-width: 1140px; }
+.modal-sm {
+  max-width: 300px;
+}
+.modal-md {
+  max-width: 500px;
+}
+.modal-lg {
+  max-width: 800px;
+}
+.modal-xl {
+  max-width: 1140px;
+}
 
 .modal-header {
   display: flex;
@@ -1093,33 +1116,33 @@
   display: flex;
   flex: 1;
   overflow: hidden;
+  position: relative;
 }
 
+/* El sidebar está completamente fuera del flujo normal de layout */
 .layout-sidebar {
-  grid-area: sidebar;
-  flex: 0 0 auto;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 999;
+  /* Los estilos se aplican en el componente Sidebar para el ancho */
 }
 
+/* El contenido principal ocupa 100% del ancho disponible */
 .layout-main {
-  grid-area: main;
   flex: 1;
   padding: var(--spacing-lg);
   overflow-y: auto;
-  transition: margin-left 0.3s ease;
+  width: 100%;
+  /* Asegurar que no se vea afectado por el sidebar fijo */
 }
 
 .layout-main-full {
-  grid-area: main;
   flex: 1;
   width: 100%;
   padding: var(--spacing-lg);
   overflow-y: auto;
-  transition: margin-left 0.3s ease;
-}
-
-/* Ajuste para cuando hay sidebar oculto o colapsado */
-.layout-body {
-  position: relative; /* Para que el contenido principal pueda ocupar todo el ancho cuando el sidebar esté oculto */
 }
 
 /* Ajuste para contenido principal cuando el sidebar está oculto */
@@ -1147,85 +1170,124 @@
   }
 }
 
-/* Responsive Design for Mobile Devices */
-@media (max-width: 768px) {
-  .layout-body {
-    flex-direction: column;
-  }
+/* Mobile-first: Base styles for small screens */
+.layout-body {
+  flex-direction: column;
+}
 
-  .layout-sidebar {
-    width: 100% !important;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--border-color);
-    position: relative;
+.layout-sidebar {
+  /* Sidebar remains fixed regardless of screen size */
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 999;
+  /* Width will be controlled by JS based on collapsed state */
+}
+
+.layout-main {
+  padding: var(--spacing-md);
+}
+
+.header {
+  padding: var(--spacing-sm);
+}
+
+/* Make buttons stack vertically on mobile */
+.btn {
+  margin-bottom: var(--spacing-xs);
+}
+
+/* Adjust table for mobile */
+.table {
+  font-size: 0.875rem;
+}
+
+.table th,
+.table td {
+  padding: 0.25rem 0.25rem;
+}
+
+/* Adjust spacing for smaller screens */
+.card,
+.form-group,
+.input-container,
+.select-container,
+.textarea-container {
+  margin-bottom: var(--spacing-sm);
+}
+
+/* Navigation adjustments for mobile */
+.navbar {
+  flex-direction: column;
+}
+
+.nav-link {
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+/* Menu adjustments for mobile */
+.menu-link {
+  padding: 0.5rem 0.75rem;
+}
+
+/* Desktop adjustments */
+@media (min-width: 769px) {
+  .layout-body {
+    flex-direction: row;
   }
 
   .layout-main {
-    padding: var(--spacing-md);
+    padding: var(--spacing-lg);
   }
 
   .header {
-    padding: var(--spacing-sm);
-  }
-
-  /* Adjust form containers for mobile */
-  .form-container {
-    padding: var(--spacing-sm);
-  }
-
-  .login-card {
-    max-width: 100%;
-    margin: var(--spacing-sm);
     padding: var(--spacing-md);
   }
 
-  /* Adjust card elements */
-  .card-content {
-    padding: var(--spacing-md);
-  }
-
-  /* Make buttons stack vertically if needed */
+  /* Buttons spacing on desktop */
   .btn {
-    width: 100%;
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: 0;
   }
 
-  /* Adjust table for mobile */
+  /* Adjust table for desktop */
   .table {
-    font-size: 0.875rem;
+    font-size: 1rem;
   }
 
   .table th,
   .table td {
-    padding: 0.25rem 0.25rem;
+    padding: 0.5rem 0.5rem;
   }
 
-  /* Adjust spacing for smaller screens */
+  /* Adjust spacing for larger screens */
   .card,
   .form-group,
   .input-container,
   .select-container,
   .textarea-container {
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
   }
 
   /* Navigation adjustments */
   .navbar {
-    flex-direction: column;
+    flex-direction: row;
   }
 
   .nav-link {
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
   }
 
   /* Menu adjustments */
-  .menu-horizontal {
-    flex-direction: column;
-  }
-
   .menu-link {
-    padding: 0.5rem 0.75rem;
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .layout-main {
+    padding: var(--spacing-md);
   }
 }
 

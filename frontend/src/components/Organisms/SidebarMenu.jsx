@@ -13,7 +13,7 @@ const SidebarMenu = ({
   onToggleCollapse,
   onExpand,
   hidden = false,
-  title = 'Menú Principal',
+  title = 'Menu Principal',
   currentPath,
   ...props
 }) => {
@@ -55,7 +55,7 @@ const SidebarMenu = ({
             </Menu>
           </Sidebar>
         )}
-        {/* Borde derecho celeste cuando está completamente oculto */}
+        {/* Borde derecho celeste cuando esta completamente oculto */}
         {hidden && (
           <div className="sidebar-hidden-edge" onMouseEnter={onExpand}></div>
         )}

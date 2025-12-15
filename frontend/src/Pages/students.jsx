@@ -1,21 +1,34 @@
 import { useState } from 'react';
-import Card from '../components/Atoms/Card';
-import Text from '../components/Atoms/Text';
-import Button from '../components/Atoms/Button';
-import Input from '../components/Atoms/Input';
-import Table from '../components/Atoms/Table';
-import TableRow from '../components/Atoms/TableRow';
-import TableCell from '../components/Atoms/TableCell';
-import TableHeader from '../components/Atoms/TableHeader';
-import TableBody from '../components/Atoms/TableBody';
 import Modal from '../components/Atoms/Modal';
 import FormGroup from '../components/Molecules/FormGroup';
+import Input from '../components/Atoms/Input';
+import Button from '../components/Atoms/Button';
+import useIsMobile from '../hooks/useIsMobile';
+import DesktopStudents from '../components/Organisms/DesktopStudents';
+import MobileStudents from '../components/Organisms/MobileStudents';
 
 const Students = () => {
   const [students, setStudents] = useState([
     { id: 1, name: 'Juan Pérez', dni: '12345678', classroom: 'Maternal A', status: 'activo' },
     { id: 2, name: 'María García', dni: '87654321', classroom: 'Jardín B', status: 'activo' },
     { id: 3, name: 'Pedro López', dni: '11223344', classroom: 'Preescolar C', status: 'inactivo' },
+    { id: 4, name: 'Ana Martínez', dni: '44332211', classroom: 'Maternal A', status: 'activo' },
+    { id: 5, name: 'Luis Rodríguez', dni: '55667788', classroom: 'Jardín B', status: 'inactivo' },
+    { id: 6, name: 'Carmen Sánchez', dni: '99887766', classroom: 'Preescolar C', status: 'activo' },
+    { id: 7, name: 'Jorge Fernández', dni: '66778899', classroom: 'Maternal A', status: 'activo' },
+    { id: 8, name: 'Lucía Gómez', dni: '33445566', classroom: 'Jardín B', status: 'inactivo' },
+    { id: 9, name: 'Diego Díaz', dni: '22113344', classroom: 'Preescolar C', status: 'activo' },
+    { id: 10, name: 'Sofía Torres', dni: '77889900', classroom: 'Maternal A', status: 'activo' },
+    { id: 11, name: 'Miguel Ramírez', dni: '44556677', classroom: 'Jardín B', status: 'inactivo' },
+    { id: 12, name: 'Valentina Flores', dni: '88990011', classroom: 'Preescolar C', status: 'activo' },
+    { id: 13, name: 'Andrés Morales', dni: '11224455', classroom: 'Maternal A', status: 'activo' },
+    { id: 14, name: 'Isabella Jiménez', dni: '66775544', classroom: 'Jardín B', status: 'inactivo' },
+    { id: 15, name: 'Santiago Ruiz', dni: '33447788', classroom: 'Preescolar C', status: 'activo' },
+    { id: 16, name: 'Camila Hernández', dni: '99001122', classroom: 'Maternal A', status: 'activo' },
+    { id: 17, name: 'Matías Castro', dni: '55664433', classroom: 'Jardín B', status: 'inactivo' },
+    { id: 18, name: 'Emma Vega', dni: '22334455', classroom: 'Preescolar C', status: 'activo' },
+    { id: 19, name: 'Lucas Ortiz', dni: '77881100', classroom: 'Maternal A', status: 'activo' },
+    { id: 20, name: 'Mía Silva', dni: '44557788', classroom: 'Jardín B', status: 'inactivo' }
   ]);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,7 +41,6 @@ const Students = () => {
     status: 'activo'
   });
 
-  // Función para normalizar texto (eliminar acentos y convertir a minúsculas)
   const normalizeText = (text) => {
     return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u0386]/g, '');
   };
@@ -37,6 +49,14 @@ const Students = () => {
     normalizeText(student.name).includes(normalizeText(searchTerm)) ||
     student.dni.includes(searchTerm)
   );
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormState(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleEdit = (student) => {
     setCurrentStudent(student);
@@ -50,13 +70,22 @@ const Students = () => {
   };
 
   const handleSave = () => {
-    // Actualizar el estudiante en la lista
-    const updatedStudents = students.map(student =>
-      student.id === currentStudent.id
-        ? { ...student, ...formState }
-        : student
-    );
-    setStudents(updatedStudents);
+    if (currentStudent) {
+      // Actualizar estudiante existente
+      const updatedStudents = students.map(student =>
+        student.id === currentStudent.id
+          ? { ...student, ...formState }
+          : student
+      );
+      setStudents(updatedStudents);
+    } else {
+      // Agregar nuevo estudiante
+      const newStudent = {
+        id: Math.max(...students.map(s => s.id), 0) + 1,
+        ...formState
+      };
+      setStudents([...students, newStudent]);
+    }
     setIsModalOpen(false);
   };
 
@@ -71,69 +100,34 @@ const Students = () => {
     setIsModalOpen(true);
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormState(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const isMobile = useIsMobile();
+
+  const handleDelete = (studentId) => {
+    setStudents(prev => prev.filter(s => s.id !== studentId));
   };
 
+
+
   return (
-    <Card>
-      <Text variant="h1">Estudiantes</Text>
-
-      <div className="students-header">
-        <Button variant="primary" onClick={handleAdd}>Agregar Estudiante</Button>
-        <Input
-          type="text"
-          placeholder="Buscar estudiantes..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="search-input"
+    <>
+      {isMobile ? (
+        <MobileStudents
+          students={filteredStudents}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
         />
-      </div>
-
-      <Table striped bordered responsive>
-        <TableHeader>
-          <TableRow>
-            <TableCell as="th">ID</TableCell>
-            <TableCell as="th">Nombre</TableCell>
-            <TableCell as="th">DNI</TableCell>
-            <TableCell as="th">Salón</TableCell>
-            <TableCell as="th">Estado</TableCell>
-            <TableCell as="th">Acciones</TableCell>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredStudents.map(student => (
-            <TableRow key={student.id}>
-              <TableCell>{student.id}</TableCell>
-              <TableCell>{student.name}</TableCell>
-              <TableCell>{student.dni}</TableCell>
-              <TableCell>{student.classroom}</TableCell>
-              <TableCell>
-                <span className={`status-badge ${student.status === 'activo' ? 'status-active' : 'status-inactive'}`}>
-                  {student.status}
-                </span>
-              </TableCell>
-              <TableCell>
-                <div className="actions-cell">
-                  <Button
-                    variant="secondary"
-                    size="small"
-                    className="action-btn"
-                    onClick={() => handleEdit(student)}
-                  >
-                    Editar
-                  </Button>
-                  <Button variant="danger" size="small" className="action-btn">Eliminar</Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      ) : (
+        <DesktopStudents
+          students={filteredStudents}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onAdd={handleAdd}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+        />
+      )}
 
       <Modal
         isOpen={isModalOpen}
@@ -183,7 +177,7 @@ const Students = () => {
           <Button variant="primary" onClick={handleSave}>Guardar</Button>
         </div>
       </Modal>
-    </Card>
+    </>
   );
 };
 

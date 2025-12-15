@@ -6,7 +6,6 @@
 }
 
 .sidebar-layout {
-  width: 250px;
   background-color: var(--bg-primary);
   border-right: 1px solid var(--border-color);
   padding: var(--spacing-md);
@@ -58,6 +57,329 @@
   margin-bottom: var(--spacing-lg);
 }
 
+/* Estilos para la lista de cards de datos */
+.data-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  background-color: transparent; /* header background handled by caller */
+  padding: 0; /* header spacing handled by container */
+  border-radius: 0;
+  color: var(--text-primary);
+}
+
+.data-card-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background-color: var(--warning-color); /* yellow box */
+  border-radius: var(--border-radius-lg);
+  color: #1f1f1f;
+  max-width: 1100px; /* inner yellow box max width */
+  margin: 0 auto; /* center the yellow box inside the parent */
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+/* Parent container around the header + yellow box */
+.data-card-container {
+  width: 100%;
+  display: block;
+  max-width: 1200px; /* parent box max width */
+  margin: 0 auto; /* center parent box */
+  padding: 0; /* avoid double padding that caused overflow */
+  box-sizing: border-box;
+}
+
+.data-card-item {
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s ease, transform 0.12s ease;
+  cursor: pointer;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-sizing: border-box;
+  aspect-ratio: 1 / 1; /* make cards roughly square on desktop */
+  min-height: 180px; /* ensure reasonable height on small screens */
+}
+
+.data-card-item:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.data-card-item-expanded {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-color);
+}
+
+.data-card-content {
+  padding: var(--spacing-sm);
+  background-color: transparent; /* item provides background */
+  border: none;
+  color: var(--text-primary);
+}
+
+.data-card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+}
+
+.data-card-title-section {
+  flex: 1;
+}
+
+.data-card-title {
+  margin-top: 0;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-primary);
+}
+
+.data-card-subtitle {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
+.data-card-quick-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-self: flex-start;
+}
+
+.data-card-detail {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--bg-secondary);
+}
+
+.data-card-fields {
+  margin-bottom: var(--spacing-md);
+  background-color: var(--bg-secondary);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.data-card-field {
+  display: flex;
+  justify-content: space-between;
+  padding: calc(var(--spacing-xs) + 2px) 0;
+  border-bottom: 1px solid var(--border-color);
+  gap: var(--spacing-sm);
+}
+
+.data-card-field:last-child {
+  border-bottom: none;
+}
+
+.field-label {
+  font-weight: 500;
+  color: var(--text-secondary);
+  flex: 1 1 45%;
+  background-color: var(--bg-tertiary);
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius-sm);
+}
+
+.field-value {
+  font-weight: 400;
+  color: var(--text-primary);
+  text-align: right;
+  flex: 1 1 55%;
+  margin-left: var(--spacing-sm);
+  background-color: transparent;
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius-sm);
+}
+
+.data-card-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  justify-content: flex-end;
+  padding-top: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  color: var(--text-primary);
+}
+
+.action-btn {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* Mobile-specific adjustments for data cards */
+@media (max-width: 768px) {
+  .data-card-header {
+    flex-direction: column;
+    align-items: stretch;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .data-card-list {
+    gap: var(--spacing-sm);
+  }
+
+  .data-card-item {
+    margin-bottom: 0;
+  }
+
+  .data-card-content {
+    padding: var(--spacing-sm);
+    aspect-ratio: auto;
+  }
+
+  /* Ensure the yellow box and cards don't overflow on small screens */
+  .data-card-list {
+    grid-template-columns: 1fr; /* single column on mobile */
+    padding: var(--spacing-sm);
+    max-width: none;
+    width: 100%;
+  }
+
+  .data-card-container {
+    padding: var(--spacing-sm);
+  }
+
+  .data-card-item {
+    aspect-ratio: auto; /* remove square constraint on mobile */
+    min-height: auto;
+  }
+
+  .data-card-header-row {
+    gap: var(--spacing-xs);
+    align-items: center;
+  }
+
+  .data-card-title {
+    margin-bottom: 0;
+    font-size: var(--font-size-lg);
+  }
+
+  .data-card-subtitle {
+    margin-bottom: 0;
+    font-size: var(--font-size-sm);
+  }
+
+  .data-card-quick-actions {
+    align-self: center;
+    justify-content: flex-end;
+  }
+
+  .data-card-field {
+    padding: var(--spacing-xs) 0;
+    flex-direction: column;
+  }
+
+  .field-label {
+    font-size: var(--font-size-sm);
+  }
+
+  .field-value {
+    font-size: var(--font-size-base);
+  }
+
+  .data-card-actions {
+    flex-direction: row;
+    gap: var(--spacing-xs);
+    padding-top: var(--spacing-xs);
+  }
+
+  .action-btn {
+    margin-bottom: 0;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    min-height: auto;
+  }
+
+  .data-card-detail {
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+  }
+
+  .data-card-fields {
+    margin-bottom: var(--spacing-sm);
+  }
+}
+
+/* Desktop adjustments */
+@media (min-width: 769px) {
+  .data-card-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+  }
+
+  .data-card-header-row {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .data-card-quick-actions {
+    align-self: auto;
+  }
+
+  .data-card-field {
+    flex-direction: column;
+  }
+
+  .field-value {
+    font-weight: 500;
+  }
+}
+
+/* Ajustes para el modal de detalle en móvil */
+@media (max-width: 768px) {
+  .data-card-detail-modal {
+    padding: var(--spacing-mobile-xs); /* PADDING MUY MINIMO */
+  }
+
+  .modal {
+    width: 95%;
+    max-width: 95%;
+    margin: var(--spacing-xs); /* MENOS MARGEN */
+    background-color: rgb(200, 200, 200);
+    color: white;
+  }
+
+  .modal-header {
+    padding: var(--spacing-xs); /* PADDING MUY MINIMO */
+    background-color: rgb(200, 200, 200); /* Rosa más oscuro */
+    border-bottom: 1px solid var(--primary-color); /* Rosa muy oscuro */
+    color: white;
+  }
+
+  .modal-body {
+    padding: var(--spacing-xs); /* PADDING MUY MINIMO */
+    background-color: var(--bg-secondary); /* Rosa claro */
+    color: white;
+  }
+
+  .data-card-detail .data-card-fields {
+    margin-bottom: var(--spacing-xs); /* MENOS MARGEN */
+  }
+
+  .data-card-detail .data-card-actions {
+    padding: var(--spacing-xs) 0 0;
+    background-color: #6a1b9a;
+    padding: var(--spacing-xs);
+    border-radius: var(--border-radius);
+    color: white;
+  }
+}
+
 .sidebar-toggle-btn {
   display: flex;
   align-items: center;
@@ -74,22 +396,22 @@
   left: 0;
   top: 0;
   height: 100vh;
-  width: 250px;
+  width: 6px; /* Ancho del borde visible cuando está oculto */
   transition: width 0.3s ease;
   z-index: 1100; /* Asegura que esté por encima de todo */
 }
 
 .sidebar-edge-visible {
-  width: 250px; /* Ancho normal cuando está visible */
+  width: 6px; /* Ancho del borde cuando está visible */
 }
 
 .sidebar-edge-hidden {
-  width: 60px; /* Ancho cuando está oculto - solo el borde celeste */
+  width: 6px; /* Ancho cuando está oculto - solo el borde celeste */
 }
 
 .sidebar-hidden {
   position: fixed;
-  left: -190px; /* 250px - 60px = 190px para ocultar todo excepto los 60px del borde */
+  left: -244px; /* 250px - 6px = 244px para ocultar todo excepto los 6px del borde */
   top: 0;
   height: 100vh;
   width: 250px;

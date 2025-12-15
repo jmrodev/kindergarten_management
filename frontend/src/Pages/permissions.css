@@ -1,0 +1,32 @@
+/* Minimal styles for permissions page */
+.permissions-controls {
+  margin: 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.permissions-table-wrap {
+  overflow-x: auto;
+  margin-top: 12px;
+}
+
+.permissions-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.permissions-table th,
+.permissions-table td {
+  border: 1px solid #e0e0e0;
+  padding: 8px 12px;
+  text-align: center;
+}
+
+.permissions-table th {
+  background: #f7f7f7;
+}
+
+.permission-cell input[type='checkbox'] {
+  transform: scale(1.1);
+}
