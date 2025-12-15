@@ -12,7 +12,7 @@ import './organisms.css';
 import { usePermissions } from '../../context/PermissionsContext';
 
 const DesktopStudents = ({ students, onEdit, onDelete, onAdd, searchTerm, setSearchTerm }) => {
-    const perms = usePermissions();
+    const { permissions: perms = {} } = usePermissions();
     const canCreate = perms['students:create'] !== undefined ? perms['students:create'] : true;
     const canEdit = perms['students:edit'] !== undefined ? perms['students:edit'] : true;
     const canDelete = perms['students:delete'] !== undefined ? perms['students:delete'] : true;

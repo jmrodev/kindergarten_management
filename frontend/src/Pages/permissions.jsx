@@ -1,23 +1,19 @@
 import { useEffect, useState } from 'react';
 import permissionsService from '../services/permissionsService';
 import api from '../utils/api';
+import { usePermissions } from '../context/PermissionsContext';
 import Card from '../components/Atoms/Card';
 import Text from '../components/Atoms/Text';
-import Button from '../components/Atoms/Button';
+import Table from '../components/Atoms/Table';
+import TableHeader from '../components/Atoms/TableHeader';
+import TableBody from '../components/Atoms/TableBody';
+import TableRow from '../components/Atoms/TableRow';
+import TableCell from '../components/Atoms/TableCell';
+import PermissionRow from '../components/Molecules/PermissionRow';
 import './permissions.css';
 
-const PermissionToggle = ({ value, onChange, disabled }) => {
-    return (
-        <input
-            type="checkbox"
-            checked={!!value}
-            onChange={(e) => onChange(e.target.checked)}
-            disabled={disabled}
-        />
-    );
-};
-
 const PermissionsPage = () => {
+    const { refreshPermissions } = usePermissions();
     const [roles, setRoles] = useState([]);
     const [modules, setModules] = useState([]);
     const [actions, setActions] = useState([]);
@@ -78,6 +74,9 @@ const PermissionsPage = () => {
             // refresh list
             const rPerms = await permissionsService.getAll();
             setPermissions(rPerms);
+
+            // Refresh global permissions context
+            if (refreshPermissions) await refreshPermissions();
         } catch (err) {
             console.error('Toggle failed', err);
             setError(err.message || 'Error actualizando permiso');
@@ -104,29 +103,25 @@ const PermissionsPage = () => {
             </div>
 
             <div className="permissions-table-wrap">
-                <table className="permissions-table">
-                    <thead>
-                        <tr>
-                            <th>Módulo</th>
-                            {actions.map(a => <th key={a.id}>{a.action_name}</th>)}
-                        </tr>
-                    </thead>
-                    <tbody>
+                <Table striped bordered responsive className="permissions-table">
+                    <TableHeader>
+                        <TableRow>
+                            <TableCell as="th">Módulo</TableCell>
+                            {actions.map(a => <TableCell key={a.id} as="th">{a.action_name}</TableCell>)}
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {modules.map(m => (
-                            <tr key={m.id}>
-                                <td>{m.module_name}</td>
-                                {actions.map(a => (
-                                    <td key={a.id} className="permission-cell">
-                                        <PermissionToggle
-                                            value={getPermValue(selectedRoleId, m.id, a.id)}
-                                            onChange={(checked) => handleToggle(m.id, a.id, checked)}
-                                        />
-                                    </td>
-                                ))}
-                            </tr>
+                            <PermissionRow
+                                key={m.id}
+                                module={m}
+                                actions={actions}
+                                getPermValue={(moduleId, actionId) => getPermValue(selectedRoleId, moduleId, actionId)}
+                                onToggle={handleToggle}
+                            />
                         ))}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
         </Card>
     );

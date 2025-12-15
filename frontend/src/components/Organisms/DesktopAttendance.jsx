@@ -27,7 +27,7 @@ const DesktopAttendance = ({
     handleSave,
     handleChange
 }) => {
-    const perms = usePermissions();
+    const { permissions: perms = {} } = usePermissions();
     const canCreate = perms['attendance:create'] !== undefined ? perms['attendance:create'] : true;
     const canEdit = perms['attendance:edit'] !== undefined ? perms['attendance:edit'] : true;
     const canDelete = perms['attendance:delete'] !== undefined ? perms['attendance:delete'] : true;

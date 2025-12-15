@@ -88,6 +88,32 @@ function App() {
     setMenuItems(baseItems);
   };
 
+  const refreshPermissions = async () => {
+    if (!user || !user.role) return;
+    try {
+      const roleForCheck = user.role || '';
+      const pairs = [
+        { module: 'students', action: 'view', key: 'students:view' },
+        { module: 'students', action: 'create', key: 'students:create' },
+        { module: 'students', action: 'edit', key: 'students:edit' },
+        { module: 'students', action: 'delete', key: 'students:delete' },
+        { module: 'attendance', action: 'view', key: 'attendance:view' },
+        { module: 'attendance', action: 'create', key: 'attendance:create' },
+        { module: 'attendance', action: 'edit', key: 'attendance:edit' },
+        { module: 'attendance', action: 'delete', key: 'attendance:delete' },
+        { module: 'teachers', action: 'view', key: 'teachers:view' },
+        { module: 'classes', action: 'view', key: 'classes:view' },
+        { module: 'enrollments', action: 'view', key: 'enrollments:view' }
+      ];
+
+      const perms = await permissionsService.bulkCheck(roleForCheck, pairs);
+      setUserPermissions(perms);
+      updateMenuItems(user.role, perms);
+    } catch (err) {
+      console.warn('Error refreshing permissions', err);
+    }
+  };
+
   useEffect(() => {
     const initAuth = async () => {
       const token = localStorage.getItem('token');
@@ -221,7 +247,7 @@ function App() {
   }
 
   return (
-    <PermissionsContext.Provider value={userPermissions}>
+    <PermissionsContext.Provider value={{ permissions: userPermissions, refreshPermissions }}>
       <AppLayout
         sidebar={isMobileView ? null : (
           <SidebarMenu
