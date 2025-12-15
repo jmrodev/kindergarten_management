@@ -14,6 +14,7 @@ import Classes from './Pages/classes';
 import Attendance from './Pages/attendance';
 import Enrollments from './Pages/enrollments';
 import Permissions from './Pages/permissions';
+import Users from './Pages/users';
 
 function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -80,6 +81,11 @@ function App() {
       baseItems.push({ path: '/enrollments', label: 'Inscripciones', icon: '/src/assets/svg/menu.svg' });
     }
 
+    // Users management - admin/director only
+    if (can('personal:view', canonicalRole === 'administrator' || canonicalRole === 'director')) {
+      baseItems.push({ path: '/users', label: 'Usuarios', icon: '/src/assets/svg/user.svg' });
+    }
+
     // Permissions management - admin/director only
     if (canonicalRole === 'administrator' || canonicalRole === 'director') {
       baseItems.push({ path: '/permissions', label: 'Permisos', icon: '/src/assets/svg/lock.svg' });
@@ -103,7 +109,11 @@ function App() {
         { module: 'attendance', action: 'delete', key: 'attendance:delete' },
         { module: 'teachers', action: 'view', key: 'teachers:view' },
         { module: 'classes', action: 'view', key: 'classes:view' },
-        { module: 'enrollments', action: 'view', key: 'enrollments:view' }
+        { module: 'enrollments', action: 'view', key: 'enrollments:view' },
+        { module: 'personal', action: 'view', key: 'personal:view' },
+        { module: 'personal', action: 'create', key: 'personal:create' },
+        { module: 'personal', action: 'edit', key: 'personal:edit' },
+        { module: 'personal', action: 'delete', key: 'personal:delete' }
       ];
 
       const perms = await permissionsService.bulkCheck(roleForCheck, pairs);
@@ -298,6 +308,7 @@ function App() {
           <Route path="/classes" element={<Classes />} />
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/enrollments" element={<Enrollments />} />
+          <Route path="/users" element={<Users />} />
           <Route path="/permissions" element={<Permissions />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

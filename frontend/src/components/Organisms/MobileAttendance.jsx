@@ -1,17 +1,14 @@
-import { useState } from 'react';
 import Card from '../Atoms/Card';
-import Text from '../Atoms/Text';
-import Button from '../Atoms/Button';
 import Input from '../Atoms/Input';
 import Select from '../Atoms/Select';
 import DataCardList from '../Organisms/DataCardList';
 
-const MobileAttendance = ({ attendance, onEdit, searchTerm, setSearchTerm, selectedClass, setSelectedClass, selectedDate, setSelectedDate }) => {
+const MobileAttendance = ({ attendance, onEdit, selectedClass, setSelectedClass, selectedDate, setSelectedDate }) => {
   // Campos para la vista de cards en móvil
   const cardFields = [
     { key: 'id', label: 'ID' },
     { key: 'date', label: 'Fecha' },
-    { key: 'classroom', label: 'Salón' },
+    { key: 'classroom_name', label: 'Salón' },
     { key: 'status', label: 'Estado' }
   ];
 
@@ -47,7 +44,7 @@ const MobileAttendance = ({ attendance, onEdit, searchTerm, setSearchTerm, selec
         title="Asistencia"
         fields={cardFields}
         onEdit={onEdit}
-        itemTitleKey="studentName"
+        itemTitleKey="student_name"
         showHeader={false}
       />
     </Card>

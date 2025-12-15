@@ -8,9 +8,15 @@ const MobileStudents = ({ students, onEdit, onDelete, searchTerm, setSearchTerm 
   const cardFields = [
     { key: 'id', label: 'ID' },
     { key: 'dni', label: 'DNI' },
-    { key: 'classroom', label: 'Salón' },
-    { key: 'status', label: 'Estado' }
+    { key: 'classroom_name', label: 'Salón' },
+    { key: 'enrollment_status', label: 'Estado' }
   ];
+
+  // Función para combinar nombre completo
+  const studentsWithFullName = students.map(s => ({
+    ...s,
+    full_name: `${s.first_name} ${s.last_name}`
+  }));
 
   return (
     <Card>
@@ -26,12 +32,12 @@ const MobileStudents = ({ students, onEdit, onDelete, searchTerm, setSearchTerm 
       </div>
 
       <DataCardList
-        items={students}
+        items={studentsWithFullName}
         title="Estudiantes"
         fields={cardFields}
         onEdit={onEdit}
         onDelete={onDelete}
-        itemTitleKey="name"
+        itemTitleKey="full_name"
         showHeader={false}
       />
     </Card>

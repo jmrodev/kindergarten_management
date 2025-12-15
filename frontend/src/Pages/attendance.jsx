@@ -1,48 +1,79 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useIsMobile from '../hooks/useIsMobile';
+import Loading from '../components/Atoms/Loading';
+import ErrorMessage from '../components/Atoms/ErrorMessage';
 import DesktopAttendance from '../components/Organisms/DesktopAttendance';
 import MobileAttendance from '../components/Organisms/MobileAttendance';
+import attendanceService from '../services/attendanceService';
 
 const Attendance = () => {
   const isMobile = useIsMobile();
 
-  const [attendanceData, setAttendanceData] = useState([
-    { id: 1, studentName: 'Juan Pérez', classroom: 'Maternal A', date: '2024-01-15', status: 'presente' },
-    { id: 2, studentName: 'María García', classroom: 'Jardín B', date: '2024-01-15', status: 'ausente' },
-    { id: 3, studentName: 'Pedro López', classroom: 'Preescolar C', date: '2024-01-15', status: 'presente' },
-    { id: 4, studentName: 'Ana Martínez', classroom: 'Maternal A', date: '2024-01-15', status: 'tarde' },
-  ]);
-
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedClass, setSelectedClass] = useState('Todos');
-  const [selectedDate, setSelectedDate] = useState('2024-01-15');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentAttendance, setCurrentAttendance] = useState(null);
   const [formState, setFormState] = useState({
-    studentName: '',
-    classroom: '',
+    student_id: '',
     date: new Date().toISOString().split('T')[0],
-    status: 'presente'
+    status: 'presente',
+    notes: ''
   });
+
+  // Cargar asistencias al montar o cuando cambie la fecha
+  useEffect(() => {
+    loadAttendance();
+  }, [selectedDate]);
+
+  const loadAttendance = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const filters = { date: selectedDate };
+      if (selectedClass !== 'Todos') {
+        filters.classroomId = selectedClass;
+      }
+      const response = await attendanceService.getAll(filters);
+      // Backend returns { status: 'success', data: [...] }
+      setAttendanceData(Array.isArray(response) ? response : (response.data || []));
+    } catch (err) {
+      console.error('Error loading attendance:', err);
+      setError(err.message || 'Error al cargar asistencias');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleEdit = (record) => {
     setCurrentAttendance(record);
     setFormState({
-      studentName: record.studentName,
-      classroom: record.classroom,
+      student_id: record.student_id,
       date: record.date,
-      status: record.status
+      status: record.status || 'presente',
+      notes: record.notes || ''
     });
     setIsModalOpen(true);
   };
 
-  const handleSave = () => {
-    const updatedAttendance = attendanceData.map(record =>
-      record.id === currentAttendance.id
-        ? { ...record, ...formState }
-        : record
-    );
-    setAttendanceData(updatedAttendance);
-    setIsModalOpen(false);
+  const handleSave = async () => {
+    try {
+      if (currentAttendance) {
+        // Actualizar asistencia existente
+        await attendanceService.update(currentAttendance.id, formState);
+      } else {
+        // Crear nueva asistencia
+        await attendanceService.create(formState);
+      }
+      // Recargar datos
+      await loadAttendance();
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error('Error saving attendance:', err);
+      setError(err.message || 'Error al guardar asistencia');
+    }
   };
 
   const handleChange = (e) => {
@@ -52,6 +83,9 @@ const Attendance = () => {
       [name]: value
     }));
   };
+
+  if (loading) return <Loading message="Cargando asistencias..." />;
+  if (error) return <ErrorMessage message={error} onRetry={loadAttendance} />;
 
   if (isMobile) {
     return (

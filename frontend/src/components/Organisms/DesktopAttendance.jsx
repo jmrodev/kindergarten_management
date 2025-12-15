@@ -33,8 +33,8 @@ const DesktopAttendance = ({
     const canDelete = perms['attendance:delete'] !== undefined ? perms['attendance:delete'] : true;
 
     const filteredAttendance = attendanceData.filter(record => {
-        const matchesClass = selectedClass === 'Todos' || record.classroom === selectedClass;
-        return matchesClass && record.date === selectedDate;
+        const matchesClass = selectedClass === 'Todos' || record.classroom_name === selectedClass;
+        return matchesClass;
     });
 
     return (
@@ -80,8 +80,8 @@ const DesktopAttendance = ({
                     {filteredAttendance.map(record => (
                         <TableRow key={record.id}>
                             <TableCell>{record.id}</TableCell>
-                            <TableCell>{record.studentName}</TableCell>
-                            <TableCell>{record.classroom}</TableCell>
+                            <TableCell>{record.student_name || 'N/A'}</TableCell>
+                            <TableCell>{record.classroom_name || 'Sin asignar'}</TableCell>
                             <TableCell>{record.date}</TableCell>
                             <TableCell>
                                 <span className={`status-badge ${record.status === 'presente' ? 'status-presente' : record.status === 'ausente' ? 'status-ausente' : 'status-tarde'}`}>

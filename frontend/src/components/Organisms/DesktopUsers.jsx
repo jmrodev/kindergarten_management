@@ -11,21 +11,21 @@ import TableBody from '../Atoms/TableBody';
 import './organisms.css';
 import { usePermissions } from '../../context/PermissionsContext';
 
-const DesktopStudents = ({ students, onEdit, onDelete, onAdd, searchTerm, setSearchTerm }) => {
+const DesktopUsers = ({ users, onEdit, onDelete, onAdd, searchTerm, setSearchTerm }) => {
     const { permissions: perms = {} } = usePermissions();
-    const canCreate = perms['students:create'] !== undefined ? perms['students:create'] : true;
-    const canEdit = perms['students:edit'] !== undefined ? perms['students:edit'] : true;
-    const canDelete = perms['students:delete'] !== undefined ? perms['students:delete'] : true;
+    const canCreate = perms['personal:create'] !== undefined ? perms['personal:create'] : true;
+    const canEdit = perms['personal:edit'] !== undefined ? perms['personal:edit'] : true;
+    const canDelete = perms['personal:delete'] !== undefined ? perms['personal:delete'] : true;
 
     return (
         <Card>
-            <Text variant="h1">Estudiantes</Text>
+            <Text variant="h1">Gestión de Usuarios</Text>
 
             <div className="students-header">
-                {canCreate && <Button variant="primary" onClick={onAdd}>Agregar Estudiante</Button>}
+                {canCreate && <Button variant="primary" onClick={onAdd}>Agregar Usuario</Button>}
                 <Input
                     type="text"
-                    placeholder="Buscar estudiantes..."
+                    placeholder="Buscar usuarios..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="search-input"
@@ -38,21 +38,27 @@ const DesktopStudents = ({ students, onEdit, onDelete, onAdd, searchTerm, setSea
                         <TableCell as="th">ID</TableCell>
                         <TableCell as="th">Nombre</TableCell>
                         <TableCell as="th">DNI</TableCell>
-                        <TableCell as="th">Salón</TableCell>
+                        <TableCell as="th">Email</TableCell>
+                        <TableCell as="th">Rol</TableCell>
                         <TableCell as="th">Estado</TableCell>
                         <TableCell as="th">Acciones</TableCell>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {students.map(student => (
-                        <TableRow key={student.id}>
-                            <TableCell>{student.id}</TableCell>
-                            <TableCell>{student.first_name} {student.last_name}</TableCell>
-                            <TableCell>{student.dni}</TableCell>
-                            <TableCell>{student.classroom_name || 'Sin asignar'}</TableCell>
+                    {users.map(user => (
+                        <TableRow key={user.id}>
+                            <TableCell>{user.id}</TableCell>
+                            <TableCell>{user.first_name} {user.paternal_surname || ''} {user.maternal_surname || ''}</TableCell>
+                            <TableCell>{user.dni || 'N/A'}</TableCell>
+                            <TableCell>{user.email || 'N/A'}</TableCell>
                             <TableCell>
-                                <span className={`status-badge ${student.enrollment_status === 'activo' ? 'status-active' : 'status-inactive'}`}>
-                                    {student.enrollment_status || 'N/A'}
+                                <span className="role-badge">
+                                    {user.role_name || 'Sin rol'}
+                                </span>
+                            </TableCell>
+                            <TableCell>
+                                <span className={`status-badge ${user.is_active ? 'status-active' : 'status-inactive'}`}>
+                                    {user.is_active ? 'Activo' : 'Inactivo'}
                                 </span>
                             </TableCell>
                             <TableCell>
@@ -62,7 +68,7 @@ const DesktopStudents = ({ students, onEdit, onDelete, onAdd, searchTerm, setSea
                                             variant="secondary"
                                             size="small"
                                             className="action-btn"
-                                            onClick={() => onEdit(student)}
+                                            onClick={() => onEdit(user)}
                                         >
                                             Editar
                                         </Button>)}
@@ -71,7 +77,7 @@ const DesktopStudents = ({ students, onEdit, onDelete, onAdd, searchTerm, setSea
                                             variant="danger"
                                             size="small"
                                             className="action-btn"
-                                            onClick={() => onDelete(student.id)}
+                                            onClick={() => onDelete(user.id)}
                                         >
                                             Eliminar
                                         </Button>)}
@@ -85,4 +91,4 @@ const DesktopStudents = ({ students, onEdit, onDelete, onAdd, searchTerm, setSea
     );
 };
 
-export default DesktopStudents;
+export default DesktopUsers;
