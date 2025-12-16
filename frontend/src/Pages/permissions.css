@@ -1,4 +1,5 @@
-/* Minimal styles for permissions page */
+/* Permissions Page Styles */
+
 .permissions-controls {
   margin: 16px 0;
   display: flex;
@@ -6,6 +7,26 @@
   gap: 8px;
 }
 
+.permissions-controls select {
+  flex: 1;
+  min-width: 150px;
+  padding: 8px 12px;
+  border: 2px solid #6c757d;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: #fff;
+  cursor: pointer;
+  color: #212529;
+  transition: border-color 0.15s ease-in-out;
+}
+
+.permissions-controls select:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15);
+}
+
+/* Desktop Table View */
 .permissions-table-wrap {
   overflow-x: auto;
   margin-top: 12px;
@@ -25,8 +46,134 @@
 
 .permissions-table th {
   background: #f7f7f7;
+  font-weight: 600;
 }
 
 .permission-cell input[type='checkbox'] {
-  transform: scale(1.1);
+  /* Allow inherited styles from atoms.css */
+}
+
+/* Mobile Card-Based View */
+.permissions-mobile-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.permission-module-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease-in-out;
+}
+
+.permission-module-card:active {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.permission-module-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%);
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #2c3e50;
+  text-align: left;
+  transition: background 0.2s ease-in-out;
+}
+
+.permission-module-header:active {
+  background: linear-gradient(135deg, #ececec 0%, #f0f0f0 100%);
+}
+
+.permission-module-name {
+  flex: 1;
+}
+
+.permission-module-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-left: 12px;
+  font-size: 0.8rem;
+  color: #7f8c8d;
+  transition: transform 0.2s ease-in-out;
+}
+
+.permission-module-actions {
+  padding: 12px 16px;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
+.permission-action-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background: #fff;
+  border-radius: 4px;
+  border: 1px solid #e8e8e8;
+}
+
+.permission-action-label {
+  flex: 1;
+  font-size: 0.9rem;
+  color: #2c3e50;
+  font-weight: 500;
+  margin: 0;
+  cursor: pointer;
+}
+
+.permission-action-row input[type='checkbox'] {
+  margin-left: 8px;
+  /* Allow inherited styles from atoms.css PermissionToggle */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .permissions-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .permissions-controls label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .permission-module-header {
+    padding: 14px 12px;
+    font-size: 0.95rem;
+  }
+
+  .permission-action-row {
+    padding: 10px;
+  }
 }

@@ -10,10 +10,13 @@ import TableBody from '../components/Atoms/TableBody';
 import TableRow from '../components/Atoms/TableRow';
 import TableCell from '../components/Atoms/TableCell';
 import PermissionRow from '../components/Molecules/PermissionRow';
+import PermissionToggle from '../components/Atoms/PermissionToggle';
+import useIsMobile from '../hooks/useIsMobile';
 import './permissions.css';
 
 const PermissionsPage = () => {
     const { refreshPermissions } = usePermissions();
+    const isMobile = useIsMobile();
     const [roles, setRoles] = useState([]);
     const [modules, setModules] = useState([]);
     const [actions, setActions] = useState([]);
@@ -21,6 +24,7 @@ const PermissionsPage = () => {
     const [selectedRoleId, setSelectedRoleId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [expandedModules, setExpandedModules] = useState({});
 
     useEffect(() => {
         const load = async () => {
@@ -75,8 +79,10 @@ const PermissionsPage = () => {
             const rPerms = await permissionsService.getAll();
             setPermissions(rPerms);
 
-            // Refresh global permissions context
-            if (refreshPermissions) await refreshPermissions();
+            // Refresh global permissions context (to update menus for current user)
+            if (refreshPermissions) {
+                await refreshPermissions();
+            }
         } catch (err) {
             console.error('Toggle failed', err);
             setError(err.message || 'Error actualizando permiso');
@@ -88,6 +94,13 @@ const PermissionsPage = () => {
 
     if (loading) return <div className="app-loading">Cargando permisos...</div>;
     if (error) return <div className="app-error">{error}</div>;
+
+    const toggleModuleExpand = (moduleId) => {
+        setExpandedModules(prev => ({
+            ...prev,
+            [moduleId]: !prev[moduleId]
+        }));
+    };
 
     return (
         <Card>
@@ -102,27 +115,63 @@ const PermissionsPage = () => {
                 </select>
             </div>
 
-            <div className="permissions-table-wrap">
-                <Table striped bordered responsive className="permissions-table">
-                    <TableHeader>
-                        <TableRow>
-                            <TableCell as="th">Módulo</TableCell>
-                            {actions.map(a => <TableCell key={a.id} as="th">{a.action_name}</TableCell>)}
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {modules.map(m => (
-                            <PermissionRow
-                                key={m.id}
-                                module={m}
-                                actions={actions}
-                                getPermValue={(moduleId, actionId) => getPermValue(selectedRoleId, moduleId, actionId)}
-                                onToggle={handleToggle}
-                            />
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
+            {/* Mobile View: Card-based layout */}
+            {isMobile ? (
+                <div className="permissions-mobile-view">
+                    {modules.map(m => (
+                        <div key={m.id} className="permission-module-card">
+                            <button
+                                className="permission-module-header"
+                                onClick={() => toggleModuleExpand(m.id)}
+                                aria-expanded={expandedModules[m.id] || false}
+                            >
+                                <span className="permission-module-name">{m.module_name}</span>
+                                <span className="permission-module-toggle">
+                                    {expandedModules[m.id] ? '▼' : '▶'}
+                                </span>
+                            </button>
+                            {expandedModules[m.id] && (
+                                <div className="permission-module-actions">
+                                    {actions.map(action => (
+                                        <div key={action.id} className="permission-action-row">
+                                            <label className="permission-action-label">
+                                                {action.action_name}
+                                            </label>
+                                            <PermissionToggle
+                                                checked={getPermValue(selectedRoleId, m.id, action.id)}
+                                                onChange={(checked) => handleToggle(m.id, action.id, checked)}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                /* Desktop View: Traditional table */
+                <div className="permissions-table-wrap">
+                    <Table striped bordered responsive className="permissions-table">
+                        <TableHeader>
+                            <TableRow>
+                                <TableCell as="th">Módulo</TableCell>
+                                {actions.map(a => <TableCell key={a.id} as="th">{a.action_name}</TableCell>)}
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {modules.map(m => (
+                                <PermissionRow
+                                    key={m.id}
+                                    module={m}
+                                    actions={actions}
+                                    getPermValue={(moduleId, actionId) => getPermValue(selectedRoleId, moduleId, actionId)}
+                                    onToggle={handleToggle}
+                                />
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            )}
         </Card>
     );
 };

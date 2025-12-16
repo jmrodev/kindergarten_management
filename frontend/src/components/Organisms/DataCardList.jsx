@@ -77,12 +77,24 @@ const DataCardList = ({
         >
           <div className="data-card-detail-modal">
             <div className="data-card-fields">
-              {fields.map((field, idx) => (
-                <div key={idx} className="data-card-field">
-                  <span className="field-label">{field.label}:</span>
-                  <span className="field-value">{selectedItem[field.key]}</span>
-                </div>
-              ))}
+              {fields.map((field, idx) => {
+                const rawValue = field.valueFn ? field.valueFn(selectedItem) : selectedItem[field.key];
+                const value = rawValue || '';
+
+                let renderedValue = value;
+                if (field.type === 'phone' && value) {
+                  renderedValue = (<a href={`tel:${value}`} className="link-field">{value}</a>);
+                } else if (field.type === 'email' && value) {
+                  renderedValue = (<a href={`mailto:${value}`} className="link-field">{value}</a>);
+                }
+
+                return (
+                  <div key={idx} className="data-card-field">
+                    <span className="field-label">{field.label}:</span>
+                    <span className="field-value">{renderedValue || 'N/A'}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </Modal>

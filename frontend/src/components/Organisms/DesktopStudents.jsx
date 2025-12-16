@@ -47,12 +47,12 @@ const DesktopStudents = ({ students, onEdit, onDelete, onAdd, searchTerm, setSea
                     {students.map(student => (
                         <TableRow key={student.id}>
                             <TableCell>{student.id}</TableCell>
-                            <TableCell>{student.first_name} {student.last_name}</TableCell>
-                            <TableCell>{student.dni}</TableCell>
+                            <TableCell>{student.first_name} {student.paternal_surname || ''} {student.maternal_surname || ''}</TableCell>
+                            <TableCell>{student.dni || 'N/A'}</TableCell>
                             <TableCell>{student.classroom_name || 'Sin asignar'}</TableCell>
                             <TableCell>
-                                <span className={`status-badge ${student.enrollment_status === 'activo' ? 'status-active' : 'status-inactive'}`}>
-                                    {student.enrollment_status || 'N/A'}
+                                <span className={`status-badge ${student.status === 'activo' ? 'status-active' : 'status-inactive'}`}>
+                                    {student.status || 'N/A'}
                                 </span>
                             </TableCell>
                             <TableCell>

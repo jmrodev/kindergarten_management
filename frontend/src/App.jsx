@@ -15,6 +15,7 @@ import Attendance from './Pages/attendance';
 import Enrollments from './Pages/enrollments';
 import Permissions from './Pages/permissions';
 import Users from './Pages/users';
+import MobileMenu from './components/Organisms/MobileMenu';
 
 function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -276,29 +277,23 @@ function App() {
             onMenuToggle={toggleMobileMenu}
             isMenuOpen={isMobileMenuOpen}
             title={`Sistema de Gestión - ${user.firstName} ${user.lastName}`}
+            onLogout={handleLogout}
           />
         }
         isMobileMenuOpen={isMobileMenuOpen && isMobileView}
         onBackdropClick={handleBackdropClick}
       >
         {isMobileMenuOpen && isMobileView && (() => {
-          // build mobile menu based on permissions
-          const allowedPaths = [];
-          if (userPermissions['students:view']) allowedPaths.push('/students');
-          if (userPermissions['attendance:view']) allowedPaths.push('/attendance');
-          const mobileMenuItems = menuItems.filter(i => allowedPaths.includes(i.path));
+          // Mobile menu includes all items from menuItems (already filtered by permissions)
           return (
-            <div className="mobile-sidebar-overlay">
-              <SidebarMenu
-                items={mobileMenuItems}
-                collapsed={false}
-                hidden={false}
-                onToggleCollapse={null}
-                onExpand={null}
-                title={`Sistema de Gestión - ${user.firstName} ${user.lastName}`}
+            <>
+              <MobileMenu
+                items={menuItems}
+                title={`${user.firstName} ${user.lastName}`}
                 currentPath={location.pathname}
+                onClose={() => setIsMobileMenuOpen(false)}
               />
-            </div>
+            </>
           );
         })()}
         <Routes>

@@ -9,13 +9,18 @@ const MobileStudents = ({ students, onEdit, onDelete, searchTerm, setSearchTerm 
     { key: 'id', label: 'ID' },
     { key: 'dni', label: 'DNI' },
     { key: 'classroom_name', label: 'Salón' },
-    { key: 'enrollment_status', label: 'Estado' }
+    { key: 'status', label: 'Estado' },
+    // Datos de contacto útiles en detalle
+    { key: 'pediatrician_name', label: 'Pediatra' },
+    { key: 'pediatrician_phone', label: 'Tel. Pediatra', type: 'phone' },
+    { key: 'guardian_email', label: 'Email Tutor', type: 'email', valueFn: (s) => s.guardian_email || s.emergency_contact?.email_optional },
+    { key: 'guardian_phone', label: 'Tel. Tutor', type: 'phone', valueFn: (s) => s.guardian_phone || s.emergency_contact?.phone }
   ];
 
   // Función para combinar nombre completo
   const studentsWithFullName = students.map(s => ({
     ...s,
-    full_name: `${s.first_name} ${s.last_name}`
+    full_name: `${s.first_name} ${s.paternal_surname || ''} ${s.maternal_surname || ''}`.trim()
   }));
 
   return (

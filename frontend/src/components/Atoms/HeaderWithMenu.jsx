@@ -1,7 +1,7 @@
 import './atoms.css';
 import HamburgerMenu from './HamburgerMenu';
 
-const HeaderWithMenu = ({ children, onMenuToggle, isMenuOpen, className = '', title = 'Sistema de Gestión', ...props }) => {
+const HeaderWithMenu = ({ children, onMenuToggle, isMenuOpen, className = '', title = 'Sistema de Gestión', onLogout, ...props }) => {
   const baseClasses = 'header';
   const customClasses = className;
 
@@ -21,8 +21,13 @@ const HeaderWithMenu = ({ children, onMenuToggle, isMenuOpen, className = '', ti
         <div className="header-title-container">
           <h1 className="header-title">{title}</h1>
         </div>
-        {/* Empty div to maintain spacing */}
-        <div className="header-spacer"></div>
+        <div className="header-actions">
+          {onLogout && (
+            <button className="btn btn-secondary" onClick={onLogout} aria-label="Salir de sesión">
+              Salir
+            </button>
+          )}
+        </div>
       </div>
       {children}
     </header>
