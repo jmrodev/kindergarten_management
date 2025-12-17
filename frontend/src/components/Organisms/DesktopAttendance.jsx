@@ -28,15 +28,15 @@ const DesktopAttendance = ({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <Text variant="h1">Asistencia</Text>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <Button 
-                        variant="secondary" 
+                    <Button
+                        variant="secondary"
                         onClick={onToggleViewMode}
                     >
                         {viewMode === 'register' ? 'Ver Registradas' : 'Registrar Nueva'}
                     </Button>
                     {viewMode === 'register' && (
-                        <Button 
-                            variant="primary" 
+                        <Button
+                            variant="primary"
                             onClick={onSave}
                             disabled={!hasChanges || saving}
                         >

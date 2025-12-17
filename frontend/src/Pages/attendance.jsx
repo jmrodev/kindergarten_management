@@ -101,7 +101,7 @@ const Attendance = () => {
     setViewMode(viewMode === 'register' ? 'view' : 'register');
     if (viewMode === 'view') {
       // Reset changes when going back to register mode
-      setAttendanceRecords({...originalRecords});
+      setAttendanceRecords({ ...originalRecords });
       setHasChanges(false);
     }
   };
@@ -123,11 +123,11 @@ const Attendance = () => {
       });
 
       await Promise.all(promises);
-      
+
       // Update original records and reset changes flag
-      setOriginalRecords({...attendanceRecords});
+      setOriginalRecords({ ...attendanceRecords });
       setHasChanges(false);
-      
+
       console.log('Asistencia guardada exitosamente');
     } catch (err) {
       console.error('Error saving attendance:', err);
