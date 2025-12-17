@@ -7,163 +7,106 @@ import TableRow from '../Atoms/TableRow';
 import TableCell from '../Atoms/TableCell';
 import TableHeader from '../Atoms/TableHeader';
 import TableBody from '../Atoms/TableBody';
-import Modal from '../Atoms/Modal';
-import FormGroup from '../Molecules/FormGroup';
-import { usePermissions } from '../../context/PermissionsContext';
 
 const DesktopAttendance = ({
-    attendanceData,
-    selectedClass,
-    setSelectedClass,
+    classrooms,
+    students,
+    attendanceRecords,
+    selectedClassroom,
+    setSelectedClassroom,
     selectedDate,
     setSelectedDate,
-    isModalOpen,
-    setIsModalOpen,
-    currentAttendance,
-    setCurrentAttendance,
-    formState,
-    setFormState,
-    handleEdit,
-    handleSave,
-    handleChange
+    onToggleStatus,
+    onSave,
+    hasChanges,
+    saving,
+    viewMode,
+    onToggleViewMode
 }) => {
-    const { permissions: perms = {} } = usePermissions();
-    const canCreate = perms['attendance:create'] !== undefined ? perms['attendance:create'] : true;
-    const canEdit = perms['attendance:edit'] !== undefined ? perms['attendance:edit'] : true;
-    const canDelete = perms['attendance:delete'] !== undefined ? perms['attendance:delete'] : true;
-
-    const filteredAttendance = attendanceData.filter(record => {
-        const matchesClass = selectedClass === 'Todos' || record.classroom_name === selectedClass;
-        return matchesClass;
-    });
-
     return (
         <Card>
-            <Text variant="h1">Asistencia</Text>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <Text variant="h1">Asistencia</Text>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <Button 
+                        variant="secondary" 
+                        onClick={onToggleViewMode}
+                    >
+                        {viewMode === 'register' ? 'Ver Registradas' : 'Registrar Nueva'}
+                    </Button>
+                    {viewMode === 'register' && (
+                        <Button 
+                            variant="primary" 
+                            onClick={onSave}
+                            disabled={!hasChanges || saving}
+                        >
+                            {saving ? 'Guardando...' : 'Registrar Asistencia'}
+                        </Button>
+                    )}
+                </div>
+            </div>
 
             <div className="attendance-header">
                 <div className="attendance-filters">
                     <select
-                        value={selectedClass}
-                        onChange={(e) => setSelectedClass(e.target.value)}
-                        className="class-select"
+                        value={selectedClassroom || ''}
+                        onChange={(e) => setSelectedClassroom(Number(e.target.value))}
+                        className="select-field"
                     >
-                        <option value="Todos">Todos los salones</option>
-                        <option value="Maternal A">Maternal A</option>
-                        <option value="Maternal B">Maternal B</option>
-                        <option value="Jardín A">Jardín A</option>
-                        <option value="Jardín B">Jardín B</option>
-                        <option value="Preescolar A">Preescolar A</option>
+                        {classrooms.map(room => (
+                            <option key={room.id} value={room.id}>{room.name}</option>
+                        ))}
                     </select>
                     <input
                         type="date"
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
-                        className="date-input"
+                        className="input-field"
+                        style={{ maxWidth: '200px', marginLeft: '1rem' }}
                     />
                 </div>
-                {canCreate && <Button variant="primary">Registrar Asistencia</Button>}
             </div>
 
             <Table striped bordered responsive>
                 <TableHeader>
                     <TableRow>
-                        <TableCell as="th">ID</TableCell>
-                        <TableCell as="th">Estudiante</TableCell>
-                        <TableCell as="th">Salón</TableCell>
-                        <TableCell as="th">Fecha</TableCell>
+                        <TableCell as="th">Alumno</TableCell>
+                        <TableCell as="th">DNI</TableCell>
                         <TableCell as="th">Estado</TableCell>
-                        <TableCell as="th">Acciones</TableCell>
+                        <TableCell as="th">Acción</TableCell>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {filteredAttendance.map(record => (
-                        <TableRow key={record.id}>
-                            <TableCell>{record.id}</TableCell>
-                            <TableCell>{record.student_name || 'N/A'}</TableCell>
-                            <TableCell>{record.classroom_name || 'Sin asignar'}</TableCell>
-                            <TableCell>{record.date}</TableCell>
-                            <TableCell>
-                                <span className={`status-badge ${record.status === 'presente' ? 'status-presente' : record.status === 'ausente' ? 'status-ausente' : 'status-tarde'}`}>
-                                    {record.status === 'presente' ? 'Presente' :
-                                        record.status === 'ausente' ? 'Ausente' : 'Tarde'}
-                                </span>
-                            </TableCell>
-                            <TableCell>
-                                <div className="actions-cell">
-                                    {canEdit && (
+                    {students.map(student => {
+                        const status = attendanceRecords[student.id] || 'ausente';
+                        const fullName = `${student.first_name} ${student.paternal_surname || ''} ${student.maternal_surname || ''}`.trim();
+                        return (
+                            <TableRow key={student.id}>
+                                <TableCell>{fullName}</TableCell>
+                                <TableCell>{student.dni || 'N/A'}</TableCell>
+                                <TableCell>
+                                    <span className={`status-badge ${status === 'presente' ? 'status-active' : 'status-inactive'}`}>
+                                        {status === 'presente' ? 'Presente' : 'Ausente'}
+                                    </span>
+                                </TableCell>
+                                <TableCell>
+                                    {viewMode === 'register' ? (
                                         <Button
-                                            variant="secondary"
+                                            variant={status === 'presente' ? 'danger' : 'success'}
                                             size="small"
-                                            className="action-btn"
-                                            onClick={() => handleEdit(record)}
+                                            onClick={() => onToggleStatus(student.id)}
                                         >
-                                            Editar
-                                        </Button>)}
-                                    {canDelete && <Button variant="primary" size="small" className="action-btn">Justificar</Button>}
-                                </div>
-                            </TableCell>
-                        </TableRow>
-                    ))}
+                                            {status === 'presente' ? 'Marcar Ausente' : 'Marcar Presente'}
+                                        </Button>
+                                    ) : (
+                                        <span style={{ color: '#666', fontSize: '0.9rem' }}>-</span>
+                                    )}
+                                </TableCell>
+                            </TableRow>
+                        );
+                    })}
                 </TableBody>
             </Table>
-
-            <Modal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title={currentAttendance ? "Editar Asistencia" : "Registrar Asistencia"}
-            >
-                <FormGroup>
-                    <input
-                        label="Estudiante"
-                        name="studentName"
-                        value={formState.studentName}
-                        onChange={handleChange}
-                        required
-                    />
-                </FormGroup>
-                <FormGroup>
-                    <select
-                        name="classroom"
-                        value={formState.classroom}
-                        onChange={handleChange}
-                        className="select-field"
-                    >
-                        <option value="">Seleccione un salón</option>
-                        <option value="Maternal A">Maternal A</option>
-                        <option value="Maternal B">Maternal B</option>
-                        <option value="Jardín A">Jardín A</option>
-                        <option value="Jardín B">Jardín B</option>
-                        <option value="Preescolar A">Preescolar A</option>
-                    </select>
-                </FormGroup>
-                <FormGroup>
-                    <input
-                        label="Fecha"
-                        name="date"
-                        type="date"
-                        value={formState.date}
-                        onChange={handleChange}
-                        required
-                    />
-                </FormGroup>
-                <FormGroup>
-                    <select
-                        name="status"
-                        value={formState.status}
-                        onChange={handleChange}
-                        className="select-field"
-                    >
-                        <option value="presente">Presente</option>
-                        <option value="ausente">Ausente</option>
-                        <option value="tarde">Tarde</option>
-                    </select>
-                </FormGroup>
-                <div className="modal-footer">
-                    <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-                    <Button variant="primary" onClick={handleSave}>Guardar</Button>
-                </div>
-            </Modal>
         </Card>
     );
 };
