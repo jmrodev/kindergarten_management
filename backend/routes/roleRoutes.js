@@ -1,17 +1,35 @@
-const express = require('express');
-const router = express.Router();
-const RoleController = require('../controllers/RoleController');
-const { protect, authorize } = require('../middleware/auth');
+const express = require('express')
+const router = express.Router()
+const RoleController = require('../controllers/RoleController')
+const { protect, checkPermission } = require('../middleware/auth')
 
-// Role management routes
-router.get('/', protect, authorize('administrator'), RoleController.getAllRoles);
-router.get('/:id', protect, authorize('administrator'), RoleController.getRoleById);
-router.post('/', protect, authorize('administrator'), RoleController.createRole);
-router.put('/:id', protect, authorize('administrator'), RoleController.updateRole);
-router.delete('/:id', protect, authorize('administrator'), RoleController.deleteRole);
+// Role management routes - check permissions from role_permission table
+router.use(protect)
 
-// Access Level routes (can be managed by admin as well)
-router.get('/access-levels', protect, authorize('administrator'), RoleController.getAllAccessLevels);
-router.post('/access-levels', protect, authorize('administrator'), RoleController.createAccessLevel);
+router.get('/', checkPermission('roles', 'ver'), RoleController.getAllRoles)
+router.get('/:id', checkPermission('roles', 'ver'), RoleController.getRoleById)
+router.post('/', checkPermission('roles', 'crear'), RoleController.createRole)
+router.put(
+  '/:id',
+  checkPermission('roles', 'editar'),
+  RoleController.updateRole
+)
+router.delete(
+  '/:id',
+  checkPermission('roles', 'eliminar'),
+  RoleController.deleteRole
+)
 
-module.exports = router;
+// Access Level routes
+router.get(
+  '/access-levels',
+  checkPermission('configuracion', 'ver'),
+  RoleController.getAllAccessLevels
+)
+router.post(
+  '/access-levels',
+  checkPermission('configuracion', 'crear'),
+  RoleController.createAccessLevel
+)
+
+module.exports = router

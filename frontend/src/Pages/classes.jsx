@@ -10,6 +10,9 @@ import TableHeader from '../components/Atoms/TableHeader';
 import TableBody from '../components/Atoms/TableBody';
 import Modal from '../components/Atoms/Modal';
 import FormGroup from '../components/Molecules/FormGroup';
+import useIsMobile from '../hooks/useIsMobile';
+import DataCardList from '../components/Organisms/DataCardList';
+import ClassDetailModal from '../components/Organisms/ClassDetailModal';
 
 const Classes = () => {
   const [classes, setClasses] = useState([
@@ -22,7 +25,9 @@ const Classes = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [currentClass, setCurrentClass] = useState(null);
+  const [detailClass, setDetailClass] = useState(null);
   const [formState, setFormState] = useState({
     name: '',
     capacity: '',
@@ -84,6 +89,54 @@ const Classes = () => {
     }));
   };
 
+  const handleView = (classItem) => {
+    setDetailClass(classItem);
+    setIsDetailOpen(true);
+  };
+
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    const cardFields = [
+      { key: 'capacity', label: 'Capacidad' },
+      { key: 'shift', label: 'Turno' },
+      { key: 'academicYear', label: 'Año Académico' },
+      { key: 'ageGroup', label: 'Grupo de Edad' },
+    ];
+
+    return (
+      <>
+        <Card>
+          <Text variant="h1">Clases</Text>
+
+          <div className="classes-header">
+            <Button variant="primary" onClick={handleAdd}>Agregar Clase</Button>
+            <Input
+              type="text"
+              placeholder="Buscar clases..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+          </div>
+
+          <DataCardList
+            items={filteredClasses}
+            title="Clases"
+            fields={cardFields}
+            onEdit={handleEdit}
+            onDelete={() => { }}
+            onAdd={handleAdd}
+            onItemSelect={handleView}
+            itemTitleKey="name"
+          />
+        </Card>
+
+        <ClassDetailModal classItem={detailClass} isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} />
+      </>
+    );
+  }
+
   return (
     <Card>
       <Text variant="h1">Clases</Text>
@@ -122,6 +175,14 @@ const Classes = () => {
               <TableCell>{classItem.ageGroup} años</TableCell>
               <TableCell>
                 <div className="actions-cell">
+                  <Button
+                    variant="primary"
+                    size="small"
+                    className="action-btn"
+                    onClick={() => handleView(classItem)}
+                  >
+                    Ver Detalle
+                  </Button>
                   <Button
                     variant="secondary"
                     size="small"
@@ -199,6 +260,8 @@ const Classes = () => {
           <Button variant="primary" onClick={handleSave}>Guardar</Button>
         </div>
       </Modal>
+
+      <ClassDetailModal classItem={detailClass} isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} />
     </Card>
   );
 };

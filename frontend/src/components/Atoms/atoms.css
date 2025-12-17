@@ -1436,10 +1436,11 @@
 /* El sidebar está completamente fuera del flujo normal de layout */
 .layout-sidebar {
   position: fixed;
-  top: 0;
+  top: 60px; /* Debajo del header (altura aproximada del header sticky) */
   left: 0;
-  height: 100vh;
+  height: calc(100vh - 60px); /* Altura restante después del header */
   z-index: 998;
+  overflow-y: auto;
   /* Los estilos se aplican en el componente Sidebar para el ancho */
 }
 
@@ -1447,8 +1448,8 @@
 .sidebar-edge {
   position: fixed;
   left: 0;
-  top: 0;
-  height: 100vh;
+  top: 60px; /* Debajo del header */
+  height: calc(100vh - 60px); /* Altura restante */
   width: 12px;
   z-index: 997;
   cursor: pointer;
@@ -1471,6 +1472,64 @@
   background: linear-gradient(to right, #3498db, transparent);
   z-index: 997;
   cursor: pointer;
+}
+
+/* Sidebar tab - clickeable cuando menu esta oculto */
+.sidebar-tab {
+  position: fixed;
+  left: 0;
+  top: 60px;
+  height: 50px;
+  width: 50px;
+  background-color: var(--primary-color);
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 998;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.sidebar-tab:hover {
+  width: 55px;
+  box-shadow: 4px 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar-tab-icon {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-tab:hover .sidebar-tab-icon {
+  transform: scale(1.1);
+}
+
+/* Sidebar header con toggle button */
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) 0;
+  margin-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.menu-title {
+  flex: 1;
+  margin: 0;
+}
+
+.sidebar-toggle-btn {
+  padding: 0.5rem 0.75rem;
+  min-width: auto;
+  min-height: auto;
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-left: var(--spacing-sm);
 }
 
 /* El contenido principal ocupa 100% del ancho disponible */

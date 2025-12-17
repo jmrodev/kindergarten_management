@@ -10,6 +10,9 @@ import TableHeader from '../components/Atoms/TableHeader';
 import TableBody from '../components/Atoms/TableBody';
 import Modal from '../components/Atoms/Modal';
 import FormGroup from '../components/Molecules/FormGroup';
+import useIsMobile from '../hooks/useIsMobile';
+import MobileTeachers from '../components/Organisms/MobileTeachers';
+import TeacherDetailModal from '../components/Organisms/TeacherDetailModal';
 
 const Teachers = () => {
   const [teachers, setTeachers] = useState([
@@ -20,7 +23,9 @@ const Teachers = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [currentTeacher, setCurrentTeacher] = useState(null);
+  const [detailTeacher, setDetailTeacher] = useState(null);
   const [formState, setFormState] = useState({
     name: '',
     dni: '',
@@ -83,6 +88,30 @@ const Teachers = () => {
     }));
   };
 
+  const handleView = (teacher) => {
+    setDetailTeacher(teacher);
+    setIsDetailOpen(true);
+  };
+
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return (
+      <>
+        <MobileTeachers
+          teachers={filteredTeachers}
+          onEdit={handleEdit}
+          onDelete={() => { }}
+          onAdd={handleAdd}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          onView={handleView}
+        />
+        <TeacherDetailModal teacher={detailTeacher} isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} />
+      </>
+    );
+  }
+
   return (
     <Card>
       <Text variant="h1">Maestros</Text>
@@ -121,6 +150,14 @@ const Teachers = () => {
               <TableCell>{teacher.specialty}</TableCell>
               <TableCell>
                 <div className="actions-cell">
+                  <Button
+                    variant="primary"
+                    size="small"
+                    className="action-btn"
+                    onClick={() => handleView(teacher)}
+                  >
+                    Ver Detalle
+                  </Button>
                   <Button
                     variant="secondary"
                     size="small"
@@ -193,6 +230,8 @@ const Teachers = () => {
           <Button variant="primary" onClick={handleSave}>Guardar</Button>
         </div>
       </Modal>
+
+      <TeacherDetailModal teacher={detailTeacher} isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} />
     </Card>
   );
 };

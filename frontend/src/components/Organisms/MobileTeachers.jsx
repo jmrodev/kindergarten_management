@@ -5,7 +5,7 @@ import Button from '../Atoms/Button';
 import Input from '../Atoms/Input';
 import DataCardList from '../Organisms/DataCardList';
 
-const MobileTeachers = ({ teachers, onEdit, onDelete, onAdd, searchTerm, setSearchTerm }) => {
+const MobileTeachers = ({ teachers, onEdit, onDelete, onAdd, searchTerm, setSearchTerm, onView }) => {
   // Campos para la vista de cards en móvil
   const cardFields = [
     { key: 'id', label: 'ID' },
@@ -37,6 +37,7 @@ const MobileTeachers = ({ teachers, onEdit, onDelete, onAdd, searchTerm, setSear
         onEdit={onEdit}
         onDelete={onDelete}
         onAdd={onAdd}
+        onItemSelect={onView}
         itemTitleKey="name"
       />
     </Card>

@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './App.css';
 import PermissionsContext from './context/PermissionsContext';
 import permissionsService from './services/permissionsService';
+import api from './utils/api';
 import AppLayout from './components/Organisms/AppLayout';
 import SidebarMenu from './components/Organisms/SidebarMenu';
 import HeaderWithMenu from './components/Atoms/HeaderWithMenu';
@@ -26,6 +27,7 @@ function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [menuItems, setMenuItems] = useState([]);
   const [userPermissions, setUserPermissions] = useState({});
+  const [sidebarAutoCollapseTimer, setSidebarAutoCollapseTimer] = useState(null);
   const location = useLocation();
 
   // Define updateMenuItems before using it
@@ -51,77 +53,87 @@ function App() {
       { path: '/', label: 'Dashboard', icon: '/src/assets/svg/dashboard.svg' },
     ];
 
-    // Helper to check permission fallback to role-based if permission undefined
-    const can = (permKey, fallback = false) => {
-      if (permissions[permKey] !== undefined) return permissions[permKey];
-      return fallback;
+    // Helper to check permission from BD (module:action format)
+    // ONLY returns true if permission explicitly exists in BD
+    const can = (moduleKey, actionKey) => {
+      const permKey = `${moduleKey}:${actionKey}`;
+      // Return true ONLY if permission exists in BD and is true
+      return permissions[permKey] === true;
     };
 
-    // Students
-    if (can('students:view', canonicalRole === 'administrator' || canonicalRole === 'director' || canonicalRole === 'teacher' || canonicalRole === 'secretary')) {
-      baseItems.push({ path: '/students', label: canonicalRole === 'teacher' ? 'Mis Estudiantes' : 'Estudiantes', icon: '/src/assets/svg/students.svg' });
+    // Determine role type for label customization (not for permission fallback)
+    const isTeacher = canonicalRole === 'teacher';
+
+    // Students - ONLY if has alumnos:ver permission in BD
+    if (can('alumnos', 'ver')) {
+      baseItems.push({ path: '/students', label: isTeacher ? 'Mis Estudiantes' : 'Estudiantes', icon: '/src/assets/svg/students.svg' });
     }
 
-    // Teachers (configurable)
-    if (can('teachers:view', canonicalRole === 'administrator' || canonicalRole === 'director')) {
+    // Teachers/Staff - ONLY if has personal:ver permission in BD
+    if (can('personal', 'ver')) {
       baseItems.push({ path: '/teachers', label: 'Maestros', icon: '/src/assets/svg/user.svg' });
     }
 
-    // Classes
-    if (can('classes:view', canonicalRole === 'administrator' || canonicalRole === 'director')) {
+    // Classes - ONLY if has salas:ver permission in BD
+    if (can('salas', 'ver')) {
       baseItems.push({ path: '/classes', label: 'Clases', icon: '/src/assets/svg/menu.svg' });
     }
 
-    // Attendance
-    if (can('attendance:view', canonicalRole === 'administrator' || canonicalRole === 'director' || canonicalRole === 'teacher')) {
+    // Attendance - ONLY if has asistencia:ver permission in BD
+    if (can('asistencia', 'ver')) {
       baseItems.push({ path: '/attendance', label: 'Asistencia', icon: '/src/assets/svg/notification.svg' });
     }
 
-    // Enrollments (secretary)
-    if (can('enrollments:view', canonicalRole === 'secretary' || canonicalRole === 'administrator')) {
+    // Enrollments - ONLY if has inscripciones:ver permission in BD
+    if (can('inscripciones', 'ver')) {
       baseItems.push({ path: '/enrollments', label: 'Inscripciones', icon: '/src/assets/svg/menu.svg' });
     }
 
-    // Users management - admin/director only
-    if (can('personal:view', canonicalRole === 'administrator' || canonicalRole === 'director')) {
+    // Users - ONLY if has personal:ver permission in BD
+    if (can('personal', 'ver')) {
       baseItems.push({ path: '/users', label: 'Usuarios', icon: '/src/assets/svg/user.svg' });
     }
 
-    // Permissions management - admin/director only
-    if (canonicalRole === 'administrator' || canonicalRole === 'director') {
+    // Permissions management - ONLY if has configuracion:ver permission in BD
+    if (can('configuracion', 'ver')) {
       baseItems.push({ path: '/permissions', label: 'Permisos', icon: '/src/assets/svg/lock.svg' });
     }
 
+    console.log(`[updateMenuItems] Role: ${canonicalRole}, Items: ${baseItems.length}, Perms keys: ${Object.keys(permissions).length}`);
     setMenuItems(baseItems);
   };
 
-  const refreshPermissions = async () => {
-    if (!user || !user.role) return;
+  const refreshPermissions = async (userOverride = null) => {
+    const targetUser = userOverride || user;
+    if (!targetUser || !targetUser.role) {
+      console.log('[refreshPermissions] No user or role yet, using role-based fallback');
+      updateMenuItems(targetUser?.role, {});
+      return;
+    }
     try {
-      const roleForCheck = user.role || '';
-      const pairs = [
-        { module: 'students', action: 'view', key: 'students:view' },
-        { module: 'students', action: 'create', key: 'students:create' },
-        { module: 'students', action: 'edit', key: 'students:edit' },
-        { module: 'students', action: 'delete', key: 'students:delete' },
-        { module: 'attendance', action: 'view', key: 'attendance:view' },
-        { module: 'attendance', action: 'create', key: 'attendance:create' },
-        { module: 'attendance', action: 'edit', key: 'attendance:edit' },
-        { module: 'attendance', action: 'delete', key: 'attendance:delete' },
-        { module: 'teachers', action: 'view', key: 'teachers:view' },
-        { module: 'classes', action: 'view', key: 'classes:view' },
-        { module: 'enrollments', action: 'view', key: 'enrollments:view' },
-        { module: 'personal', action: 'view', key: 'personal:view' },
-        { module: 'personal', action: 'create', key: 'personal:create' },
-        { module: 'personal', action: 'edit', key: 'personal:edit' },
-        { module: 'personal', action: 'delete', key: 'personal:delete' }
-      ];
+      console.log('[refreshPermissions] Fetching user permissions...');
+      // Get actual user permissions from backend (module:action format)
+      const response = await api.get('/api/permissions/user-permissions');
+      console.log('[refreshPermissions] Got response:', response);
+      console.log('[refreshPermissions] Response type:', typeof response);
+      console.log('[refreshPermissions] Response keys:', response ? Object.keys(response).slice(0, 10) : 'null');
 
-      const perms = await permissionsService.bulkCheck(roleForCheck, pairs);
+      // Convert to object format if needed
+      const perms = Array.isArray(response) ? {} : (response || {});
+      console.log('[refreshPermissions] Parsed perms object has', Object.keys(perms).length, 'keys');
+
+      if (Object.keys(perms).length === 0) {
+        console.log('[refreshPermissions] No permissions returned, using role-based fallback');
+      }
+
       setUserPermissions(perms);
-      updateMenuItems(user.role, perms);
+      updateMenuItems(targetUser.role, perms);
     } catch (err) {
-      console.warn('Error refreshing permissions', err);
+      console.error('[refreshPermissions] Error fetching permissions:', err.message);
+      console.log('[refreshPermissions] Using role-based fallback');
+      // If fetch fails, use fallback based on role
+      setUserPermissions({});
+      updateMenuItems(targetUser.role, {});
     }
   };
 
@@ -147,31 +159,7 @@ function App() {
         };
 
         setUser(normalized);
-
-        // Consultar permisos dinámicos para el rol
-        try {
-          const roleForCheck = normalized.role || '';
-          const pairs = [
-            { module: 'students', action: 'view', key: 'students:view' },
-            { module: 'students', action: 'create', key: 'students:create' },
-            { module: 'students', action: 'edit', key: 'students:edit' },
-            { module: 'students', action: 'delete', key: 'students:delete' },
-            { module: 'attendance', action: 'view', key: 'attendance:view' },
-            { module: 'attendance', action: 'create', key: 'attendance:create' },
-            { module: 'attendance', action: 'edit', key: 'attendance:edit' },
-            { module: 'attendance', action: 'delete', key: 'attendance:delete' },
-            { module: 'teachers', action: 'view', key: 'teachers:view' },
-            { module: 'classes', action: 'view', key: 'classes:view' },
-            { module: 'enrollments', action: 'view', key: 'enrollments:view' }
-          ];
-
-          const perms = await permissionsService.bulkCheck(roleForCheck, pairs);
-          setUserPermissions(perms);
-          updateMenuItems(normalized.role, perms);
-        } catch (permErr) {
-          console.warn('Error fetching permissions', permErr);
-          updateMenuItems(normalized.role);
-        }
+        await refreshPermissions(normalized);
       } catch (err) {
         console.warn('Autenticación inválida o token expirado, limpiando credenciales', err);
         localStorage.removeItem('token');
@@ -214,13 +202,14 @@ function App() {
 
     return () => {
       if (timer) clearTimeout(timer);
+      if (sidebarAutoCollapseTimer) clearTimeout(sidebarAutoCollapseTimer);
     };
-  }, [isMobileView, user, sidebarHidden]);
+  }, [isMobileView, user, sidebarHidden, sidebarAutoCollapseTimer]);
 
   const handleLogin = (userData) => {
     // After login the Login page already saved token and user in localStorage
     setUser(userData);
-    updateMenuItems(userData.role);
+    refreshPermissions(userData);
   };
 
   const handleLogout = () => {
@@ -239,6 +228,31 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    const handlePermissionsSync = (event) => {
+      if (event.key === 'permissions:version') {
+        console.log('[permissions-sync] Detected permissions change, refreshing context');
+        refreshPermissions();
+      }
+    };
+
+    window.addEventListener('storage', handlePermissionsSync);
+    return () => window.removeEventListener('storage', handlePermissionsSync);
+  }, []);
+
+  // Periodic permission refresh (polling) for cross-device sync
+  // Every 30 seconds, check for permission updates
+  useEffect(() => {
+    if (!user) return;
+
+    const permissionPollInterval = setInterval(() => {
+      console.log('[permission-poll] Checking for permission updates...');
+      refreshPermissions();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(permissionPollInterval);
+  }, [user]);
+
   const toggleSidebarCollapse = () => {
     setSidebarCollapsed(!sidebarCollapsed);
     setSidebarHidden(false);
@@ -247,6 +261,18 @@ function App() {
   const showSidebar = () => {
     setSidebarHidden(false);
     setSidebarCollapsed(false);
+
+    // Clear existing timer if any
+    if (sidebarAutoCollapseTimer) {
+      clearTimeout(sidebarAutoCollapseTimer);
+    }
+
+    // Set new timer to auto-collapse after 3 seconds
+    const timer = setTimeout(() => {
+      setSidebarCollapsed(true);
+    }, 3000);
+
+    setSidebarAutoCollapseTimer(timer);
   };
 
   if (loading) {

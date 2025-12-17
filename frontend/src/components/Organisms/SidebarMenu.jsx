@@ -22,44 +22,41 @@ const SidebarMenu = ({
 
   return (
     <>
-      {/* Borde izquierdo invisible para detectar hover */}
-      <div
-        className={`sidebar-edge ${!hidden ? 'sidebar-edge-visible' : 'sidebar-edge-hidden'}`}
-        onMouseEnter={onExpand}
-      >
-        {!hidden && (
-          <Sidebar collapsed={collapsed} className={hidden ? 'sidebar-hidden' : ''} {...props}>
-            <div className="sidebar-header">
-              {!collapsed && <Text variant="h3" className="menu-title">{title}</Text>}
-              <Button
-                className="sidebar-toggle-btn"
-                onClick={onToggleCollapse}
-                variant="secondary"
-                size="small"
+      {!hidden && (
+        <Sidebar collapsed={collapsed} className={hidden ? 'sidebar-hidden' : ''} {...props}>
+          <div className="sidebar-header">
+            {!collapsed && <Text variant="h3" className="menu-title">{title}</Text>}
+            <Button
+              variant="secondary"
+              size="small"
+              className="sidebar-toggle-btn"
+              onClick={onToggleCollapse}
+              title={collapsed ? 'Expandir menú' : 'Contraer menú'}
+            >
+              {collapsed ? '→' : '←'}
+            </Button>
+          </div>
+          <Menu>
+            {items.map((item, index) => (
+              <MenuItem
+                key={index}
+                href={item.path}
+                active={actualCurrentPath === item.path}
+                onClick={item.onClick}
               >
-                {collapsed ? '→' : '←'}
-              </Button>
-            </div>
-            <Menu>
-              {items.map((item, index) => (
-                <MenuItem
-                  key={index}
-                  href={item.path}
-                  active={actualCurrentPath === item.path}
-                  onClick={item.onClick}
-                >
-                  {item.icon && <SvgIcon src={item.icon} size={18} className="menu-item-icon" />}
-                  {!collapsed && <span className="menu-item-text">{item.label}</span>}
-                </MenuItem>
-              ))}
-            </Menu>
-          </Sidebar>
-        )}
-        {/* Borde derecho celeste cuando esta completamente oculto */}
-        {hidden && (
-          <div className="sidebar-hidden-edge" onMouseEnter={onExpand}></div>
-        )}
-      </div>
+                {item.icon && <SvgIcon src={item.icon} size={18} className="menu-item-icon" />}
+                {!collapsed && <span className="menu-item-text">{item.label}</span>}
+              </MenuItem>
+            ))}
+          </Menu>
+        </Sidebar>
+      )}
+      {/* Pestaña clickeable cuando el menú está oculto */}
+      {hidden && (
+        <div className="sidebar-tab" onClick={onExpand} title="Abrir menú">
+          <span className="sidebar-tab-icon">≡</span>
+        </div>
+      )}
     </>
   );
 };

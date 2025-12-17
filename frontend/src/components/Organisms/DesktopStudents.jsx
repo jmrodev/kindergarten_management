@@ -11,11 +11,12 @@ import TableBody from '../Atoms/TableBody';
 import './organisms.css';
 import { usePermissions } from '../../context/PermissionsContext';
 
-const DesktopStudents = ({ students, onEdit, onDelete, onAdd, searchTerm, setSearchTerm }) => {
+const DesktopStudents = ({ students, onEdit, onDelete, onAdd, searchTerm, setSearchTerm, onView }) => {
     const { permissions: perms = {} } = usePermissions();
     const canCreate = perms['students:create'] !== undefined ? perms['students:create'] : true;
     const canEdit = perms['students:edit'] !== undefined ? perms['students:edit'] : true;
     const canDelete = perms['students:delete'] !== undefined ? perms['students:delete'] : true;
+    const canView = perms['alumnos:ver'] !== undefined ? perms['alumnos:ver'] : true;
 
     return (
         <Card>
@@ -57,6 +58,15 @@ const DesktopStudents = ({ students, onEdit, onDelete, onAdd, searchTerm, setSea
                             </TableCell>
                             <TableCell>
                                 <div className="actions-cell">
+                                    {canView && (
+                                        <Button
+                                            variant="primary"
+                                            size="small"
+                                            className="action-btn"
+                                            onClick={() => onView(student)}
+                                        >
+                                            Ver Detalle
+                                        </Button>)}
                                     {canEdit && (
                                         <Button
                                             variant="secondary"

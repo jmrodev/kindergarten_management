@@ -8,6 +8,7 @@ import ErrorMessage from '../components/Atoms/ErrorMessage';
 import useIsMobile from '../hooks/useIsMobile';
 import DesktopStudents from '../components/Organisms/DesktopStudents';
 import MobileStudents from '../components/Organisms/MobileStudents';
+import StudentDetailModal from '../components/Organisms/StudentDetailModal';
 import studentsService from '../services/studentsService';
 
 const Students = () => {
@@ -16,7 +17,9 @@ const Students = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [currentStudent, setCurrentStudent] = useState(null);
+  const [detailStudent, setDetailStudent] = useState(null);
   const [formState, setFormState] = useState({
     // Datos personales
     first_name: '',
@@ -222,6 +225,20 @@ const Students = () => {
 
   const isMobile = useIsMobile();
 
+  const handleView = async (student) => {
+    try {
+      // Try to fetch the full student record by ID to include all DB fields
+      const detailed = await studentsService.getById(student.id);
+      const fullData = Array.isArray(detailed) ? (detailed[0] || student) : (detailed.data || detailed || student);
+      setDetailStudent(fullData);
+    } catch (e) {
+      console.warn('Falling back to list student data for detail view', e);
+      setDetailStudent(student);
+    } finally {
+      setIsDetailOpen(true);
+    }
+  };
+
   const handleDelete = async (studentId) => {
     if (!window.confirm('¿Está seguro de eliminar este estudiante?')) return;
 
@@ -249,6 +266,7 @@ const Students = () => {
           onDelete={handleDelete}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
+          onView={handleView}
         />
       ) : (
         <DesktopStudents
@@ -258,6 +276,7 @@ const Students = () => {
           onAdd={handleAdd}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
+          onView={handleView}
         />
       )}
 
@@ -591,6 +610,8 @@ const Students = () => {
           <Button variant="primary" onClick={handleSave}>Guardar</Button>
         </div>
       </Modal>
+
+      <StudentDetailModal student={detailStudent} isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} />
     </>
   );
 };

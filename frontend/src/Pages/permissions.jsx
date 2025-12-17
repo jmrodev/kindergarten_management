@@ -25,6 +25,7 @@ const PermissionsPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [expandedModules, setExpandedModules] = useState({});
+    const [updateKey, setUpdateKey] = useState(0); // Force re-render
 
     useEffect(() => {
         const load = async () => {
@@ -56,7 +57,9 @@ const PermissionsPage = () => {
 
     const getPermValue = (roleId, moduleId, actionId) => {
         const p = permissions.find(px => px.role_id === roleId && px.module_id === moduleId && px.action_id === actionId);
-        return p ? !!p.is_granted : false;
+        const value = p ? !!p.has_permission : false;
+        console.log(`[getPermValue] roleId=${roleId}, moduleId=${moduleId}, actionId=${actionId}, found=`, p, 'value=', value);
+        return value;
     };
 
     const handleToggle = async (moduleId, actionId, checked) => {
@@ -67,21 +70,32 @@ const PermissionsPage = () => {
             const idx = permissions.findIndex(px => px.role_id === selectedRoleId && px.module_id === moduleId && px.action_id === actionId);
             if (idx >= 0) {
                 const copy = permissions.slice();
-                copy[idx] = { ...copy[idx], is_granted: checked ? 1 : 0 };
+                copy[idx] = { ...copy[idx], has_permission: checked ? 1 : 0 };
                 setPermissions(copy);
             } else {
                 // insert temporary entry
-                setPermissions(prev.concat([{ role_id: selectedRoleId, module_id: moduleId, action_id: actionId, is_granted: checked ? 1 : 0 }]));
+                setPermissions(prev.concat([{ role_id: selectedRoleId, module_id: moduleId, action_id: actionId, has_permission: checked ? 1 : 0 }]));
             }
 
             await permissionsService.toggle({ roleId: selectedRoleId, moduleId, actionId, isGranted: checked ? 1 : 0 });
-            // refresh list
+            // refresh list - force new array to trigger re-render
             const rPerms = await permissionsService.getAll();
-            setPermissions(rPerms);
+            console.log('[handleToggle] Refreshed permissions:', rPerms.length, 'items');
+            console.log('[handleToggle] Sample permission:', rPerms.find(p => p.role_id === selectedRoleId && p.module_id === moduleId && p.action_id === actionId));
+            setPermissions([...rPerms]); // Create new array reference
+            setUpdateKey(prev => prev + 1); // Force re-render
 
-            // Refresh global permissions context (to update menus for current user)
+            // Refresh global permissions context immediately (current tab)
             if (refreshPermissions) {
+                console.log('[handleToggle] Calling refreshPermissions immediately');
                 await refreshPermissions();
+            }
+
+            // Broadcast change so other tabs also update their permissions context
+            try {
+                localStorage.setItem('permissions:version', Date.now().toString());
+            } catch (e) {
+                console.warn('Could not broadcast permissions update', e);
             }
         } catch (err) {
             console.error('Toggle failed', err);
@@ -138,6 +152,7 @@ const PermissionsPage = () => {
                                                 {action.action_name}
                                             </label>
                                             <PermissionToggle
+                                                key={`${selectedRoleId}-${m.id}-${action.id}-${updateKey}`}
                                                 checked={getPermValue(selectedRoleId, m.id, action.id)}
                                                 onChange={(checked) => handleToggle(m.id, action.id, checked)}
                                             />
@@ -161,7 +176,7 @@ const PermissionsPage = () => {
                         <TableBody>
                             {modules.map(m => (
                                 <PermissionRow
-                                    key={m.id}
+                                    key={`${m.id}-${selectedRoleId}-${updateKey}`}
                                     module={m}
                                     actions={actions}
                                     getPermValue={(moduleId, actionId) => getPermValue(selectedRoleId, moduleId, actionId)}

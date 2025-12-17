@@ -2,8 +2,13 @@ import Card from '../Atoms/Card';
 // header removed for mobile (read-only view)
 import Input from '../Atoms/Input';
 import DataCardList from '../Organisms/DataCardList';
+import { usePermissions } from '../../context/PermissionsContext';
 
-const MobileStudents = ({ students, onEdit, onDelete, searchTerm, setSearchTerm }) => {
+const MobileStudents = ({ students, onEdit, onDelete, searchTerm, setSearchTerm, onView }) => {
+  const { permissions: perms = {} } = usePermissions();
+  const canView = perms['alumnos:ver'] !== undefined ? perms['alumnos:ver'] : true;
+  const canEdit = perms['students:edit'] !== undefined ? perms['students:edit'] : true;
+  const canDelete = perms['students:delete'] !== undefined ? perms['students:delete'] : true;
   // Campos para la vista de cards en móvil
   const cardFields = [
     { key: 'id', label: 'ID' },
@@ -40,8 +45,9 @@ const MobileStudents = ({ students, onEdit, onDelete, searchTerm, setSearchTerm 
         items={studentsWithFullName}
         title="Estudiantes"
         fields={cardFields}
-        onEdit={onEdit}
-        onDelete={onDelete}
+        onEdit={canEdit ? onEdit : null}
+        onItemSelect={canView ? onView : null}
+        onDelete={canDelete ? onDelete : null}
         itemTitleKey="full_name"
         showHeader={false}
       />
