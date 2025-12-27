@@ -101,7 +101,7 @@ class RoleRepository {
   static async count(filters = {}) {
     const conn = await getConnection();
     try {
-      let query = 'SELECT COUNT(*) as count FROM role WHERE 1=1';
+      let query = 'SELECT CAST(COUNT(*) AS SIGNED) as count FROM role WHERE 1=1';
       const params = [];
 
       if (filters.accessLevelId) {

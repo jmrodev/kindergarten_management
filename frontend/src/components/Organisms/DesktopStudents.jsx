@@ -1,4 +1,5 @@
 import React from 'react';
+import { studentFields } from '../../config/fields/studentFields.jsx';
 import Card from '../Atoms/Card';
 import Text from '../Atoms/Text';
 import Button from '../Atoms/Button';
@@ -11,7 +12,7 @@ import TableBody from '../Atoms/TableBody';
 import './organisms.css';
 import { usePermissions } from '../../context/PermissionsContext';
 
-const DesktopStudents = ({ students, onEdit, onDelete, onAdd, searchTerm, setSearchTerm, onView }) => {
+const DesktopStudents = ({ students, onEdit, onDelete, onAdd, searchTerm, setSearchTerm, onView, statusFilter, onStatusFilterChange }) => {
     const { permissions: perms = {} } = usePermissions();
     const canCreate = perms['students:create'] !== undefined ? perms['students:create'] : true;
     const canEdit = perms['students:edit'] !== undefined ? perms['students:edit'] : true;
@@ -23,68 +24,82 @@ const DesktopStudents = ({ students, onEdit, onDelete, onAdd, searchTerm, setSea
             <Text variant="h1">Estudiantes</Text>
 
             <div className="students-header">
-                {canCreate && <Button variant="primary" onClick={onAdd}>Agregar Estudiante</Button>}
+                {canCreate && (
+                    <Button variant="primary" onClick={onAdd}>
+                        Agregar Estudiante
+                    </Button>
+                )}
                 <Input
                     type="text"
-                    placeholder="Buscar estudiantes..."
+                    placeholder="Buscar por nombre o DNI..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="search-input"
                 />
+                <select
+                    className="select-field"
+                    style={{ width: 'auto', marginLeft: '10px' }}
+                    value={statusFilter}
+                    onChange={(e) => onStatusFilterChange(e.target.value)}
+                >
+                    <option value="">Todos los Estados</option>
+                    <option value="activo">Activo</option>
+                    <option value="preinscripto">Preinscripto</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="inscripto">Inscripto</option>
+                    <option value="egresado">Egresado</option>
+                    <option value="sorteo">Sorteo</option>
+                    <option value="inactivo">Inactivo</option>
+                    <option value="rechazado">Rechazado</option>
+                </select>
             </div>
 
             <Table striped bordered responsive>
                 <TableHeader>
                     <TableRow>
-                        <TableCell as="th">ID</TableCell>
-                        <TableCell as="th">Nombre</TableCell>
-                        <TableCell as="th">DNI</TableCell>
-                        <TableCell as="th">Salón</TableCell>
-                        <TableCell as="th">Estado</TableCell>
+                        {studentFields.filter(f => f.showInDesktop).map(field => (
+                            <TableCell as="th" key={field.key}>{field.label}</TableCell>
+                        ))}
                         <TableCell as="th">Acciones</TableCell>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {students.map(student => (
                         <TableRow key={student.id}>
-                            <TableCell>{student.id}</TableCell>
-                            <TableCell>{student.first_name} {student.paternal_surname || ''} {student.maternal_surname || ''}</TableCell>
-                            <TableCell>{student.dni || 'N/A'}</TableCell>
-                            <TableCell>{student.classroom_name || 'Sin asignar'}</TableCell>
-                            <TableCell>
-                                <span className={`status-badge ${student.status === 'activo' ? 'status-active' : 'status-inactive'}`}>
-                                    {student.status || 'N/A'}
-                                </span>
-                            </TableCell>
+                            {studentFields.filter(f => f.showInDesktop).map(field => (
+                                <TableCell key={field.key}>
+                                    {field.render
+                                        ? field.render(field.valueFn ? field.valueFn(student) : student[field.key], student)
+                                        : (field.valueFn ? field.valueFn(student) : (student[field.key] || 'N/A'))
+                                    }
+                                </TableCell>
+                            ))}
                             <TableCell>
                                 <div className="actions-cell">
                                     {canView && (
-                                        <Button
-                                            variant="primary"
-                                            size="small"
-                                            className="action-btn"
+                                        <button
+                                            className="icon-action-btn view-btn"
                                             onClick={() => onView(student)}
+                                            title="Ver Detalle"
                                         >
-                                            Ver Detalle
-                                        </Button>)}
+                                            👁️
+                                        </button>)}
                                     {canEdit && (
-                                        <Button
-                                            variant="secondary"
-                                            size="small"
-                                            className="action-btn"
+                                        <button
+                                            className="icon-action-btn edit-btn"
                                             onClick={() => onEdit(student)}
+                                            title="Editar"
                                         >
-                                            Editar
-                                        </Button>)}
+                                            ✏️
+                                        </button>)}
                                     {canDelete && (
-                                        <Button
-                                            variant="danger"
-                                            size="small"
-                                            className="action-btn"
+                                        <button
+                                            className="icon-action-btn delete-btn"
                                             onClick={() => onDelete(student.id)}
+                                            title="Eliminar"
                                         >
-                                            Eliminar
-                                        </Button>)}
+                                            🗑️
+                                        </button>)}
                                 </div>
                             </TableCell>
                         </TableRow>

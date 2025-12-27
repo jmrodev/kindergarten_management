@@ -4,23 +4,16 @@ import Input from '../Atoms/Input';
 import DataCardList from '../Organisms/DataCardList';
 import { usePermissions } from '../../context/PermissionsContext';
 
-const MobileStudents = ({ students, onEdit, onDelete, searchTerm, setSearchTerm, onView }) => {
+import { studentFields } from '../../config/fields/studentFields.jsx';
+
+const MobileStudents = ({ students, onEdit, onDelete, searchTerm, setSearchTerm, onView, statusFilter, onStatusFilterChange }) => {
   const { permissions: perms = {} } = usePermissions();
   const canView = perms['alumnos:ver'] !== undefined ? perms['alumnos:ver'] : true;
   const canEdit = perms['students:edit'] !== undefined ? perms['students:edit'] : true;
   const canDelete = perms['students:delete'] !== undefined ? perms['students:delete'] : true;
-  // Campos para la vista de cards en móvil
-  const cardFields = [
-    { key: 'id', label: 'ID' },
-    { key: 'dni', label: 'DNI' },
-    { key: 'classroom_name', label: 'Salón' },
-    { key: 'status', label: 'Estado' },
-    // Datos de contacto útiles en detalle
-    { key: 'pediatrician_name', label: 'Pediatra' },
-    { key: 'pediatrician_phone', label: 'Tel. Pediatra', type: 'phone' },
-    { key: 'guardian_email', label: 'Email Tutor', type: 'email', valueFn: (s) => s.guardian_email || s.emergency_contact?.email_optional },
-    { key: 'guardian_phone', label: 'Tel. Tutor', type: 'phone', valueFn: (s) => s.guardian_phone || s.emergency_contact?.phone }
-  ];
+
+  // Filter fields for mobile view
+  const cardFields = studentFields.filter(field => field.showInMobile);
 
   // Función para combinar nombre completo
   const studentsWithFullName = students.map(s => ({
@@ -39,6 +32,23 @@ const MobileStudents = ({ students, onEdit, onDelete, searchTerm, setSearchTerm,
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
         />
+        <select
+          className="select-field"
+          style={{ width: '100%', marginTop: '10px' }}
+          value={statusFilter}
+          onChange={(e) => onStatusFilterChange(e.target.value)}
+        >
+          <option value="">Todos los Estados</option>
+          <option value="activo">Activo</option>
+          <option value="preinscripto">Preinscripto</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="inscripto">Inscripto</option>
+          <option value="egresado">Egresado</option>
+          <option value="sorteo">Sorteo</option>
+          <option value="inactivo">Inactivo</option>
+          <option value="rechazado">Rechazado</option>
+        </select>
+
       </div>
 
       <DataCardList

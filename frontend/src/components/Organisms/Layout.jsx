@@ -23,12 +23,16 @@ const Layout = ({ children, sidebar, header, className = '', isMobileMenuOpen = 
         <div className="mobile-menu-backdrop" onClick={props.onBackdropClick}></div>
       )}
       <div className={layoutClasses}>
-        {header && <header className="layout-header">{header}</header>}
-        <div className="layout-body">
-          <main className={mainContentClasses}>{children}</main>
-        </div>
-        {/* El sidebar está completamente fuera del flujo de layout */}
+        {/* Sidebar on the left */}
         {sidebar && <aside className="layout-sidebar">{sidebar}</aside>}
+
+        {/* content on the right (header + main) */}
+        <div className="app-content">
+          {header && <header className="layout-header">{header}</header>}
+          <div className="layout-body">
+            <main className={mainContentClasses}>{children}</main>
+          </div>
+        </div>
       </div>
     </>
   );

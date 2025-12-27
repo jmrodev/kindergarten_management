@@ -1,4 +1,4 @@
-// models/Student.js (updated with vaccination and document methods)
+// models/Student.js
 const { getConnection } = require('../db');
 
 class Student {
@@ -7,11 +7,9 @@ class Student {
     try {
       let query = `SELECT s.*,
                    a.street, a.number, a.city, a.provincia,
-                   ec.full_name as emergency_contact_name, ec.phone as emergency_contact_phone,
                    c.name as classroom_name
                    FROM student s
                    LEFT JOIN address a ON s.address_id = a.id
-                   LEFT JOIN emergency_contact ec ON s.emergency_contact_id = ec.id
                    LEFT JOIN classroom c ON s.classroom_id = c.id
                    WHERE 1=1`;
       const params = [];
@@ -21,12 +19,12 @@ class Student {
         query += ' AND s.status = ?';
         params.push(filters.status);
       }
-      
+
       if (filters.classroomId) {
         query += ' AND s.classroom_id = ?';
         params.push(filters.classroomId);
       }
-      
+
       if (filters.shift) {
         query += ' AND s.shift = ?';
         params.push(filters.shift);
@@ -47,13 +45,9 @@ class Student {
       const result = await conn.query(
         `SELECT s.*,
          a.street, a.number, a.city, a.provincia,
-         ec.full_name as emergency_contact_name, ec.relationship as emergency_contact_relationship,
-         ec.phone as emergency_contact_phone, ec.alternative_phone as emergency_contact_alt_phone,
-         ec.is_authorized_pickup as emergency_contact_authorized_pickup,
          c.name as classroom_name
          FROM student s
          LEFT JOIN address a ON s.address_id = a.id
-         LEFT JOIN emergency_contact ec ON s.emergency_contact_id = ec.id
          LEFT JOIN classroom c ON s.classroom_id = c.id
          WHERE s.id = ?`,
         [id]
@@ -67,37 +61,17 @@ class Student {
   static async create(studentData) {
     const conn = await getConnection();
     try {
-      // First create the emergency contact
-      if (studentData.emergency_contact) {
-        const ecResult = await conn.query(
-          `INSERT INTO emergency_contact (student_id, full_name, relationship, 
-           priority, phone, alternative_phone, is_authorized_pickup) 
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [
-            null, // student_id will be set after student creation
-            studentData.emergency_contact.full_name,
-            studentData.emergency_contact.relationship,
-            studentData.emergency_contact.priority || 1,
-            studentData.emergency_contact.phone,
-            studentData.emergency_contact.alternative_phone,
-            studentData.emergency_contact.is_authorized_pickup || false
-          ]
-        );
-        
-        studentData.emergency_contact_id = ecResult.insertId;
-      }
-
-      // Then create the student
+      // Create the student
       const result = await conn.query(
         `INSERT INTO student (first_name, middle_name_optional, third_name_optional, 
          paternal_surname, maternal_surname, nickname_optional, dni, birth_date, 
-         address_id, emergency_contact_id, classroom_id, shift, status, 
+         address_id, classroom_id, shift, status, 
          enrollment_date, withdrawal_date, health_insurance, affiliate_number, 
          allergies, medications, medical_observations, blood_type, 
          pediatrician_name, pediatrician_phone, photo_authorization, 
          trip_authorization, medical_attention_authorization, 
-         has_siblings_in_school, special_needs, vaccination_status, observations) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         has_siblings_in_school, special_needs, vaccination_status, observations, gender) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           studentData.first_name,
           studentData.middle_name_optional,
@@ -108,7 +82,6 @@ class Student {
           studentData.dni,
           studentData.birth_date,
           studentData.address_id,
-          studentData.emergency_contact_id,
           studentData.classroom_id,
           studentData.shift,
           studentData.status,
@@ -128,20 +101,12 @@ class Student {
           studentData.has_siblings_in_school || false,
           studentData.special_needs,
           studentData.vaccination_status || 'no_informado',
-          studentData.observations
+          studentData.observations,
+          studentData.gender || null
         ]
       );
-      
+
       const studentId = result.insertId;
-      
-      // Update emergency contact with the student ID
-      if (studentData.emergency_contact_id) {
-        await conn.query(
-          `UPDATE emergency_contact SET student_id = ? WHERE id = ?`,
-          [studentId, studentData.emergency_contact_id]
-        );
-      }
-      
       return studentId;
     } finally {
       conn.release();
@@ -162,7 +127,7 @@ class Student {
          blood_type = ?, pediatrician_name = ?, pediatrician_phone = ?, 
          photo_authorization = ?, trip_authorization = ?, 
          medical_attention_authorization = ?, has_siblings_in_school = ?, 
-         special_needs = ?, vaccination_status = ?, observations = ? 
+         special_needs = ?, vaccination_status = ?, observations = ?, gender = ? 
          WHERE id = ?`,
         [
           studentData.first_name,
@@ -194,27 +159,10 @@ class Student {
           studentData.special_needs,
           studentData.vaccination_status,
           studentData.observations,
+          studentData.gender,
           id
         ]
       );
-
-      // If emergency contact info was provided, update it too
-      if (studentData.emergency_contact && studentData.emergency_contact_id) {
-        await conn.query(
-          `UPDATE emergency_contact SET full_name = ?, relationship = ?, 
-           priority = ?, phone = ?, alternative_phone = ?, 
-           is_authorized_pickup = ? WHERE id = ?`,
-          [
-            studentData.emergency_contact.full_name,
-            studentData.emergency_contact.relationship,
-            studentData.emergency_contact.priority || 1,
-            studentData.emergency_contact.phone,
-            studentData.emergency_contact.alternative_phone,
-            studentData.emergency_contact.is_authorized_pickup || false,
-            studentData.emergency_contact_id
-          ]
-        );
-      }
 
       return result.affectedRows > 0;
     } finally {

@@ -246,22 +246,27 @@ router.get('/user-permissions', protect, async (req, res, next) => {
   console.log(`[user-permissions] Fetching permissions for user: ${userId}`);
 
   try {
-    // Get user's role
-    const userResult = await pool.query(
-      `SELECT s.role_id, r.role_name
-             FROM staff s
-             JOIN role r ON s.role_id = r.id
-             WHERE s.id = ? AND s.is_active = 1`,
-      [userId]
-    );
+    let roleId = req.user.role_id;
+    let roleName = req.user.role || 'Unknown';
 
-    if (userResult.length === 0) {
-      console.log(`[user-permissions] User ${userId} not found or inactive`);
-      return res.json({}); // No permissions for inactive/missing user
+    // If no role_id in token (legacy), try fetching from staff table
+    if (!roleId) {
+      const userResult = await pool.query(
+        `SELECT s.role_id, r.role_name
+                FROM staff s
+                JOIN role r ON s.role_id = r.id
+                WHERE s.id = ? AND s.is_active = 1`,
+        [userId]
+      );
+
+      if (userResult.length === 0) {
+        console.log(`[user-permissions] User ${userId} not found or inactive`);
+        return res.json({});
+      }
+      roleId = userResult[0].role_id;
+      roleName = userResult[0].role_name;
     }
 
-    const roleId = userResult[0].role_id;
-    const roleName = userResult[0].role_name;
     console.log(`[user-permissions] User ${userId} has role: ${roleName} (id: ${roleId})`);
 
     // Get all permissions for this role as a key:value map

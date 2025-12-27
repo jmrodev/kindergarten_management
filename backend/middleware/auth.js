@@ -5,27 +5,36 @@ const { AppError } = require('./errorHandler')
 const { getConnection } = require('../db')
 
 const generateToken = (user) => {
-  // Convertir BigInt a número o string para evitar problemas de serialización
-  let payload = {
-    id: typeof user.id === 'bigint' ? Number(user.id) : user.id,
-    role: user.role,
-  }
+  try {
+    // Convertir BigInt a número o string para evitar problemas de serialización
+    let payload = {
+      id: typeof user.id === 'bigint' ? Number(user.id) : user.id,
+      role: user.role,
+    }
 
-  // Si es un usuario del portal de padres (con Google), incluir información específica
-  if (user.google_user || user.google_id) {
-    payload.google_user = true
-    payload.google_id = user.google_id
-    payload.email = user.email
-    payload.name = user.name
-    payload.parent_portal_user = true // Indicar que es un usuario del portal de padres
-  } else {
-    // Para usuarios normales del sistema (staff), usar la información tradicional
-    payload.email = user.email
-  }
+    // Si es un usuario del portal de padres, incluir información específica
+    if (user.parent_portal_user) {
+      payload.google_user = !!user.google_id // Mantener flag si existe google_id
+      payload.google_id = user.google_id
+      payload.email = user.email
+      payload.name = user.name
+      payload.parent_portal_user = true // Indicar que es un usuario del portal de padres
+      payload.role_id = user.role_id // Ensure role_id is present if passed
+    } else {
+      // Para usuarios normales del sistema (staff), usar la información tradicional
+      payload.email = user.email
+      // Ensure role_id/role is present for Staff if needed, though 'role' above handles it
+    }
 
-  return jwt.sign(payload, process.env.JWT_SECRET || 'kindergarten_secret', {
-    expiresIn: '24h',
-  })
+    console.log('[generateToken] Payload:', payload);
+
+    return jwt.sign(payload, process.env.JWT_SECRET || 'kindergarten_secret', {
+      expiresIn: '24h',
+    })
+  } catch (error) {
+    console.error('[generateToken] Error generating token:', error);
+    throw error;
+  }
 }
 
 const protect = async (req, res, next) => {
@@ -67,6 +76,8 @@ const protect = async (req, res, next) => {
             email: result[0].email,
             name: result[0].name,
             google_id: result[0].google_id,
+            role_id: result[0].role_id,
+            role: 'Parent',
             parent_portal_user: true,
           }
         } finally {
@@ -264,23 +275,27 @@ const requireRolesOrPermission = (acceptedRoles, moduleKey, actionKey) => {
 }
 
 // Helper function to check user permission by querying the role_permission table
-const checkUserPermission = async (userId, moduleKey, actionKey) => {
+const checkUserPermission = async (userId, moduleKey, actionKey, roleId = null) => {
   const conn = await getConnection()
   try {
-    // First, get the user's role
-    const userResult = await conn.query(
-      `SELECT s.role_id, r.role_name
-       FROM staff s
-       JOIN role r ON s.role_id = r.id
-       WHERE s.id = ? AND s.is_active = 1`,
-      [userId]
-    )
+    let userRoleId = roleId
 
-    if (userResult.length === 0) {
-      return false
+    // If roleId not provided (legacy call), fetch from staff table
+    if (!userRoleId) {
+      // First, get the user's role
+      const userResult = await conn.query(
+        `SELECT s.role_id, r.role_name
+        FROM staff s
+        JOIN role r ON s.role_id = r.id
+        WHERE s.id = ? AND s.is_active = 1`,
+        [userId]
+      )
+
+      if (userResult.length === 0) {
+        return false
+      }
+      userRoleId = userResult[0].role_id
     }
-
-    const userRoleId = userResult[0].role_id
 
     // Check if the role has the requested permission
     const permissionResult = await conn.query(

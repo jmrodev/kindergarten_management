@@ -31,7 +31,7 @@ const request = async (url, options = {}) => {
 
   if (!res.ok) {
     const message =
-      (data && data.message) || res.statusText || 'Error en la petición'
+      (data && (data.message || data.error)) || res.statusText || 'Error en la petición'
     const err = new Error(message)
     err.status = res.status
     err.payload = data

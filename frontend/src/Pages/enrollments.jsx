@@ -11,6 +11,7 @@ import TableHeader from '../components/Atoms/TableHeader';
 import TableBody from '../components/Atoms/TableBody';
 import Modal from '../components/Atoms/Modal';
 import FormGroup from '../components/Molecules/FormGroup';
+import '../components/Organisms/organisms.css';
 
 const Enrollments = () => {
   const [enrollments, setEnrollments] = useState([
@@ -38,7 +39,7 @@ const Enrollments = () => {
 
   const filteredEnrollments = enrollments.filter(enrollment => {
     const matchesSearch = normalizeText(enrollment.studentName).includes(normalizeText(searchTerm)) ||
-                          enrollment.dni.includes(searchTerm);
+      enrollment.dni.includes(searchTerm);
     const matchesStatus = selectedStatus === 'Todos' || enrollment.status === selectedStatus;
     return matchesSearch && matchesStatus;
   });
@@ -136,22 +137,21 @@ const Enrollments = () => {
               <TableCell>
                 <span className={`status-badge ${enrollment.status === 'pendiente' ? 'status-pendiente' : enrollment.status === 'aprobado' ? 'status-aprobado' : enrollment.status === 'inscrito' ? 'status-inscrito' : 'status-rechazado'}`}>
                   {enrollment.status === 'pendiente' ? 'Pendiente' :
-                   enrollment.status === 'aprobado' ? 'Aprobado' :
-                   enrollment.status === 'inscrito' ? 'Inscrito' :
-                   'Rechazado'}
+                    enrollment.status === 'aprobado' ? 'Aprobado' :
+                      enrollment.status === 'inscrito' ? 'Inscrito' :
+                        'Rechazado'}
                 </span>
               </TableCell>
               <TableCell>{enrollment.enrollmentDate}</TableCell>
               <TableCell>
                 <div className="actions-cell">
-                  <Button
-                    variant="secondary"
-                    size="small"
-                    className="action-btn"
+                  <button
+                    className="icon-action-btn edit-btn"
                     onClick={() => handleEdit(enrollment)}
+                    title="Editar"
                   >
-                    Editar
-                  </Button>
+                    ✏️
+                  </button>
                   <Button variant="success" size="small" className="action-btn">Aprobar</Button>
                   <Button variant="danger" size="small" className="action-btn">Rechazar</Button>
                 </div>

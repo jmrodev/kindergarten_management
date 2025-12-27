@@ -43,7 +43,7 @@ const DataCardList = ({
         )}
 
         <div className="data-card-list">
-          {items.map((item, index) => (
+          {items && items.map((item, index) => (
             <Card
               key={item.id || index}
               className="data-card-item"
@@ -61,6 +61,26 @@ const DataCardList = ({
                       </div>
                     )}
                   </div>
+                  {/* Summary fields */}
+                  <div className="data-card-fields summary-only">
+                    {fields && fields.slice(0, 3).map((field, idx) => {
+                      const value = field.valueFn ? field.valueFn(item) : item[field.key];
+                      if (field.key === 'status') {
+                        return (
+                          <div key={idx} className="data-card-field">
+                            <span className="field-label">{field.label}:</span>
+                            <span className={`status-badge status-${(value || 'pendiente').toLowerCase()}`}>{value || 'N/A'}</span>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div key={idx} className="data-card-field">
+                          <span className="field-label">{field.label}:</span>
+                          <span className="field-value">{value || 'N/A'}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </Card>
@@ -77,7 +97,7 @@ const DataCardList = ({
         >
           <div className="data-card-detail-modal">
             <div className="data-card-fields">
-              {fields.map((field, idx) => {
+              {fields && fields.map((field, idx) => {
                 const rawValue = field.valueFn ? field.valueFn(selectedItem) : selectedItem[field.key];
                 const value = rawValue || '';
 

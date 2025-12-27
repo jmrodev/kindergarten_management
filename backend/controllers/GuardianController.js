@@ -35,7 +35,13 @@ class GuardianController {
 
     async getAllGuardians(req, res) {
         try {
-            const guardians = await GuardianRepository.getAll();
+            const sanitizedQuery = sanitizeObject(req.query, sanitizeWhitespace);
+            const filters = {};
+
+            if (sanitizedQuery.roleId) filters.roleId = sanitizedQuery.roleId;
+            if (sanitizedQuery.dni) filters.dni = sanitizedQuery.dni;
+
+            const guardians = await GuardianRepository.getAll({ filters });
             res.status(200).json(guardians);
         } catch (error) {
             console.error('Error in getAllGuardians:', error);

@@ -1,0 +1,5 @@
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=cima1255
+DB_NAME=kindergarten_db
+PORT=5000

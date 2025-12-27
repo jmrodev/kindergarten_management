@@ -15,14 +15,14 @@ const FieldRow = ({ label, value }) => (
     </TableRow>
 )
 
-const TeacherDetailModal = ({ teacher, isOpen, onClose }) => {
-    if (!teacher) return null
+const StaffDetailModal = ({ staff, isOpen, onClose }) => {
+    if (!staff) return null
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={`Detalle del Maestro`} size="lg">
+        <Modal isOpen={isOpen} onClose={onClose} title={`Detalle del Personal`} size="lg">
             <Card>
                 <div className="card-content">
-                    <Text variant="h2">{teacher.name || teacher.full_name || 'Maestro'}</Text>
+                    <Text variant="h2">{staff.name || staff.full_name || 'Personal'}</Text>
 
                     <Table bordered responsive>
                         <TableHeader>
@@ -32,14 +32,13 @@ const TeacherDetailModal = ({ teacher, isOpen, onClose }) => {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <FieldRow label="ID" value={teacher.id} />
-                            <FieldRow label="Nombre" value={teacher.name || teacher.full_name} />
-                            <FieldRow label="DNI" value={teacher.dni} />
-                            <FieldRow label="Email" value={teacher.email} />
-                            <FieldRow label="Salón asignado" value={teacher.classroom} />
-                            <FieldRow label="Especialidad" value={teacher.specialty} />
-                            <FieldRow label="Teléfono" value={teacher.phone} />
-                            <FieldRow label="Turno" value={teacher.shift} />
+                            <FieldRow label="ID" value={staff.id} />
+                            <FieldRow label="Nombre" value={staff.name || staff.full_name} />
+                            <FieldRow label="Rol" value={staff.role_name} />
+                            <FieldRow label="DNI" value={staff.dni} />
+                            <FieldRow label="Email" value={staff.email} />
+                            <FieldRow label="Salón asignado" value={staff.classroom} />
+                            <FieldRow label="Teléfono" value={staff.phone} />
                         </TableBody>
                     </Table>
                 </div>
@@ -48,4 +47,4 @@ const TeacherDetailModal = ({ teacher, isOpen, onClose }) => {
     )
 }
 
-export default TeacherDetailModal
+export default StaffDetailModal

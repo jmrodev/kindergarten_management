@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import Modal from '../components/Atoms/Modal';
-import FormGroup from '../components/Molecules/FormGroup';
-import Input from '../components/Atoms/Input';
 import Button from '../components/Atoms/Button';
 import Loading from '../components/Atoms/Loading';
 import ErrorMessage from '../components/Atoms/ErrorMessage';
@@ -10,18 +8,33 @@ import DesktopStudents from '../components/Organisms/DesktopStudents';
 import MobileStudents from '../components/Organisms/MobileStudents';
 import StudentDetailModal from '../components/Organisms/StudentDetailModal';
 import studentsService from '../services/studentsService';
+import StudentWizard from '../components/Organisms/StudentWizard';
+import Pagination from '../components/Atoms/Pagination';
 
 const Students = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [limit] = useState(10); // Standard mobile-friendly limit
+  const [statusFilter, setStatusFilter] = useState('');
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [currentStudent, setCurrentStudent] = useState(null);
   const [detailStudent, setDetailStudent] = useState(null);
-  const [formState, setFormState] = useState({
-    // Datos personales
+  const [wizardSavingStatus, setWizardSavingStatus] = useState('saved');
+  const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false);
+
+  const [draftData, setDraftData] = useState(null);
+  const [isFetchingDetails, setIsFetchingDetails] = useState(false);
+
+  // Initial Form State
+  const initialFormState = {
     first_name: '',
     middle_name_optional: '',
     third_name_optional: '',
@@ -31,15 +44,11 @@ const Students = () => {
     dni: '',
     birth_date: '',
     status: 'activo',
-    // Dirección
-    address: {
-      street: '',
-      number: '',
-      city: '',
-      provincia: '',
-      postal_code_optional: ''
-    },
-    // Salud
+    street: '',
+    number: '',
+    city: '',
+    provincia: '',
+    postal_code_optional: '',
     blood_type: '',
     health_insurance: '',
     allergies: '',
@@ -48,32 +57,40 @@ const Students = () => {
     medical_observations: '',
     pediatrician_name: '',
     pediatrician_phone: '',
-    // Autorizaciones
     photo_authorization: false,
     trip_authorization: false,
     medical_attention_authorization: false,
-    // Contacto de emergencia
-    emergency_contact: {
-      full_name: '',
-      relationship: '',
-      phone: '',
-      alternative_phone: '',
-      is_authorized_pickup: false
-    }
-  });
+    guardians: []
+  };
 
-  // Cargar estudiantes al montar el componente
+  const [wizardData, setWizardData] = useState(initialFormState);
+
+  // Load students
   useEffect(() => {
     loadStudents();
-  }, []);
+  }, [page, statusFilter]); // Reload when page or status changes
 
   const loadStudents = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await studentsService.getAll();
-      // Backend returns { status: 'success', data: [...] }
-      setStudents(Array.isArray(response) ? response : (response.data || []));
+      // If searchTerm exists, we might want to use search endpoint instead of getAll with pagination, 
+      // or ensure search endpoint also supports pagination.
+      // For now, let's assume search handles its own filtering logic or we use client-side filtering 
+      // for small datasets returned by search. 
+      // However, if we are paginating, client-side filtering on a page is weird.
+      // Ideally, the backend search should be paginated too.
+      // But for this task, let's focus on the main list pagination.
+
+      const response = await studentsService.getAll({ page, limit, status: statusFilter });
+
+      if (response.data && response.meta) {
+        setStudents(response.data);
+        setTotalPages(response.meta.totalPages);
+      } else {
+        // Fallback for non-paginated response or error structure
+        setStudents(Array.isArray(response) ? response : (response.data || []));
+      }
     } catch (err) {
       console.error('Error loading students:', err);
       setError(err.message || 'Error al cargar estudiantes');
@@ -82,180 +99,143 @@ const Students = () => {
     }
   };
 
-  const normalizeText = (text) => {
-    return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u0386]/g, '');
-  };
+  const normalizeText = (text) => text.toLowerCase().normalize('NFD').replace(/[\u0300-\u0386]/g, '');
 
   const filteredStudents = students.filter(student => {
     const fullName = `${student.first_name} ${student.paternal_surname || ''} ${student.maternal_surname || ''}`.toLowerCase();
-    return normalizeText(fullName).includes(normalizeText(searchTerm)) ||
-      (student.dni && student.dni.includes(searchTerm));
+    return normalizeText(fullName).includes(normalizeText(searchTerm)) || (student.dni && student.dni.includes(searchTerm));
   });
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
-    // Manejar campos anidados (address.street, emergency_contact.phone, etc.)
-    if (name.includes('.')) {
-      const [parent, field] = name.split('.');
-      setFormState(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent],
-          [field]: type === 'checkbox' ? checked : value
-        }
-      }));
-    } else {
-      setFormState(prev => ({
-        ...prev,
-        [name]: type === 'checkbox' ? checked : value
-      }));
+  // Local Storage Save Logic
+  const handleWizardSaveDraft = (data, step) => {
+    if (!currentStudent) {
+      // Only save draft for new students (creation mode)
+      setWizardSavingStatus('saving');
+      localStorage.setItem('student_creation_draft', JSON.stringify({ data, step }));
+      // Simulate network delay for UX
+      setTimeout(() => setWizardSavingStatus('saved'), 500);
     }
+    setWizardData(data); // Sync state but don't strictly need it if Wizard maintains it, but useful for final submit
   };
 
-  const handleEdit = (student) => {
+  const handleEdit = async (student) => {
     setCurrentStudent(student);
-    setFormState({
-      // Datos personales
-      first_name: student.first_name || '',
-      middle_name_optional: student.middle_name_optional || '',
-      third_name_optional: student.third_name_optional || '',
-      paternal_surname: student.paternal_surname || '',
-      maternal_surname: student.maternal_surname || '',
-      nickname_optional: student.nickname_optional || '',
-      dni: student.dni || '',
-      birth_date: student.birth_date || '',
-      status: student.status || 'activo',
-      // Dirección
-      address: student.address || {
-        street: '',
-        number: '',
-        city: '',
-        provincia: '',
-        postal_code_optional: ''
-      },
-      // Salud
-      blood_type: student.blood_type || '',
-      health_insurance: student.health_insurance || '',
-      allergies: student.allergies || '',
-      medications: student.medications || '',
-      special_needs: student.special_needs || '',
-      medical_observations: student.medical_observations || '',
-      pediatrician_name: student.pediatrician_name || '',
-      pediatrician_phone: student.pediatrician_phone || '',
-      // Autorizaciones
-      photo_authorization: student.photo_authorization || false,
-      trip_authorization: student.trip_authorization || false,
-      medical_attention_authorization: student.medical_attention_authorization || false,
-      // Contacto de emergencia
-      emergency_contact: student.emergency_contact || {
-        full_name: '',
-        relationship: '',
-        phone: '',
-        alternative_phone: '',
-        is_authorized_pickup: false
-      }
-    });
+    setIsFetchingDetails(true);
+    // Initial partial set to open modal immediately (will show loading spinner via isLoading prop)
+    const partialData = {
+      ...initialFormState,
+      ...student,
+      ...(student.address || {}),
+      guardians: student.guardians || []
+    };
+    setWizardData(partialData);
     setIsModalOpen(true);
-  };
 
-  const handleSave = async () => {
+    // Fetch full data
     try {
-      if (currentStudent) {
-        // Actualizar estudiante existente
-        await studentsService.update(currentStudent.id, formState);
-      } else {
-        // Crear nuevo estudiante
-        await studentsService.create(formState);
-      }
-      // Recargar lista
-      await loadStudents();
-      setIsModalOpen(false);
+      const detailed = await studentsService.getById(student.id);
+      const fullData = Array.isArray(detailed) ? (detailed[0] || student) : (detailed.data || detailed || student);
+
+      const safeStudent = {
+        ...initialFormState,
+        ...fullData,
+        ...(fullData.address || {}),
+        guardians: fullData.guardians || []
+      };
+
+      setWizardData(safeStudent);
+      setCurrentStudent(fullData);
     } catch (err) {
-      console.error('Error saving student:', err);
-      setError(err.message || 'Error al guardar estudiante');
+      console.error('Error loading full student details:', err);
+      // If error, we should probably close modal or warn, but keeping it open with partial data is risky.
+      // Ideally show error inside modal.
+    } finally {
+      setIsFetchingDetails(false);
     }
   };
 
   const handleAdd = () => {
     setCurrentStudent(null);
-    setFormState({
-      // Datos personales
-      first_name: '',
-      middle_name_optional: '',
-      third_name_optional: '',
-      paternal_surname: '',
-      maternal_surname: '',
-      nickname_optional: '',
-      dni: '',
-      birth_date: '',
-      status: 'activo',
-      // Dirección
-      address: {
-        street: '',
-        number: '',
-        city: '',
-        provincia: '',
-        postal_code_optional: ''
-      },
-      // Salud
-      blood_type: '',
-      health_insurance: '',
-      allergies: '',
-      medications: '',
-      special_needs: '',
-      medical_observations: '',
-      pediatrician_name: '',
-      pediatrician_phone: '',
-      // Autorizaciones
-      photo_authorization: false,
-      trip_authorization: false,
-      medical_attention_authorization: false,
-      // Contacto de emergencia
-      emergency_contact: {
-        full_name: '',
-        relationship: '',
-        phone: '',
-        alternative_phone: '',
-        is_authorized_pickup: false
-      }
-    });
-    setIsModalOpen(true);
-  };
-
-  const isMobile = useIsMobile();
-
-  const handleView = async (student) => {
-    try {
-      // Try to fetch the full student record by ID to include all DB fields
-      const detailed = await studentsService.getById(student.id);
-      const fullData = Array.isArray(detailed) ? (detailed[0] || student) : (detailed.data || detailed || student);
-      setDetailStudent(fullData);
-    } catch (e) {
-      console.warn('Falling back to list student data for detail view', e);
-      setDetailStudent(student);
-    } finally {
-      setIsDetailOpen(true);
+    // Check for draft
+    const draft = localStorage.getItem('student_creation_draft');
+    if (draft) {
+      setDraftData(JSON.parse(draft));
+      setIsRecoveryModalOpen(true);
+    } else {
+      setWizardData(initialFormState);
+      setIsModalOpen(true);
     }
   };
 
-  const handleDelete = async (studentId) => {
-    if (!window.confirm('¿Está seguro de eliminar este estudiante?')) return;
+  const handleRecoverDraft = () => {
+    if (draftData) {
+      const { data, step } = draftData;
+      setWizardData({ ...data, currentStep: step });
+    }
+    setIsRecoveryModalOpen(false);
+    setIsModalOpen(true);
+  };
 
+  const handleDiscardDraft = () => {
+    localStorage.removeItem('student_creation_draft');
+    setWizardData(initialFormState);
+    setIsRecoveryModalOpen(false);
+    setIsModalOpen(true);
+  };
+
+  const handleWizardSubmit = async (finalData) => {
     try {
-      await studentsService.delete(studentId);
-      // Recargar lista
+      if (currentStudent) {
+        await studentsService.update(currentStudent.id, finalData);
+      } else {
+        await studentsService.create(finalData);
+        // Clear draft
+        localStorage.removeItem('student_creation_draft');
+      }
       await loadStudents();
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error('Error saving student:', err);
+      // Pass error to wizard? Or show alert
+      alert(`Error al guardar: ${err.message}`);
+    }
+  };
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState(null);
+
+  const confirmDelete = (studentId) => {
+    setStudentToDelete(studentId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!studentToDelete) return;
+    try {
+      await studentsService.delete(studentToDelete);
+      await loadStudents();
+      setIsDeleteModalOpen(false);
+      setStudentToDelete(null);
     } catch (err) {
       console.error('Error deleting student:', err);
       setError(err.message || 'Error al eliminar estudiante');
     }
   };
 
-  if (loading) return <Loading message="Cargando estudiantes..." />;
-  if (error) return <ErrorMessage message={error} onRetry={loadStudents} />;
+  const handleView = async (student) => {
+    try {
+      const detailed = await studentsService.getById(student.id);
+      const fullData = Array.isArray(detailed) ? (detailed[0] || student) : (detailed.data || detailed || student);
+      setDetailStudent(fullData);
+    } catch (e) {
+      console.warn('Falling back to list student data', e);
+      setDetailStudent(student);
+    } finally {
+      setIsDetailOpen(true);
+    }
+  };
 
-
+  const isMobile = useIsMobile();
 
   return (
     <>
@@ -263,355 +243,84 @@ const Students = () => {
         <MobileStudents
           students={filteredStudents}
           onEdit={handleEdit}
-          onDelete={handleDelete}
+          onDelete={confirmDelete}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           onView={handleView}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
         />
       ) : (
         <DesktopStudents
           students={filteredStudents}
           onEdit={handleEdit}
-          onDelete={handleDelete}
+          onDelete={confirmDelete}
           onAdd={handleAdd}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           onView={handleView}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
         />
       )}
 
+      {/* Pagination Controls */}
+      {!loading && !error && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
+      )}
+
+      {/* Wizard Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={currentStudent ? "Editar Estudiante" : "Agregar Estudiante"}
+        title={currentStudent ? "Editar Estudiante" : "Nuevo Estudiante"}
+        size="large" // Assuming Modal supports size or we rely on default width
       >
-        <div style={{ maxHeight: '70vh', overflowY: 'auto', padding: '0 10px' }}>
-
-          {/* DATOS PERSONALES */}
-          <h3 style={{ marginTop: '20px', marginBottom: '10px', color: '#2c3e50', borderBottom: '2px solid #3498db', paddingBottom: '5px' }}>
-            Datos Personales
-          </h3>
-          <FormGroup>
-            <Input
-              label="Nombre *"
-              name="first_name"
-              value={formState.first_name}
-              onChange={handleChange}
-              required
-            />
-          </FormGroup>
-          <FormGroup>
-            <Input
-              label="Segundo Nombre"
-              name="middle_name_optional"
-              value={formState.middle_name_optional}
-              onChange={handleChange}
-            />
-          </FormGroup>
-          <FormGroup>
-            <Input
-              label="Tercer Nombre"
-              name="third_name_optional"
-              value={formState.third_name_optional}
-              onChange={handleChange}
-            />
-          </FormGroup>
-          <FormGroup>
-            <Input
-              label="Apellido Paterno *"
-              name="paternal_surname"
-              value={formState.paternal_surname}
-              onChange={handleChange}
-              required
-            />
-          </FormGroup>
-          <FormGroup>
-            <Input
-              label="Apellido Materno"
-              name="maternal_surname"
-              value={formState.maternal_surname}
-              onChange={handleChange}
-            />
-          </FormGroup>
-          <FormGroup>
-            <Input
-              label="Apodo"
-              name="nickname_optional"
-              value={formState.nickname_optional}
-              onChange={handleChange}
-            />
-          </FormGroup>
-          <FormGroup>
-            <Input
-              label="DNI *"
-              name="dni"
-              value={formState.dni}
-              onChange={handleChange}
-              required
-            />
-          </FormGroup>
-          <FormGroup>
-            <Input
-              label="Fecha de Nacimiento *"
-              name="birth_date"
-              type="date"
-              value={formState.birth_date}
-              onChange={handleChange}
-              required
-            />
-          </FormGroup>
-          <FormGroup>
-            <label>Estado</label>
-            <select
-              name="status"
-              value={formState.status}
-              onChange={handleChange}
-              className="select-field"
-            >
-              <option value="preinscripto">Preinscripto</option>
-              <option value="pendiente">Pendiente</option>
-              <option value="approved">Aprobado</option>
-              <option value="sorteo">Sorteo</option>
-              <option value="inscripto">Inscripto</option>
-              <option value="activo">Activo</option>
-              <option value="inactivo">Inactivo</option>
-              <option value="egresado">Egresado</option>
-              <option value="rechazado">Rechazado</option>
-            </select>
-          </FormGroup>
-
-          {/* DIRECCIÓN */}
-          <h3 style={{ marginTop: '20px', marginBottom: '10px', color: '#2c3e50', borderBottom: '2px solid #3498db', paddingBottom: '5px' }}>
-            Dirección
-          </h3>
-          <FormGroup>
-            <Input
-              label="Calle"
-              name="address.street"
-              value={formState.address.street}
-              onChange={handleChange}
-            />
-          </FormGroup>
-          <FormGroup>
-            <Input
-              label="Número"
-              name="address.number"
-              value={formState.address.number}
-              onChange={handleChange}
-            />
-          </FormGroup>
-          <FormGroup>
-            <Input
-              label="Ciudad"
-              name="address.city"
-              value={formState.address.city}
-              onChange={handleChange}
-            />
-          </FormGroup>
-          <FormGroup>
-            <Input
-              label="Provincia"
-              name="address.provincia"
-              value={formState.address.provincia}
-              onChange={handleChange}
-            />
-          </FormGroup>
-          <FormGroup>
-            <Input
-              label="Código Postal"
-              name="address.postal_code_optional"
-              value={formState.address.postal_code_optional}
-              onChange={handleChange}
-            />
-          </FormGroup>
-
-          {/* SALUD */}
-          <h3 style={{ marginTop: '20px', marginBottom: '10px', color: '#2c3e50', borderBottom: '2px solid #3498db', paddingBottom: '5px' }}>
-            Información de Salud
-          </h3>
-          <FormGroup>
-            <Input
-              label="Grupo Sanguíneo"
-              name="blood_type"
-              value={formState.blood_type}
-              onChange={handleChange}
-              placeholder="ej: O+, A-, B+"
-            />
-          </FormGroup>
-          <FormGroup>
-            <Input
-              label="Obra Social"
-              name="health_insurance"
-              value={formState.health_insurance}
-              onChange={handleChange}
-            />
-          </FormGroup>
-          <FormGroup>
-            <label>Alergias</label>
-            <textarea
-              name="allergies"
-              value={formState.allergies}
-              onChange={handleChange}
-              className="input-field"
-              rows="2"
-              placeholder="Detalle de alergias conocidas"
-            />
-          </FormGroup>
-          <FormGroup>
-            <label>Medicamentos</label>
-            <textarea
-              name="medications"
-              value={formState.medications}
-              onChange={handleChange}
-              className="input-field"
-              rows="2"
-              placeholder="Medicamentos que toma regularmente"
-            />
-          </FormGroup>
-          <FormGroup>
-            <label>Necesidades Especiales</label>
-            <textarea
-              name="special_needs"
-              value={formState.special_needs}
-              onChange={handleChange}
-              className="input-field"
-              rows="2"
-              placeholder="Necesidades especiales o condiciones médicas"
-            />
-          </FormGroup>
-          <FormGroup>
-            <label>Observaciones Médicas</label>
-            <textarea
-              name="medical_observations"
-              value={formState.medical_observations}
-              onChange={handleChange}
-              className="input-field"
-              rows="2"
-              placeholder="Cualquier otra observación médica relevante"
-            />
-          </FormGroup>
-          <FormGroup>
-            <Input
-              label="Nombre del Pediatra"
-              name="pediatrician_name"
-              value={formState.pediatrician_name}
-              onChange={handleChange}
-            />
-          </FormGroup>
-          <FormGroup>
-            <Input
-              label="Teléfono del Pediatra"
-              name="pediatrician_phone"
-              value={formState.pediatrician_phone}
-              onChange={handleChange}
-            />
-          </FormGroup>
-
-          {/* AUTORIZACIONES */}
-          <h3 style={{ marginTop: '20px', marginBottom: '10px', color: '#2c3e50', borderBottom: '2px solid #3498db', paddingBottom: '5px' }}>
-            Autorizaciones
-          </h3>
-          <FormGroup>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <input
-                type="checkbox"
-                name="photo_authorization"
-                checked={formState.photo_authorization}
-                onChange={handleChange}
-              />
-              Autorización de Fotos
-            </label>
-          </FormGroup>
-          <FormGroup>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <input
-                type="checkbox"
-                name="trip_authorization"
-                checked={formState.trip_authorization}
-                onChange={handleChange}
-              />
-              Autorización de Viajes/Salidas
-            </label>
-          </FormGroup>
-          <FormGroup>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <input
-                type="checkbox"
-                name="medical_attention_authorization"
-                checked={formState.medical_attention_authorization}
-                onChange={handleChange}
-              />
-              Autorización de Atención Médica
-            </label>
-          </FormGroup>
-
-          {/* CONTACTO DE EMERGENCIA */}
-          <h3 style={{ marginTop: '20px', marginBottom: '10px', color: '#2c3e50', borderBottom: '2px solid #3498db', paddingBottom: '5px' }}>
-            Contacto de Emergencia
-          </h3>
-          <FormGroup>
-            <Input
-              label="Nombre Completo"
-              name="emergency_contact.full_name"
-              value={formState.emergency_contact.full_name}
-              onChange={handleChange}
-            />
-          </FormGroup>
-          <FormGroup>
-            <label>Relación</label>
-            <select
-              name="emergency_contact.relationship"
-              value={formState.emergency_contact.relationship}
-              onChange={handleChange}
-              className="select-field"
-            >
-              <option value="">Seleccionar...</option>
-              <option value="madre">Madre</option>
-              <option value="padre">Padre</option>
-              <option value="tutor">Tutor</option>
-              <option value="abuelo">Abuelo</option>
-              <option value="abuela">Abuela</option>
-              <option value="tio">Tío</option>
-              <option value="tia">Tía</option>
-              <option value="otro">Otro</option>
-            </select>
-          </FormGroup>
-          <FormGroup>
-            <Input
-              label="Teléfono"
-              name="emergency_contact.phone"
-              value={formState.emergency_contact.phone}
-              onChange={handleChange}
-            />
-          </FormGroup>
-          <FormGroup>
-            <Input
-              label="Teléfono Alternativo"
-              name="emergency_contact.alternative_phone"
-              value={formState.emergency_contact.alternative_phone}
-              onChange={handleChange}
-            />
-          </FormGroup>
-          <FormGroup>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <input
-                type="checkbox"
-                name="emergency_contact.is_authorized_pickup"
-                checked={formState.emergency_contact.is_authorized_pickup}
-                onChange={handleChange}
-              />
-              Autorizado para retirar al estudiante
-            </label>
-          </FormGroup>
-        </div>
-
-        <div className="modal-footer">
-          <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-          <Button variant="primary" onClick={handleSave}>Guardar</Button>
-        </div>
+        <StudentWizard
+          initialData={wizardData}
+          onSaveDraft={handleWizardSaveDraft}
+          onSubmit={handleWizardSubmit}
+          isLoading={isFetchingDetails}
+          title={null} // Modal header already has title
+          savingStatus={currentStudent ? 'saved' : wizardSavingStatus}
+        />
       </Modal>
 
       <StudentDetailModal student={detailStudent} isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} />
+
+      {/* Draft Recovery Modal */}
+      <Modal
+        isOpen={isRecoveryModalOpen}
+        onClose={() => setIsRecoveryModalOpen(false)}
+        title="Recuperar Borrador"
+      >
+        <div style={{ padding: '20px' }}>
+          <p>Existe un borrador de estudiante no guardado. ¿Desea recuperarlo o empezar de nuevo?</p>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+            <Button variant="secondary" onClick={handleDiscardDraft}>Empezar de Nuevo</Button>
+            <Button variant="primary" onClick={handleRecoverDraft}>Recuperar Borrador</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Confirmar Eliminación"
+      >
+        <div style={{ padding: '20px' }}>
+          <p>¿Está seguro que desea eliminar este estudiante? Esta acción no se puede deshacer.</p>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+            <Button variant="secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</Button>
+            <Button variant="danger" onClick={handleDelete}>Eliminar</Button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 };

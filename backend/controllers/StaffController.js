@@ -6,8 +6,27 @@ const { sanitizeObject, sanitizeWhitespace } = require('../utils/sanitization');
 const StaffController = {
     async getAllStaff(req, res) {
         try {
-            const staff = await StaffRepository.getAll();
-            res.json(staff);
+            const { page = 1, limit = 10, ...filters } = req.query;
+            const offset = (page - 1) * limit;
+
+            const [staff, total] = await Promise.all([
+                StaffRepository.getAll({
+                    filters,
+                    pagination: { limit: parseInt(limit), offset: parseInt(offset) }
+                }),
+                StaffRepository.count(filters)
+            ]);
+
+            res.json({
+                status: 'success',
+                data: staff,
+                meta: {
+                    total,
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    totalPages: Math.ceil(total / limit)
+                }
+            });
         } catch (error) {
             console.error('Error in getAllStaff:', error);
             throw new AppError('Error al obtener personal', 500);
@@ -31,12 +50,12 @@ const StaffController = {
         try {
             const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
             const staffData = { ...sanitizedBody };
-            
+
             if (staffData.dni) {
                 const passwordHash = await bcrypt.hash(staffData.dni, 10);
                 staffData.password_hash = passwordHash;
             }
-            
+
             const id = await StaffRepository.create(staffData);
             const newStaff = await StaffRepository.getById(id);
             res.status(201).json(newStaff);
@@ -92,16 +111,16 @@ const StaffController = {
     async deleteStaff(req, res) {
         try {
             const staff = await StaffRepository.getById(req.params.id);
-            
+
             if (!staff) {
                 throw new AppError('Personal no encontrado', 404);
             }
-            
+
             // Proteger roles de dirección (Administrator y Director)
             if (staff.role_name === 'Administrator' || staff.role_name === 'Director') {
                 throw new AppError('No se puede eliminar usuarios con roles de dirección (Admin/Director)', 403);
             }
-            
+
             await StaffRepository.delete(req.params.id);
             res.json({ message: 'Personal eliminado correctamente' });
         } catch (error) {

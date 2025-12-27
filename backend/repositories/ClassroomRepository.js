@@ -6,13 +6,24 @@ class ClassroomRepository {
     const conn = await getConnection();
     try {
       const { filters = {}, pagination = {} } = options;
-      let query = 'SELECT * FROM classroom WHERE 1=1';
+      let query = `
+        SELECT c.*, 
+               s.first_name as teacher_first_name, 
+               s.paternal_surname as teacher_surname
+        FROM classroom c
+        LEFT JOIN staff s ON c.teacher_id = s.id
+        WHERE 1=1
+      `;
       const params = [];
 
       // Apply filters
       if (filters.isActive !== undefined) {
-        query += ' AND is_active = ?';
+        query += ' AND c.is_active = ?';
         params.push(filters.isActive);
+      }
+
+      if (['true', '1', true, 1].includes(filters.unassignedOnly)) {
+        query += ' AND c.teacher_id IS NULL';
       }
 
       // Apply pagination
@@ -24,7 +35,7 @@ class ClassroomRepository {
         params.push(pagination.limit);
       }
 
-      query += ' ORDER BY name';
+      // query += ' ORDER BY c.name'; // Implicit sort order if needed or add explicit
 
       const results = await conn.query(query, params);
       return results;
@@ -36,7 +47,14 @@ class ClassroomRepository {
   static async getById(id) {
     const conn = await getConnection();
     try {
-      const result = await conn.query('SELECT * FROM classroom WHERE id = ?', [id]);
+      const result = await conn.query(`
+        SELECT c.*, 
+               s.first_name as teacher_first_name, 
+               s.paternal_surname as teacher_surname
+        FROM classroom c
+        LEFT JOIN staff s ON c.teacher_id = s.id
+        WHERE c.id = ?
+      `, [id]);
       return result[0];
     } finally {
       conn.release();
@@ -114,7 +132,7 @@ class ClassroomRepository {
   static async count(filters = {}) {
     const conn = await getConnection();
     try {
-      let query = 'SELECT COUNT(*) as count FROM classroom WHERE 1=1';
+      let query = 'SELECT CAST(COUNT(*) AS SIGNED) as count FROM classroom WHERE 1=1';
       const params = [];
 
       if (filters.isActive !== undefined) {

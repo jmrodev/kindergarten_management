@@ -128,7 +128,7 @@ router.patch('/:submissionId/approve', protect, requireRoles(['Administrator', '
 
     try {
         const conn = await pool.getConnection();
-        
+
         try {
             await conn.beginTransaction();
 
@@ -182,7 +182,7 @@ router.patch('/:submissionId/reject', protect, requireRoles(['Administrator', 'D
 
     try {
         const conn = await pool.getConnection();
-        
+
         try {
             await conn.beginTransaction();
 
@@ -542,8 +542,9 @@ router.get('/pre-enrolled', protect, requireRoles(['Administrator', 'Directivo',
                 g.first_name as guardian_first_name,
                 g.paternal_surname as guardian_paternal_surname,
                 g.phone as guardian_phone,
-                COUNT(sd.id) as total_documents,
-                SUM(CASE WHEN sd.delivery_verified = TRUE THEN 1 ELSE 0 END) as verified_documents
+                COUNT(sd.id) as total_documents_bigint,
+                CAST(COUNT(sd.id) AS SIGNED) as total_documents,
+                CAST(SUM(CASE WHEN sd.delivery_verified = TRUE THEN 1 ELSE 0 END) AS SIGNED) as verified_documents
             FROM student s
             LEFT JOIN parent_portal_submissions pps ON s.id = pps.student_id
             LEFT JOIN student_guardian sg ON s.id = sg.student_id AND sg.is_primary = true

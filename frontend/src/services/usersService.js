@@ -5,8 +5,20 @@ const usersService = {
    * Get all staff/users
    * @returns {Promise<Array>} Array of users
    */
-  async getAll() {
-    return api.get('/api/staff')
+  async getAll({ page, limit, ...filters } = {}) {
+    const params = new URLSearchParams();
+    if (page) params.append('page', page);
+    if (limit) params.append('limit', limit);
+
+    // Append all other filters
+    Object.keys(filters).forEach(key => {
+      if (filters[key] !== undefined && filters[key] !== null) {
+        params.append(key, filters[key]);
+      }
+    });
+
+    const queryString = params.toString();
+    return api.get(`/api/staff${queryString ? '?' + queryString : ''}`);
   },
 
   /**

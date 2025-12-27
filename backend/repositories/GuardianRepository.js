@@ -25,6 +25,11 @@ class GuardianRepository {
         params.push(filters.roleId);
       }
 
+      if (filters.dni) {
+        query += ' AND g.dni = ?';
+        params.push(filters.dni);
+      }
+
       // Apply pagination
       if (pagination.limit && pagination.offset !== undefined) {
         query += ' LIMIT ? OFFSET ?';
@@ -64,8 +69,8 @@ class GuardianRepository {
     }
   }
 
-  static async create(guardianData) {
-    const conn = await getConnection();
+  static async create(guardianData, externalConn = null) {
+    const conn = externalConn || await getConnection();
     try {
       const result = await conn.query(
         `INSERT INTO guardian (first_name, middle_name_optional, paternal_surname, 
@@ -93,12 +98,12 @@ class GuardianRepository {
       );
       return result.insertId;
     } finally {
-      conn.release();
+      if (!externalConn) conn.release();
     }
   }
 
-  static async update(id, guardianData) {
-    const conn = await getConnection();
+  static async update(id, guardianData, externalConn = null) {
+    const conn = externalConn || await getConnection();
     try {
       const result = await conn.query(
         `UPDATE guardian SET first_name = ?, middle_name_optional = ?, 
@@ -127,7 +132,7 @@ class GuardianRepository {
       );
       return result.affectedRows > 0;
     } finally {
-      conn.release();
+      if (!externalConn) conn.release();
     }
   }
 
@@ -136,7 +141,7 @@ class GuardianRepository {
     try {
       // First remove from student_guardian relationships
       await conn.query('DELETE FROM student_guardian WHERE guardian_id = ?', [id]);
-      
+
       // Then delete the guardian
       const result = await conn.query('DELETE FROM guardian WHERE id = ?', [id]);
       return result.affectedRows > 0;
@@ -172,7 +177,7 @@ class GuardianRepository {
     const conn = await getConnection();
     try {
       let query = `
-        SELECT COUNT(*) as count
+        SELECT CAST(COUNT(*) AS SIGNED) as count
         FROM guardian g
         LEFT JOIN role r ON g.role_id = r.id
         WHERE 1=1

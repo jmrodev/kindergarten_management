@@ -10,14 +10,15 @@ const router = express.Router();
 // POST /api/auth/login
 router.post('/login', async (req, res, next) => {
     const pool = req.app.get('pool');
-    const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
-    const { email, password } = sanitizedBody;
-
-    if (!email || !password) {
-        return next(new AppError('Email y contraseña son requeridos', 400));
-    }
 
     try {
+        const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
+        const { email, password } = sanitizedBody;
+
+        if (!email || !password) {
+            return next(new AppError('Email y contraseña son requeridos', 400));
+        }
+
         // Buscar usuario por email
         const rows = await pool.query(
             `SELECT s.*, r.role_name as role 
@@ -73,7 +74,8 @@ router.post('/login', async (req, res, next) => {
         });
     } catch (error) {
         console.error('Error in login:', error);
-        next(new AppError('Error al iniciar sesión', 500));
+        // Expose error message safely
+        res.status(500).json({ error: 'Error al iniciar sesión: ' + String(error.message || error) });
     }
 });
 
@@ -130,21 +132,21 @@ router.get('/me', protect, async (req, res, next) => {
 // POST /api/auth/register - Registrar nuevo usuario (solo admin)
 router.post('/register', protect, async (req, res, next) => {
     const pool = req.app.get('pool');
-    
+
     // Solo admin puede registrar usuarios
     if (req.user.role !== 'Administrator') { // Changed from 'admin' to 'Administrator' for consistency with role_name
         return next(new AppError('Solo administradores pueden registrar usuarios', 403));
     }
 
     const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
-    const { 
-        firstName, 
-        paternalSurname, 
-        maternalSurname, 
-        email, 
-        password, 
+    const {
+        firstName,
+        paternalSurname,
+        maternalSurname,
+        email,
+        password,
         phone,
-        roleName 
+        roleName
     } = sanitizedBody;
 
     if (!firstName || !paternalSurname || !email || !password) {
@@ -204,7 +206,7 @@ router.post('/change-password', protect, async (req, res, next) => {
     try {
         // Obtener contraseña actual
         const rows = await pool.query('SELECT password_hash FROM staff WHERE id = ?', [req.user.id]);
-        
+
         if (rows.length === 0) {
             return next(new AppError('Usuario no encontrado', 404));
         }

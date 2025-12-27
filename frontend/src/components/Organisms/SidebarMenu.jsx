@@ -52,9 +52,18 @@ const SidebarMenu = ({
         </Sidebar>
       )}
       {/* Pestaña clickeable cuando el menú está oculto */}
+      {/* Pestaña vertical para abrir el menú (Hover strip) */}
       {hidden && (
-        <div className="sidebar-tab" onClick={onExpand} title="Abrir menú">
-          <span className="sidebar-tab-icon">≡</span>
+        <div
+          className="sidebar-tab"
+          onMouseEnter={onExpand}
+          onClick={onExpand}
+          title="Desliza el mouse para abrir"
+        >
+          <div className="sidebar-tab-content">
+            <span className="sidebar-tab-icon">›</span>
+            <span className="sidebar-tab-text">MENU</span>
+          </div>
         </div>
       )}
     </>

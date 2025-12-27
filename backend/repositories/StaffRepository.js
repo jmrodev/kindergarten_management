@@ -14,7 +14,7 @@ class StaffRepository {
                al.access_name
         FROM staff s
         LEFT JOIN address a ON s.address_id = a.id
-        LEFT JOIN classroom c ON s.classroom_id = c.id
+        LEFT JOIN classroom c ON c.teacher_id = s.id
         LEFT JOIN role r ON s.role_id = r.id
         LEFT JOIN access_level al ON r.access_level_id = al.id
         WHERE 1=1
@@ -26,16 +26,21 @@ class StaffRepository {
         query += ' AND s.is_active = ?';
         params.push(filters.isActive);
       }
-      
+
       if (filters.roleId) {
         query += ' AND s.role_id = ?';
         params.push(filters.roleId);
       }
-      
+
       if (filters.classroomId) {
-        query += ' AND s.classroom_id = ?';
+        // If sorting via c.teacher_id = s.id, then filtering by s.classroom_id column might be weird if that column is unused.
+        // Assuming we filter by "Assigned Classroom", we should check c.id.
+        query += ' AND c.id = ?'; // Updated to check joined table
         params.push(filters.classroomId);
       }
+
+      // Apply sorting
+      query += ' ORDER BY s.paternal_surname, s.first_name';
 
       // Apply pagination
       if (pagination.limit && pagination.offset !== undefined) {
@@ -45,8 +50,6 @@ class StaffRepository {
         query += ' LIMIT ?';
         params.push(pagination.limit);
       }
-
-      query += ' ORDER BY s.paternal_surname, s.first_name';
 
       const results = await conn.query(query, params);
       return results;
@@ -66,11 +69,38 @@ class StaffRepository {
          al.access_name
          FROM staff s
          LEFT JOIN address a ON s.address_id = a.id
-         LEFT JOIN classroom c ON s.classroom_id = c.id
+         LEFT JOIN classroom c ON c.teacher_id = s.id
          LEFT JOIN role r ON s.role_id = r.id
          LEFT JOIN access_level al ON r.access_level_id = al.id
          WHERE s.id = ?`,
         [id]
+      );
+      return result[0];
+    } finally {
+      conn.release();
+    }
+  }
+
+  // ... create/update methods unchanged ...
+
+  // skipping create/update/delete in replace block if possible to minimize diff context issues, but `getByEmail` is far down.
+
+  static async getByEmail(email) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        `SELECT s.*, 
+         a.street, a.number, a.city, a.provincia,
+         c.name as classroom_name,
+         r.role_name,
+         al.access_name
+         FROM staff s
+         LEFT JOIN address a ON s.address_id = a.id
+         LEFT JOIN classroom c ON c.teacher_id = s.id
+         LEFT JOIN role r ON s.role_id = r.id
+         LEFT JOIN access_level al ON r.access_level_id = al.id
+         WHERE s.email = ?`,
+        [email]
       );
       return result[0];
     } finally {
@@ -89,21 +119,21 @@ class StaffRepository {
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           staffData.first_name,
-          staffData.middle_name_optional,
-          staffData.third_name_optional,
+          staffData.middle_name_optional || null,
+          staffData.third_name_optional || null,
           staffData.paternal_surname,
-          staffData.maternal_surname,
+          staffData.maternal_surname || null,
           staffData.dni,
           staffData.email,
           staffData.password_hash,
           staffData.is_active !== undefined ? staffData.is_active : true,
           staffData.last_login || null,
           staffData.created_at || new Date(),
-          staffData.preferred_surname,
-          staffData.address_id,
-          staffData.phone,
-          staffData.email_optional,
-          staffData.classroom_id,
+          staffData.preferred_surname || null,
+          staffData.address_id || null,
+          staffData.phone || null,
+          staffData.email_optional || null,
+          staffData.classroom_id || null,
           staffData.role_id
         ]
       );
@@ -124,20 +154,20 @@ class StaffRepository {
          classroom_id = ?, role_id = ? WHERE id = ?`,
         [
           staffData.first_name,
-          staffData.middle_name_optional,
-          staffData.third_name_optional,
+          staffData.middle_name_optional || null,
+          staffData.third_name_optional || null,
           staffData.paternal_surname,
-          staffData.maternal_surname,
+          staffData.maternal_surname || null,
           staffData.dni,
           staffData.email,
           staffData.password_hash,
           staffData.is_active,
-          staffData.last_login,
-          staffData.preferred_surname,
-          staffData.address_id,
-          staffData.phone,
-          staffData.email_optional,
-          staffData.classroom_id,
+          staffData.last_login || null,
+          staffData.preferred_surname || null,
+          staffData.address_id || null,
+          staffData.phone || null,
+          staffData.email_optional || null,
+          staffData.classroom_id || null,
           staffData.role_id,
           id
         ]
@@ -195,7 +225,7 @@ class StaffRepository {
          al.access_name
          FROM staff s
          LEFT JOIN address a ON s.address_id = a.id
-         LEFT JOIN classroom c ON s.classroom_id = c.id
+         LEFT JOIN classroom c ON c.teacher_id = s.id
          LEFT JOIN role r ON s.role_id = r.id
          LEFT JOIN access_level al ON r.access_level_id = al.id
          WHERE s.email = ?`,
@@ -211,9 +241,9 @@ class StaffRepository {
     const conn = await getConnection();
     try {
       let query = `
-        SELECT COUNT(*) as count
+        SELECT CAST(COUNT(*) AS SIGNED) as count
         FROM staff s
-        LEFT JOIN classroom c ON s.classroom_id = c.id
+        LEFT JOIN classroom c ON c.teacher_id = s.id
         LEFT JOIN role r ON s.role_id = r.id
         WHERE 1=1
       `;
@@ -230,7 +260,7 @@ class StaffRepository {
       }
 
       if (filters.classroomId) {
-        query += ' AND s.classroom_id = ?';
+        query += ' AND c.id = ?';
         params.push(filters.classroomId);
       }
 

@@ -72,10 +72,26 @@ class ClassroomController {
 
     async getAllClassrooms(req, res) {
         try {
-            const classrooms = await ClassroomRepository.getAll();
+            const { page = 1, limit = 10, ...filters } = req.query;
+            const offset = (page - 1) * limit;
+
+            const [classrooms, total] = await Promise.all([
+                ClassroomRepository.getAll({
+                    filters,
+                    pagination: { limit: parseInt(limit), offset: parseInt(offset) }
+                }),
+                ClassroomRepository.count(filters)
+            ]);
+
             res.status(200).json({
                 status: 'success',
-                data: classrooms
+                data: classrooms,
+                meta: {
+                    total,
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    totalPages: Math.ceil(total / limit)
+                }
             });
         } catch (error) {
             console.error("Error in getAllClassrooms:", error);

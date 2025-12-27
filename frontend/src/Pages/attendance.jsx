@@ -20,6 +20,8 @@ const Attendance = () => {
   const [saving, setSaving] = useState(false);
   const [selectedClassroom, setSelectedClassroom] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [reportType, setReportType] = useState('daily');
+  const [attendanceHistory, setAttendanceHistory] = useState([]);
   const [viewMode, setViewMode] = useState('register'); // 'register' or 'view'
 
   // Load classrooms on mount
@@ -32,7 +34,7 @@ const Attendance = () => {
     if (selectedClassroom) {
       loadStudentsAndAttendance();
     }
-  }, [selectedClassroom, selectedDate]);
+  }, [selectedClassroom, selectedDate, reportType]);
 
   const loadClassrooms = async () => {
     try {
@@ -52,6 +54,42 @@ const Attendance = () => {
     }
   };
 
+  const getDateRange = () => {
+    const [year, month, day] = selectedDate.split('-').map(Number);
+    const d = new Date(year, month - 1, day);
+
+    let start, end;
+
+    if (reportType === 'daily') {
+      return { startDate: selectedDate, endDate: selectedDate };
+    } else if (reportType === 'weekly') {
+      // Find Monday
+      const dayOfWeek = d.getDay(); // 0 is Sunday
+      const diffToMon = (dayOfWeek + 6) % 7;
+      const monday = new Date(d);
+      monday.setDate(d.getDate() - diffToMon);
+
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+
+      start = monday.toISOString().split('T')[0];
+      end = sunday.toISOString().split('T')[0];
+    } else if (reportType === 'monthly') {
+      const firstDay = new Date(year, month - 1, 1);
+      const lastDay = new Date(year, month, 0);
+
+      start = firstDay.toISOString().split('T')[0];
+      end = lastDay.toISOString().split('T')[0];
+    } else if (reportType === 'yearly') {
+      const firstDay = new Date(year, 0, 1);
+      const lastDay = new Date(year, 11, 31);
+      start = firstDay.toISOString().split('T')[0];
+      end = lastDay.toISOString().split('T')[0];
+    }
+
+    return { startDate: start, endDate: end };
+  };
+
   const loadStudentsAndAttendance = async () => {
     try {
       setLoading(true);
@@ -61,18 +99,34 @@ const Attendance = () => {
       const studentsList = Array.isArray(studentsRes) ? studentsRes : (studentsRes.data || []);
       setStudents(studentsList);
 
-      // Fetch attendance for selected date and classroom
-      const attendanceRes = await attendanceService.getAll({ classroomId: selectedClassroom, date: selectedDate });
+      // Calculate range
+      const { startDate, endDate } = getDateRange();
+
+      // Fetch attendance
+      const query = { classroomId: selectedClassroom };
+      if (reportType === 'daily') {
+        query.date = selectedDate;
+      } else {
+        query.startDate = startDate;
+        query.endDate = endDate;
+      }
+
+      const attendanceRes = await attendanceService.getAll(query);
       const records = Array.isArray(attendanceRes) ? attendanceRes : (attendanceRes.data || []);
 
-      // Build map: student_id -> status
-      const recordsMap = {};
-      records.forEach(rec => {
-        recordsMap[rec.student_id] = rec.status;
-      });
-      setAttendanceRecords(recordsMap);
-      setOriginalRecords(recordsMap);
-      setHasChanges(false);
+      if (reportType === 'daily') {
+        // Build map: student_id -> status
+        const recordsMap = {};
+        records.forEach(rec => {
+          recordsMap[rec.student_id] = rec.status;
+        });
+        setAttendanceRecords(recordsMap);
+        setOriginalRecords(recordsMap);
+        setHasChanges(false);
+      } else {
+        // Just store history
+        setAttendanceHistory(records);
+      }
     } catch (err) {
       console.error('Error loading students/attendance:', err);
       setError(err.message || 'Error al cargar alumnos y asistencia');
@@ -81,8 +135,19 @@ const Attendance = () => {
     }
   };
 
+  const handleSetStatus = (studentId, status) => {
+    setAttendanceRecords(prev => ({
+      ...prev,
+      [studentId]: status
+    }));
+    setHasChanges(true);
+  };
+
   const handleToggleStatus = (studentId) => {
-    const currentStatus = attendanceRecords[studentId] || 'ausente';
+    const currentStatus = attendanceRecords[studentId];
+    // If undefined/null (sin registro) -> Mark Presente
+    // If Presente -> Mark Ausente
+    // If Ausente -> Mark Presente
     const newStatus = currentStatus === 'presente' ? 'ausente' : 'presente';
 
     setAttendanceRecords(prev => ({
@@ -150,7 +215,7 @@ const Attendance = () => {
         setSelectedClassroom={setSelectedClassroom}
         selectedDate={selectedDate}
         setSelectedDate={setSelectedDate}
-        onToggleStatus={handleToggleStatus}
+        onSetStatus={handleSetStatus} // New prop
         onSave={handleSaveAttendance}
         hasChanges={hasChanges}
         saving={saving}
@@ -165,10 +230,13 @@ const Attendance = () => {
       classrooms={classrooms}
       students={students}
       attendanceRecords={attendanceRecords}
+      attendanceHistory={attendanceHistory}
       selectedClassroom={selectedClassroom}
       setSelectedClassroom={setSelectedClassroom}
       selectedDate={selectedDate}
       setSelectedDate={setSelectedDate}
+      reportType={reportType}
+      setReportType={setReportType}
       onToggleStatus={handleToggleStatus}
       onSave={handleSaveAttendance}
       hasChanges={hasChanges}

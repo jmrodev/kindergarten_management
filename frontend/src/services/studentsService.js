@@ -6,8 +6,14 @@ const studentsService = {
    * Get all students
    * @returns {Promise<Array>} Array of students
    */
-  async getAll() {
-    return api.get('/api/students')
+  async getAll({ page, limit, status } = {}) {
+    const params = new URLSearchParams();
+    if (page) params.append('page', page);
+    if (limit) params.append('limit', limit);
+    if (status) params.append('status', status);
+
+    const queryString = params.toString();
+    return api.get(`/api/students${queryString ? '?' + queryString : ''}`);
   },
 
   /**
@@ -36,12 +42,39 @@ const studentsService = {
   },
 
   /**
+   * Helper to flatten nested data (address, emergency_contact) for backend consumption
+   */
+  _flattenStudentData(data) {
+    const flatData = { ...data }
+
+    // Flatten Address
+    if (data.address) {
+      flatData.street = data.address.street
+      flatData.number = data.address.number
+      flatData.city = data.address.city
+      flatData.provincia = data.address.provincia
+      flatData.postal_code_optional = data.address.postal_code_optional
+      delete flatData.address
+    }
+
+
+
+    // Pass guardians array directly if present
+    if (data.guardians) {
+      flatData.guardians = data.guardians;
+    }
+
+    return flatData
+  },
+
+  /**
    * Create a new student
    * @param {Object} data - Student data
    * @returns {Promise<Object>} Created student
    */
   async create(data) {
-    return api.post('/api/students', data)
+    const payload = this._flattenStudentData(data)
+    return api.post('/api/students', payload)
   },
 
   /**
@@ -51,7 +84,8 @@ const studentsService = {
    * @returns {Promise<Object>} Updated student
    */
   async update(id, data) {
-    return api.put(`/api/students/${id}`, data)
+    const payload = this._flattenStudentData(data)
+    return api.put(`/api/students/${id}`, payload)
   },
 
   /**

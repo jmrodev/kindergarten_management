@@ -42,7 +42,8 @@
 }
 
 .action-btn {
-  margin-right: 0 !important; /* Override any existing margins */
+  margin-right: 0 !important;
+  /* Override any existing margins */
 }
 
 /* Estilos para la página de maestros */
@@ -72,7 +73,8 @@
   gap: var(--spacing-md);
 }
 
-.class-select, .date-input {
+.class-select,
+.date-input {
   width: auto;
 }
 
@@ -103,4 +105,14 @@
 
 .status-rechazado {
   background-color: var(--danger-color);
+}
+
+.status-egresado {
+  background-color: #9333ea;
+  /* Purple 600 */
+}
+
+.status-sorteo {
+  background-color: #0ea5e9;
+  /* Sky 500 - Info */
 }

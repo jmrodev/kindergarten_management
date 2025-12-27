@@ -8,15 +8,16 @@ import AppLayout from './components/Organisms/AppLayout';
 import SidebarMenu from './components/Organisms/SidebarMenu';
 import HeaderWithMenu from './components/Atoms/HeaderWithMenu';
 import Dashboard from './Pages/dashboard';
+import ParentDashboard from './Pages/ParentDashboard';
 import Login from './Pages/Login';
 import Students from './Pages/students';
-import Teachers from './Pages/teachers';
+import Staff from './Pages/staff';
 import Classes from './Pages/classes';
 import Attendance from './Pages/attendance';
 import Enrollments from './Pages/enrollments';
 import Permissions from './Pages/permissions';
-import Users from './Pages/users';
 import MobileMenu from './components/Organisms/MobileMenu';
+import ParentRegistrationWrapper from './components/Organisms/ParentRegistrationWrapper';
 
 function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -49,6 +50,19 @@ function App() {
 
   const updateMenuItems = (role, permissions = {}) => {
     const canonicalRole = normalizeRole(role);
+
+    // Parent/Tutor Restricted Menu
+    if (canonicalRole === 'parent' || canonicalRole === 'tutor') {
+      const parentItems = [
+        { path: '/', label: 'Inicio', icon: '/src/assets/svg/dashboard.svg' }, // Parent Dashboard
+        { path: '/parent/my-children', label: 'Mis Hijos', icon: '/src/assets/svg/students.svg' },
+        { path: '/parent/register', label: 'Inscribir Alumno', icon: '/src/assets/svg/menu.svg' }
+      ];
+      setMenuItems(parentItems);
+      return;
+    }
+
+    // Staff / Standard Menu
     const baseItems = [
       { path: '/', label: 'Dashboard', icon: '/src/assets/svg/dashboard.svg' },
     ];
@@ -71,7 +85,7 @@ function App() {
 
     // Teachers/Staff - ONLY if has personal:ver permission in BD
     if (can('personal', 'ver')) {
-      baseItems.push({ path: '/teachers', label: 'Maestros', icon: '/src/assets/svg/user.svg' });
+      baseItems.push({ path: '/staff', label: 'Personal', icon: '/src/assets/svg/user.svg' });
     }
 
     // Classes - ONLY if has salas:ver permission in BD
@@ -89,48 +103,41 @@ function App() {
       baseItems.push({ path: '/enrollments', label: 'Inscripciones', icon: '/src/assets/svg/menu.svg' });
     }
 
-    // Users - ONLY if has personal:ver permission in BD
-    if (can('personal', 'ver')) {
-      baseItems.push({ path: '/users', label: 'Usuarios', icon: '/src/assets/svg/user.svg' });
-    }
-
     // Permissions management - ONLY if has configuracion:ver permission in BD
     if (can('configuracion', 'ver')) {
       baseItems.push({ path: '/permissions', label: 'Permisos', icon: '/src/assets/svg/lock.svg' });
     }
 
-    console.log(`[updateMenuItems] Role: ${canonicalRole}, Items: ${baseItems.length}, Perms keys: ${Object.keys(permissions).length}`);
+    // console.log(`[updateMenuItems] Role: ${canonicalRole}, Items: ${baseItems.length}, Perms keys: ${Object.keys(permissions).length}`);
     setMenuItems(baseItems);
   };
 
   const refreshPermissions = async (userOverride = null) => {
     const targetUser = userOverride || user;
     if (!targetUser || !targetUser.role) {
-      console.log('[refreshPermissions] No user or role yet, using role-based fallback');
+      // console.log('[refreshPermissions] No user or role yet, using role-based fallback');
       updateMenuItems(targetUser?.role, {});
       return;
     }
     try {
-      console.log('[refreshPermissions] Fetching user permissions...');
+      // console.log('[refreshPermissions] Fetching user permissions...');
       // Get actual user permissions from backend (module:action format)
       const response = await api.get('/api/permissions/user-permissions');
-      console.log('[refreshPermissions] Got response:', response);
-      console.log('[refreshPermissions] Response type:', typeof response);
-      console.log('[refreshPermissions] Response keys:', response ? Object.keys(response).slice(0, 10) : 'null');
+      // console.log('[refreshPermissions] Got response:', response);
 
       // Convert to object format if needed
       const perms = Array.isArray(response) ? {} : (response || {});
-      console.log('[refreshPermissions] Parsed perms object has', Object.keys(perms).length, 'keys');
+      // console.log('[refreshPermissions] Parsed perms object has', Object.keys(perms).length, 'keys');
 
       if (Object.keys(perms).length === 0) {
-        console.log('[refreshPermissions] No permissions returned, using role-based fallback');
+        // console.log('[refreshPermissions] No permissions returned, using role-based fallback');
       }
 
       setUserPermissions(perms);
       updateMenuItems(targetUser.role, perms);
     } catch (err) {
       console.error('[refreshPermissions] Error fetching permissions:', err.message);
-      console.log('[refreshPermissions] Using role-based fallback');
+      // console.log('[refreshPermissions] Using role-based fallback');
       // If fetch fails, use fallback based on role
       setUserPermissions({});
       updateMenuItems(targetUser.role, {});
@@ -231,7 +238,7 @@ function App() {
   useEffect(() => {
     const handlePermissionsSync = (event) => {
       if (event.key === 'permissions:version') {
-        console.log('[permissions-sync] Detected permissions change, refreshing context');
+        // console.log('[permissions-sync] Detected permissions change, refreshing context');
         refreshPermissions();
       }
     };
@@ -246,7 +253,7 @@ function App() {
     if (!user) return;
 
     const permissionPollInterval = setInterval(() => {
-      console.log('[permission-poll] Checking for permission updates...');
+      // console.log('[permission-poll] Checking for permission updates...');
       refreshPermissions();
     }, 30000); // 30 seconds
 
@@ -323,14 +330,18 @@ function App() {
           );
         })()}
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={
+            (user?.role === 'Parent' || user?.role === 'parent' || user?.role === 'Tutor' || user?.role === 'tutor')
+              ? <ParentDashboard />
+              : <Dashboard />
+          } />
           <Route path="/students" element={<Students />} />
-          <Route path="/teachers" element={<Teachers />} />
+          <Route path="/staff" element={<Staff />} />
           <Route path="/classes" element={<Classes />} />
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/enrollments" element={<Enrollments />} />
-          <Route path="/users" element={<Users />} />
           <Route path="/permissions" element={<Permissions />} />
+          <Route path="/parent/register" element={<ParentRegistrationWrapper />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AppLayout>

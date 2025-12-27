@@ -11,14 +11,8 @@ const Sidebar = ({ children, collapsed = false, className = '', ...props }) => {
     customClasses
   ].filter(Boolean).join(' ');
 
-  // Determina el ancho basado en el estado colapsado
-  const sidebarStyle = {
-    width: collapsed ? '60px' : '250px',
-    ...props.style
-  };
-
   return (
-    <aside className={sidebarClasses} style={sidebarStyle} {...props}>
+    <aside className={sidebarClasses} {...props}>
       {children}
     </aside>
   );

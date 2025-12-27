@@ -14,12 +14,12 @@ class MeetingMinutesRepository {
         query += ' AND meeting_type = ?';
         params.push(filters.meetingType);
       }
-      
+
       if (filters.startDate) {
         query += ' AND meeting_date >= ?';
         params.push(filters.startDate);
       }
-      
+
       if (filters.endDate) {
         query += ' AND meeting_date <= ?';
         params.push(filters.endDate);
@@ -119,26 +119,26 @@ class MeetingMinutesRepository {
   static async count(filters = {}) {
     const conn = await getConnection();
     try {
-      let query = 'SELECT COUNT(*) as count FROM meeting_minutes WHERE 1=1';
+      let query = 'SELECT CAST(COUNT(*) AS SIGNED) as count FROM meeting_minutes WHERE 1=1';
       const params = [];
 
       if (filters.meetingType) {
         query += ' AND meeting_type = ?';
         params.push(filters.meetingType);
       }
-      
+
       if (filters.startDate) {
         query += ' AND meeting_date >= ?';
         params.push(filters.startDate);
       }
-      
+
       if (filters.endDate) {
         query += ' AND meeting_date <= ?';
         params.push(filters.endDate);
       }
 
       const result = await conn.query(query, params);
-      return result[0].count;
+      return Number(result[0].count);
     } finally {
       conn.release();
     }

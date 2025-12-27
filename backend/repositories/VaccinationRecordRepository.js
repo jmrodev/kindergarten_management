@@ -17,7 +17,7 @@ class VaccinationRecordRepository {
         query += ' AND vr.student_id = ?';
         params.push(filters.studentId);
       }
-      
+
       if (filters.status) {
         query += ' AND vr.status = ?';
         params.push(filters.status);
@@ -138,7 +138,7 @@ class VaccinationRecordRepository {
   static async count(filters = {}) {
     const conn = await getConnection();
     try {
-      let query = `SELECT COUNT(*) as count FROM vaccination_records vr
+      let query = `SELECT CAST(COUNT(*) AS SIGNED) as count FROM vaccination_records vr
                    LEFT JOIN student s ON vr.student_id = s.id 
                    WHERE 1=1`;
       const params = [];
@@ -147,7 +147,7 @@ class VaccinationRecordRepository {
         query += ' AND vr.student_id = ?';
         params.push(filters.studentId);
       }
-      
+
       if (filters.status) {
         query += ' AND vr.status = ?';
         params.push(filters.status);
@@ -170,10 +170,10 @@ class VaccinationRecordRepository {
           s.paternal_surname,
           s.maternal_surname,
           s.vaccination_status as overall_status,
-          COUNT(CASE WHEN vr.status = 'faltante' THEN 1 END) as missing_vaccines,
-          COUNT(CASE WHEN vr.status = 'activo' THEN 1 END) as active_vaccines,
-          COUNT(CASE WHEN vr.status = 'completo' THEN 1 END) as complete_vaccines,
-          COUNT(vr.id) as total_vaccines
+          CAST(COUNT(CASE WHEN vr.status = 'faltante' THEN 1 END) AS SIGNED) as missing_vaccines,
+          CAST(COUNT(CASE WHEN vr.status = 'activo' THEN 1 END) AS SIGNED) as active_vaccines,
+          CAST(COUNT(CASE WHEN vr.status = 'completo' THEN 1 END) AS SIGNED) as complete_vaccines,
+          CAST(COUNT(vr.id) AS SIGNED) as total_vaccines
         FROM student s
         LEFT JOIN vaccination_records vr ON s.id = vr.student_id
         GROUP BY s.id

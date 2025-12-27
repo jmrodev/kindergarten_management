@@ -22,7 +22,10 @@ const documentReviewRoutes = require('./routes/documentReviewRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const calendarRoutes = require('./routes/calendarRoutes');
 const activityRoutes = require('./routes/activityRoutes');
-const { AppError, errorHandler } = require('./middleware/errorHandler'); // Import AppError and errorHandler
+const dashboardRoutes = require('./routes/dashboardRoutes'); // Import dashboard routes
+const healthInsuranceRoutes = require('./routes/healthInsuranceRoutes');
+const pediatricianRoutes = require('./routes/pediatricianRoutes');
+const { AppError, errorHandler } = require('./middleware/errorHandler');
 const { initializePassport, passport, isGoogleConfigured } = require('./config/passport');
 const { jsonSerializer } = require('./utils/serialization'); // Import jsonSerializer
 const path = require('path');
@@ -63,26 +66,16 @@ pool.getConnection()
 
 // Middleware
 app.use(cors({
-    origin: process.env.FRONTEND_URL ? [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5175'] : ['http://localhost:5173', 'http://localhost:5175'],
+    origin: process.env.FRONTEND_URL ? [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'] : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
     credentials: true
 })); // Enable CORS with credentials
 app.use(bodyParser.json()); // Parse JSON request bodies
 app.use(jsonSerializer); // Use custom JSON serializer for BigInt handling
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Servir archivos estáticos
-// Solo habilitar sesiones si Google OAuth está configurado
-if (isGoogleConfigured) {
-    app.use(session({
-        secret: process.env.SESSION_SECRET || 'kindergarten-secret-key-change-in-production',
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            secure: process.env.NODE_ENV === 'production',
-            maxAge: 24 * 60 * 60 * 1000 // 24 hours
-        }
-    }));
-    app.use(passport.initialize());
-    app.use(passport.session());
-}
+// Sessions and Passport removed as Google Auth is no longer used
+// However, if we need session for something else, we can re-enable it.
+// For now, JWT is stateless.
+
 
 // Routes
 app.use('/api/auth', authRoutes); // Auth routes (public)
@@ -101,11 +94,12 @@ app.use('/api/document-reviews', documentReviewRoutes); // Document reviews mana
 app.use('/api/attendance', attendanceRoutes); // Attendance management
 app.use('/api/calendar', calendarRoutes); // Calendar management
 app.use('/api/activities', activityRoutes); // Activities management
+app.use('/api/dashboard', dashboardRoutes); // Dashboard statistics
+app.use('/api/health-insurances', healthInsuranceRoutes); // Health insurance providers management
+app.use('/api/pediatricians', pediatricianRoutes); // Pediatricians management
 
-// Solo habilitar rutas del portal si Google OAuth está configurado
-if (isGoogleConfigured) {
-    app.use('/api/parent-portal', parentPortalRoutes); // Parent portal (Google OAuth)
-}
+app.use('/api/parent-portal', parentPortalRoutes); // Parent portal (Standard Auth)
+
 
 // Handle undefined routes (404)
 app.use((req, res, next) => {

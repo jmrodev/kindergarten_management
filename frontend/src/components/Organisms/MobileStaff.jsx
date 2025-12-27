@@ -5,25 +5,25 @@ import Button from '../Atoms/Button';
 import Input from '../Atoms/Input';
 import DataCardList from '../Organisms/DataCardList';
 
-const MobileTeachers = ({ teachers, onEdit, onDelete, onAdd, searchTerm, setSearchTerm, onView }) => {
+const MobileStaff = ({ staff, onEdit, onDelete, onAdd, searchTerm, setSearchTerm, onView }) => {
   // Campos para la vista de cards en móvil
   const cardFields = [
-    { key: 'id', label: 'ID' },
+    { key: 'role_name', label: 'Rol' },
     { key: 'dni', label: 'DNI' },
     { key: 'email', label: 'Email' },
     { key: 'classroom', label: 'Salón Asignado' },
-    { key: 'specialty', label: 'Especialidad' }
+    { key: 'phone', label: 'Teléfono' }
   ];
 
   return (
     <Card>
-      <Text variant="h1">Profesores - Móvil</Text>
+      <Text variant="h1">Personal</Text>
 
       <div className="teachers-header">
-        <Button variant="primary" onClick={onAdd}>Agregar Profesor</Button>
+        <Button variant="primary" onClick={onAdd}>Agregar Personal</Button>
         <Input
           type="text"
-          placeholder="Buscar profesores..."
+          placeholder="Buscar personal..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
@@ -31,8 +31,8 @@ const MobileTeachers = ({ teachers, onEdit, onDelete, onAdd, searchTerm, setSear
       </div>
 
       <DataCardList
-        items={teachers}
-        title="Profesores"
+        items={staff}
+        title="Personal"
         fields={cardFields}
         onEdit={onEdit}
         onDelete={onDelete}
@@ -44,4 +44,4 @@ const MobileTeachers = ({ teachers, onEdit, onDelete, onAdd, searchTerm, setSear
   );
 };
 
-export default MobileTeachers;
+export default MobileStaff;

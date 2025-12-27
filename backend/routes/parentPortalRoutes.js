@@ -1,32 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const passport = require('passport');
 const ParentPortalController = require('../controllers/ParentPortalController');
 const { authorizeParent } = require('../middleware/parentAuth');
-const { generateToken, protect } = require('../middleware/auth'); // Importar la función de generación de token y protección
-const { optionalAuth } = require('../middleware/optionalAuth'); // Importar la autenticación opcional
+const { generateToken, protect } = require('../middleware/auth');
+const { optionalAuth } = require('../middleware/optionalAuth');
 
-// Google OAuth routes
-router.get('/auth/google', passport.authenticate('google', {
-    scope: ['profile', 'email']
-}));
-
-router.get('/auth/google/callback',
-    passport.authenticate('google', { failureRedirect: '/login?error=auth' }),
-    (req, res) => {
-        // Generar token JWT para la autenticación con el frontend
-        const token = generateToken({
-            id: req.user.id,
-            email: req.user.email,
-            name: req.user.name,
-            google_user: true  // Indicar que es un usuario de Google
-        });
-
-        // Redirigir al frontend con el token como parámetro
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-        res.redirect(`${frontendUrl}/auth/google?token=${token}`);
-    }
-);
+// Standard Authentication Routes
+router.post('/login', ParentPortalController.login);
+router.post('/register', ParentPortalController.register);
 
 // Check authentication status
 router.get('/check-auth', optionalAuth, ParentPortalController.checkAuth);
@@ -47,6 +28,7 @@ router.get('/students/:parentId', protect, ParentPortalController.getStudentsByP
 
 // Get children by parent (for dashboard) - protected with JWT
 router.get('/children/parent/:parentId', protect, ParentPortalController.getChildrenByParent);
+router.get('/my-children', protect, (req, res) => ParentPortalController.getMyChildren(req, res));
 
 // Get attendance by child ID (for dashboard) - protected with JWT
 router.get('/attendance/child/:childId', protect, ParentPortalController.getAttendanceByChildId);
