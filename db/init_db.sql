@@ -239,8 +239,6 @@ CREATE TABLE student_guardian (
     relationship_type ENUM('madre', 'padre', 'tutor', 'abuelo', 'abuela', 'tio', 'tia', 'otro'),
     is_primary BOOLEAN,
     is_emergency BOOLEAN DEFAULT FALSE COMMENT 'Contacto de emergencia prioritario',
-    authorized_pickup BOOLEAN,
-    authorized_diaper_change BOOLEAN,
     custody_rights BOOLEAN,
     financial_responsible BOOLEAN,
     notes TEXT,
