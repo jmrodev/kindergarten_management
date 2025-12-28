@@ -1,5 +1,5 @@
 // controllers/AttendanceController.js
-const Attendance = require('../models/Attendance');
+const AttendanceRepository = require('../repositories/AttendanceRepository');
 const StudentRepository = require('../repositories/StudentRepository');
 const StaffRepository = require('../repositories/StaffRepository');
 const ClassroomRepository = require('../repositories/ClassroomRepository');
@@ -19,7 +19,7 @@ class AttendanceController {
         filters.endDate = req.query.endDate;
       }
 
-      const attendances = await Attendance.getAll(filters);
+      const attendances = await AttendanceRepository.getAll(filters);
       res.status(200).json({
         status: 'success',
         data: attendances
@@ -32,7 +32,7 @@ class AttendanceController {
   static async getById(req, res, next) {
     try {
       const { id } = req.params;
-      const attendance = await Attendance.getById(id);
+      const attendance = await AttendanceRepository.getById(id);
 
       if (!attendance) {
         return next(new AppError(`No attendance record found with id: ${id}`, 404));
@@ -50,7 +50,7 @@ class AttendanceController {
   static async getByStudentAndDate(req, res, next) {
     try {
       const { studentId, date } = req.params;
-      const attendance = await Attendance.getByStudentAndDate(studentId, date);
+      const attendance = await AttendanceRepository.getByStudentAndDate(studentId, date);
 
       if (!attendance) {
         return next(new AppError(`No attendance record found for student ${studentId} on date ${date}`, 404));
@@ -91,8 +91,8 @@ class AttendanceController {
         }
       }
 
-      const attendanceId = await Attendance.create(req.body);
-      const createdAttendance = await Attendance.getById(attendanceId);
+      const attendanceId = await AttendanceRepository.create(req.body);
+      const createdAttendance = await AttendanceRepository.getById(attendanceId);
 
       res.status(201).json({
         status: 'success',
@@ -107,7 +107,7 @@ class AttendanceController {
   static async update(req, res, next) {
     try {
       const { id } = req.params;
-      const attendance = await Attendance.getById(id);
+      const attendance = await AttendanceRepository.getById(id);
 
       if (!attendance) {
         return next(new AppError(`No attendance record found with id: ${id}`, 404));
@@ -137,13 +137,13 @@ class AttendanceController {
         }
       }
 
-      const updated = await Attendance.update(id, req.body);
+      const updated = await AttendanceRepository.update(id, req.body);
 
       if (!updated) {
         return next(new AppError(`No attendance record found with id: ${id}`, 404));
       }
 
-      const updatedAttendance = await Attendance.getById(id);
+      const updatedAttendance = await AttendanceRepository.getById(id);
 
       res.status(200).json({
         status: 'success',
@@ -158,7 +158,7 @@ class AttendanceController {
   static async delete(req, res, next) {
     try {
       const { id } = req.params;
-      const deleted = await Attendance.delete(id);
+      const deleted = await AttendanceRepository.delete(id);
 
       if (!deleted) {
         return next(new AppError(`No attendance record found with id: ${id}`, 404));
@@ -176,7 +176,7 @@ class AttendanceController {
   static async getDailyAttendance(req, res, next) {
     try {
       const { date } = req.params;
-      const dailyAttendance = await Attendance.getDailyAttendance(date);
+      const dailyAttendance = await AttendanceRepository.getDailyAttendance(date);
 
       res.status(200).json({
         status: 'success',
@@ -198,7 +198,7 @@ class AttendanceController {
         filters.endDate = req.query.endDate;
       }
 
-      const staffAttendance = await Attendance.getStaffAttendance(filters);
+      const staffAttendance = await AttendanceRepository.getStaffAttendance(filters);
 
       res.status(200).json({
         status: 'success',
