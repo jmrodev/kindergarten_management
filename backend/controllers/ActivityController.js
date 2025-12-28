@@ -1,5 +1,5 @@
 // controllers/ActivityController.js
-const Activity = require('../models/Activity');
+const ActivityRepository = require('../repositories/ActivityRepository');
 const StaffRepository = require('../repositories/StaffRepository');
 const ClassroomRepository = require('../repositories/ClassroomRepository');
 const { AppError } = require('../middleware/errorHandler');
@@ -12,7 +12,7 @@ class ActivityController {
       if (req.query.teacherId) filters.teacherId = req.query.teacherId;
       if (req.query.classroomId) filters.classroomId = req.query.classroomId;
 
-      const activities = await Activity.getAll(filters);
+      const activities = await ActivityRepository.getAll(filters);
       res.status(200).json({
         status: 'success',
         data: activities
@@ -25,7 +25,7 @@ class ActivityController {
   static async getById(req, res, next) {
     try {
       const { id } = req.params;
-      const activity = await Activity.getById(id);
+      const activity = await ActivityRepository.getById(id);
 
       if (!activity) {
         return next(new AppError(`No activity found with id: ${id}`, 404));
@@ -58,8 +58,8 @@ class ActivityController {
         }
       }
 
-      const activityId = await Activity.create(req.body);
-      const createdActivity = await Activity.getById(activityId);
+      const activityId = await ActivityRepository.create(req.body);
+      const createdActivity = await ActivityRepository.getById(activityId);
 
       res.status(201).json({
         status: 'success',
@@ -74,7 +74,7 @@ class ActivityController {
   static async update(req, res, next) {
     try {
       const { id } = req.params;
-      const activity = await Activity.getById(id);
+      const activity = await ActivityRepository.getById(id);
 
       if (!activity) {
         return next(new AppError(`No activity found with id: ${id}`, 404));
@@ -96,13 +96,13 @@ class ActivityController {
         }
       }
 
-      const updated = await Activity.update(id, req.body);
+      const updated = await ActivityRepository.update(id, req.body);
 
       if (!updated) {
         return next(new AppError(`No activity found with id: ${id}`, 404));
       }
 
-      const updatedActivity = await Activity.getById(id);
+      const updatedActivity = await ActivityRepository.getById(id);
 
       res.status(200).json({
         status: 'success',
@@ -117,7 +117,7 @@ class ActivityController {
   static async delete(req, res, next) {
     try {
       const { id } = req.params;
-      const deleted = await Activity.delete(id);
+      const deleted = await ActivityRepository.delete(id);
 
       if (!deleted) {
         return next(new AppError(`No activity found with id: ${id}`, 404));
@@ -142,7 +142,7 @@ class ActivityController {
         return next(new AppError(`No classroom found with id: ${classroomId}`, 404));
       }
 
-      const activities = await Activity.getByClassroom(classroomId);
+      const activities = await ActivityRepository.getByClassroom(classroomId);
 
       res.status(200).json({
         status: 'success',
@@ -163,7 +163,7 @@ class ActivityController {
         return next(new AppError(`No teacher found with id: ${teacherId}`, 404));
       }
 
-      const activities = await Activity.getByTeacher(teacherId);
+      const activities = await ActivityRepository.getByTeacher(teacherId);
 
       res.status(200).json({
         status: 'success',
@@ -176,7 +176,7 @@ class ActivityController {
 
   static async getSpecialActivities(req, res, next) {
     try {
-      const activities = await Activity.getSpecialActivities();
+      const activities = await ActivityRepository.getSpecialActivities();
 
       res.status(200).json({
         status: 'success',

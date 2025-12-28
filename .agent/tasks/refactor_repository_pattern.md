@@ -16,9 +16,9 @@ Refactor Project to Repository Pattern
 
 # Phase 3: Models without Repositories (Activity, Attendance, Calendar)
 
-- [ ] Create `ActivityRepository.js` and migrate logic from `Activity.js`. <!-- id: 8 -->
-- [ ] Refactor `ActivityController` (partially done). <!-- id: 9 -->
-- [ ] Clean `Activity.js`. <!-- id: 10 -->
+- [x] Create `ActivityRepository.js` and migrate logic from `Activity.js`. <!-- id: 8 -->
+- [x] Refactor `ActivityController` (partially done). <!-- id: 9 -->
+- [x] Clean `Activity.js`. <!-- id: 10 -->
 - [ ] Create `AttendanceRepository.js` and migrate logic from `Attendance.js`. <!-- id: 11 -->
 - [ ] Refactor `AttendanceController` (partially done). <!-- id: 12 -->
 - [ ] Clean `Attendance.js`. <!-- id: 13 -->
