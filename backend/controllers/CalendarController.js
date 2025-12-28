@@ -1,5 +1,5 @@
 // controllers/CalendarController.js
-const Calendar = require('../models/Calendar');
+const CalendarRepository = require('../repositories/CalendarRepository');
 const ClassroomRepository = require('../repositories/ClassroomRepository');
 const StaffRepository = require('../repositories/StaffRepository');
 const { AppError } = require('../middleware/errorHandler');
@@ -17,7 +17,7 @@ class CalendarController {
         filters.endDate = req.query.endDate;
       }
 
-      const calendarEvents = await Calendar.getAll(filters);
+      const calendarEvents = await CalendarRepository.getAll(filters);
       res.status(200).json({
         status: 'success',
         data: calendarEvents
@@ -30,7 +30,7 @@ class CalendarController {
   static async getById(req, res, next) {
     try {
       const { id } = req.params;
-      const calendarEvent = await Calendar.getById(id);
+      const calendarEvent = await CalendarRepository.getById(id);
 
       if (!calendarEvent) {
         return next(new AppError(`No calendar event found with id: ${id}`, 404));
@@ -63,8 +63,8 @@ class CalendarController {
         }
       }
 
-      const eventId = await Calendar.create(req.body);
-      const createdEvent = await Calendar.getById(eventId);
+      const eventId = await CalendarRepository.create(req.body);
+      const createdEvent = await CalendarRepository.getById(eventId);
 
       res.status(201).json({
         status: 'success',
@@ -79,7 +79,7 @@ class CalendarController {
   static async update(req, res, next) {
     try {
       const { id } = req.params;
-      const calendarEvent = await Calendar.getById(id);
+      const calendarEvent = await CalendarRepository.getById(id);
 
       if (!calendarEvent) {
         return next(new AppError(`No calendar event found with id: ${id}`, 404));
@@ -101,13 +101,13 @@ class CalendarController {
         }
       }
 
-      const updated = await Calendar.update(id, req.body);
+      const updated = await CalendarRepository.update(id, req.body);
 
       if (!updated) {
         return next(new AppError(`No calendar event found with id: ${id}`, 404));
       }
 
-      const updatedEvent = await Calendar.getById(id);
+      const updatedEvent = await CalendarRepository.getById(id);
 
       res.status(200).json({
         status: 'success',
@@ -122,7 +122,7 @@ class CalendarController {
   static async delete(req, res, next) {
     try {
       const { id } = req.params;
-      const deleted = await Calendar.delete(id);
+      const deleted = await CalendarRepository.delete(id);
 
       if (!deleted) {
         return next(new AppError(`No calendar event found with id: ${id}`, 404));
@@ -150,7 +150,7 @@ class CalendarController {
         return next(new AppError('Month must be between 1 and 12', 400));
       }
 
-      const events = await Calendar.getEventsByMonth(year, month);
+      const events = await CalendarRepository.getEventsByMonth(year, month);
 
       res.status(200).json({
         status: 'success',
@@ -172,7 +172,7 @@ class CalendarController {
         return next(new AppError(`No classroom found with id: ${classroomId}`, 404));
       }
 
-      const events = await Calendar.getEventsByClassroom(classroomId, startDate, endDate);
+      const events = await CalendarRepository.getEventsByClassroom(classroomId, startDate, endDate);
 
       res.status(200).json({
         status: 'success',
@@ -191,7 +191,7 @@ class CalendarController {
         return next(new AppError('Both startDate and endDate are required', 400));
       }
 
-      const events = await Calendar.getSpecialEvents(startDate, endDate);
+      const events = await CalendarRepository.getSpecialEvents(startDate, endDate);
 
       res.status(200).json({
         status: 'success',

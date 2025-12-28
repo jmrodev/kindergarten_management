@@ -22,6 +22,6 @@ Refactor Project to Repository Pattern
 - [x] Create `AttendanceRepository.js` and migrate logic from `Attendance.js`. <!-- id: 11 -->
 - [x] Refactor `AttendanceController` (partially done). <!-- id: 12 -->
 - [x] Clean `Attendance.js`. <!-- id: 13 -->
-- [ ] Create `CalendarRepository.js` and migrate logic from `Calendar.js`. <!-- id: 14 -->
-- [ ] Refactor `CalendarController` (partially done). <!-- id: 15 -->
-- [ ] Clean `Calendar.js`. <!-- id: 16 -->
+- [x] Create `CalendarRepository.js` and migrate logic from `Calendar.js`. <!-- id: 14 -->
+- [x] Refactor `CalendarController` (partially done). <!-- id: 15 -->
+- [x] Clean `Calendar.js`. <!-- id: 16 -->
