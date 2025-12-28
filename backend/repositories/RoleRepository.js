@@ -98,6 +98,29 @@ class RoleRepository {
     }
   }
 
+  static async findAllAccessLevels() {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query('SELECT * FROM access_level ORDER BY access_name');
+      return result;
+    } finally {
+      conn.release();
+    }
+  }
+
+  static async createAccessLevel(data) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        'INSERT INTO access_level (access_name, description) VALUES (?, ?)',
+        [data.access_name, data.description || null]
+      );
+      return result.insertId;
+    } finally {
+      conn.release();
+    }
+  }
+
   static async count(filters = {}) {
     const conn = await getConnection();
     try {

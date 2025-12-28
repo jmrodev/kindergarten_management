@@ -11,8 +11,8 @@ Refactor Project to Repository Pattern
 
 # Phase 2: Secondary Models (Guardian, Role, etc.)
 
-- [ ] Check `Guardian.js` vs `GuardianRepository.js` and refactor. <!-- id: 6 -->
-- [ ] Check `Role.js` vs `RoleRepository.js` and refactor. <!-- id: 7 -->
+- [x] Check `Guardian.js` vs `GuardianRepository.js` and refactor. <!-- id: 6 -->
+- [x] Check `Role.js` vs `RoleRepository.js` and refactor. <!-- id: 7 -->
 
 # Phase 3: Models without Repositories (Activity, Attendance, Calendar)
 
