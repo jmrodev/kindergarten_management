@@ -1,5 +1,5 @@
 // controllers/DocumentReviewController.js
-const DocumentReview = require('../models/DocumentReview');
+const DocumentReviewRepository = require('../repositories/DocumentReviewRepository');
 const StudentRepository = require('../repositories/StudentRepository');
 const GuardianRepository = require('../repositories/GuardianRepository');
 const StaffRepository = require('../repositories/StaffRepository');
@@ -14,7 +14,7 @@ class DocumentReviewController {
       if (req.query.status) filters.status = req.query.status;
       if (req.query.reviewerId) filters.reviewerId = req.query.reviewerId;
 
-      const documentReviews = await DocumentReview.getAll(filters);
+      const documentReviews = await DocumentReviewRepository.getAll(filters);
       res.status(200).json({
         status: 'success',
         data: documentReviews
@@ -27,7 +27,7 @@ class DocumentReviewController {
   static async getById(req, res, next) {
     try {
       const { id } = req.params;
-      const documentReview = await DocumentReview.getById(id);
+      const documentReview = await DocumentReviewRepository.getById(id);
 
       if (!documentReview) {
         return next(new AppError(`No document review found with id: ${id}`, 404));
@@ -81,8 +81,8 @@ class DocumentReviewController {
         req.body.reviewer_id = req.user.id;
       }
 
-      const reviewId = await DocumentReview.create(req.body);
-      const createdReview = await DocumentReview.getById(reviewId);
+      const reviewId = await DocumentReviewRepository.create(req.body);
+      const createdReview = await DocumentReviewRepository.getById(reviewId);
 
       res.status(201).json({
         status: 'success',
@@ -97,7 +97,7 @@ class DocumentReviewController {
   static async update(req, res, next) {
     try {
       const { id } = req.params;
-      const documentReview = await DocumentReview.getById(id);
+      const documentReview = await DocumentReviewRepository.getById(id);
 
       if (!documentReview) {
         return next(new AppError(`No document review found with id: ${id}`, 404));
@@ -137,13 +137,13 @@ class DocumentReviewController {
         }
       }
 
-      const updated = await DocumentReview.update(id, req.body);
+      const updated = await DocumentReviewRepository.update(id, req.body);
 
       if (!updated) {
         return next(new AppError(`No document review found with id: ${id}`, 404));
       }
 
-      const updatedReview = await DocumentReview.getById(id);
+      const updatedReview = await DocumentReviewRepository.getById(id);
 
       res.status(200).json({
         status: 'success',
@@ -158,7 +158,7 @@ class DocumentReviewController {
   static async delete(req, res, next) {
     try {
       const { id } = req.params;
-      const deleted = await DocumentReview.delete(id);
+      const deleted = await DocumentReviewRepository.delete(id);
 
       if (!deleted) {
         return next(new AppError(`No document review found with id: ${id}`, 404));
@@ -175,7 +175,7 @@ class DocumentReviewController {
 
   static async getPendingReviews(req, res, next) {
     try {
-      const pendingReviews = await DocumentReview.getPendingReviews();
+      const pendingReviews = await DocumentReviewRepository.getPendingReviews();
 
       res.status(200).json({
         status: 'success',

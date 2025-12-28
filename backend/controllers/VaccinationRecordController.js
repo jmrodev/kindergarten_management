@@ -1,5 +1,5 @@
 // controllers/VaccinationRecordController.js
-const VaccinationRecord = require('../models/VaccinationRecord');
+const VaccinationRecordRepository = require('../repositories/VaccinationRecordRepository');
 const StudentRepository = require('../repositories/StudentRepository');
 const { AppError } = require('../middleware/errorHandler');
 
@@ -11,7 +11,7 @@ class VaccinationRecordController {
       if (req.query.studentId) filters.studentId = req.query.studentId;
       if (req.query.status) filters.status = req.query.status;
 
-      const vaccinationRecords = await VaccinationRecord.getAll(filters);
+      const vaccinationRecords = await VaccinationRecordRepository.getAll(filters);
       res.status(200).json({
         status: 'success',
         data: vaccinationRecords
@@ -24,7 +24,7 @@ class VaccinationRecordController {
   static async getById(req, res, next) {
     try {
       const { id } = req.params;
-      const vaccinationRecord = await VaccinationRecord.getById(id);
+      const vaccinationRecord = await VaccinationRecordRepository.getById(id);
 
       if (!vaccinationRecord) {
         return next(new AppError(`No vaccination record found with id: ${id}`, 404));
@@ -42,7 +42,7 @@ class VaccinationRecordController {
   static async getByStudentId(req, res, next) {
     try {
       const { studentId } = req.params;
-      const vaccinationRecords = await VaccinationRecord.getByStudentId(studentId);
+      const vaccinationRecords = await VaccinationRecordRepository.getByStudentId(studentId);
 
       res.status(200).json({
         status: 'success',
@@ -61,8 +61,8 @@ class VaccinationRecordController {
         return next(new AppError(`No student found with id: ${req.body.student_id}`, 404));
       }
 
-      const vaccinationId = await VaccinationRecord.create(req.body);
-      const createdVaccination = await VaccinationRecord.getById(vaccinationId);
+      const vaccinationId = await VaccinationRecordRepository.create(req.body);
+      const createdVaccination = await VaccinationRecordRepository.getById(vaccinationId);
 
       res.status(201).json({
         status: 'success',
@@ -77,7 +77,7 @@ class VaccinationRecordController {
   static async update(req, res, next) {
     try {
       const { id } = req.params;
-      const vaccinationRecord = await VaccinationRecord.getById(id);
+      const vaccinationRecord = await VaccinationRecordRepository.getById(id);
 
       if (!vaccinationRecord) {
         return next(new AppError(`No vaccination record found with id: ${id}`, 404));
@@ -91,13 +91,13 @@ class VaccinationRecordController {
         }
       }
 
-      const updated = await VaccinationRecord.update(id, req.body);
+      const updated = await VaccinationRecordRepository.update(id, req.body);
 
       if (!updated) {
         return next(new AppError(`No vaccination record found with id: ${id}`, 404));
       }
 
-      const updatedVaccination = await VaccinationRecord.getById(id);
+      const updatedVaccination = await VaccinationRecordRepository.getById(id);
 
       res.status(200).json({
         status: 'success',
@@ -112,7 +112,7 @@ class VaccinationRecordController {
   static async delete(req, res, next) {
     try {
       const { id } = req.params;
-      const deleted = await VaccinationRecord.delete(id);
+      const deleted = await VaccinationRecordRepository.delete(id);
 
       if (!deleted) {
         return next(new AppError(`No vaccination record found with id: ${id}`, 404));
@@ -129,7 +129,7 @@ class VaccinationRecordController {
 
   static async getVaccinationStatusSummary(req, res, next) {
     try {
-      const summary = await VaccinationRecord.getVaccinationStatusSummary();
+      const summary = await VaccinationRecordRepository.getVaccinationStatusSummary();
 
       res.status(200).json({
         status: 'success',
