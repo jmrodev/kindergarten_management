@@ -17,12 +17,20 @@ class EnrollmentController {
             const sanitizedBody = sanitizeObject(req.body, sanitizeWhitespace);
 
             const {
-                student,
-                guardian,
-                emergencyContact,
+                student: studentObj, // renaming to avoid confusion with variable below
+                guardian, // Legacy support
+                emergencyContact, // Legacy support
+                guardians, // NEW: Full array support
                 classroomId,
                 shift
             } = sanitizedBody;
+
+            // If flat student data came in 'studentObj', use it, or if fields provided at root?
+            // The controller assumes 'student' key contains student fields.
+            // But if frontend sends structured data { student: {...}, guardians: [...] }, we use that.
+
+            const student = studentObj || {}; // Fallback if needed, but validation should handle it
+
 
             // 1. Crear dirección del alumno
             const addressData = {
@@ -107,6 +115,24 @@ class EnrollmentController {
                 };
 
                 await this._processGuardian(ecGuardianData, studentId, null, null, connection, true);
+            }
+
+            // 6. Process 'guardians' array (Unified Frontend)
+            if (guardians && Array.isArray(guardians)) {
+                for (const g of guardians) {
+                    // Check if this guardian is effectively a primary (guardian var above) or EC (emergencyContact var above) to avoid duplication if user sent both formats?
+                    // Ideally frontend sends ONLY 'guardians' array OR 'guardian'/'emergencyContact' legacy fields.
+                    // We process blindly assuming they are distinct or frontend logic handles it.
+
+                    // The 'g' object from frontend likely matches Guardian structure or close to it.
+                    // We need to map it carefully.
+
+                    // Frontend 'g' keys from StepFamily: first_name, paternal_surname, dni, relationship, phone, is_primary, etc.
+                    // _processGuardian expects camelCase if we stick to one convention, OR we adapt logic inside it.
+                    // Let's look at _processGuardian: It handles both (input.firstName || input.first_name).
+
+                    await this._processGuardian(g, studentId, addressId, student.address?.street, connection, g.is_emergency || g.isEmergency);
+                }
             }
 
             await connection.commit();

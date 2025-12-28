@@ -42,29 +42,52 @@ const studentsService = {
   },
 
   /**
-   * Helper to flatten nested data (address, emergency_contact) for backend consumption
+   * Format flat frontend state to structured backend payload
    */
-  _flattenStudentData(data) {
-    const flatData = { ...data }
+  _formatForBackend(data) {
+    // Map flat snake_case state to nested camelCase expected by EnrollmentController
+    const student = {
+      firstName: data.first_name,
+      middleName: data.middle_name_optional,
+      thirdName: data.third_name_optional,
+      paternalSurname: data.paternal_surname,
+      maternalSurname: data.maternal_surname,
+      nickname: data.nickname_optional,
+      dni: data.dni,
+      birthDate: data.birth_date,
+      gender: data.gender,
+      healthInsurance: data.health_insurance,
+      affiliateNumber: data.affiliate_number, // checking if frontend has this field? not in initial state shown but maybe dynamically added
+      allergies: data.allergies,
+      medications: data.medications,
+      medicalObservations: data.medical_observations,
+      bloodType: data.blood_type,
+      pediatricianName: data.pediatrician_name,
+      pediatricianPhone: data.pediatrician_phone,
+      photoAuthorization: data.photo_authorization,
+      tripAuthorization: data.trip_authorization,
+      medicalAttentionAuthorization: data.medical_attention_authorization,
+      hasSiblingsInSchool: data.has_siblings_in_school,
+      specialNeeds: data.special_needs,
+      vaccinationStatus: data.vaccination_status,
+      observations: data.observations,
 
-    // Flatten Address
-    if (data.address) {
-      flatData.street = data.address.street
-      flatData.number = data.address.number
-      flatData.city = data.address.city
-      flatData.provincia = data.address.provincia
-      flatData.postal_code_optional = data.address.postal_code_optional
-      delete flatData.address
-    }
+      // Address nested
+      address: {
+        street: data.street,
+        number: data.number,
+        city: data.city,
+        provincia: data.provincia,
+        postalCode: data.postal_code_optional
+      }
+    };
 
-
-
-    // Pass guardians array directly if present
-    if (data.guardians) {
-      flatData.guardians = data.guardians;
-    }
-
-    return flatData
+    return {
+      student: student,
+      guardians: data.guardians || [],
+      classroomId: data.classroom_id,
+      shift: data.shift
+    };
   },
 
   /**
@@ -73,7 +96,7 @@ const studentsService = {
    * @returns {Promise<Object>} Created student
    */
   async create(data) {
-    const payload = this._flattenStudentData(data)
+    const payload = this._formatForBackend(data)
     return api.post('/api/students', payload)
   },
 
@@ -84,7 +107,10 @@ const studentsService = {
    * @returns {Promise<Object>} Updated student
    */
   async update(id, data) {
-    const payload = this._flattenStudentData(data)
+    // Note: Update endpoint might share logic or differ. 
+    // EnrollmentController uses similar mapping but expects specific structure.
+    // For safety, we use the same structure.
+    const payload = this._formatForBackend(data)
     return api.put(`/api/students/${id}`, payload)
   },
 
