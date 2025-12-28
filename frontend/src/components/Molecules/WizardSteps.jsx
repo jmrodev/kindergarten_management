@@ -554,28 +554,7 @@ export const StepFamily = ({ data, onChange, onAddGuardian, onRemoveGuardian, on
                 Agregue a los padres, tutores y personas autorizadas.
             </p>
 
-            {/* List of added guardians */}
-            <div className="guardians-list">
-                {data.guardians && data.guardians.map((g, index) => (
-                    <div key={index} className="guardian-item-card">
-                        <div className="guardian-info">
-                            <strong>{g.first_name} {g.paternal_surname}</strong> ({g.relationship})
-                            <br />DNI: {g.dni} | Tel: {g.phone}
-                            <div className="guardian-badges">
-                                {g.is_primary && <span className="badge-primary">Tutor</span>}
-                                {g.is_emergency && <span className="badge-warning">Emergencia</span>}
-                                {g.can_pickup && <span className="badge-success" title="Autorizado a retirar">Retira 🚙</span>}
-                                {g.has_restraining_order && <span className="badge-danger" title="Restricción Judicial">⛔ Restricción</span>}
-                                {g.can_change_diaper && <span className="badge-info" title="Cambio de pañales">Pañales 👶</span>}
-                            </div>
-                        </div>
-                        <Button variant="danger" size="small" onClick={() => onRemoveGuardian(index)}>Eliminar</Button>
-                    </div>
-                ))}
-                {(!data.guardians || data.guardians.length === 0) && (
-                    <p className="text-empty">No hay responsables agregados aún.</p>
-                )}
-            </div>
+            {/* List of added guardians moved to bottom */}
 
             <hr className="divider" />
 
