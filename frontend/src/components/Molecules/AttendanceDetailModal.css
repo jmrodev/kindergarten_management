@@ -1,0 +1,152 @@
+/* AttendanceDetailModal.css */
+.attendance-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.attendance-modal {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.attendance-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.attendance-modal-header h3 {
+    margin: 0;
+    color: #2c3e50;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #95a5a6;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #34495e;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.special-fields {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    border-left: 3px solid #3498db;
+    margin-bottom: 15px;
+}
+
+.attendance-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.cancel-btn {
+    padding: 8px 16px;
+    background: #ecf0f1;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #7f8c8d;
+}
+
+.save-btn {
+    padding: 8px 16px;
+    background: #2ecc71;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: white;
+    font-weight: 500;
+}
+
+.save-btn:hover {
+    background: #27ae60;
+}
+
+.guardian-selection {
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.guardian-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.guardian-btn {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.guardian-btn:hover {
+    background: #f0f0f0;
+    border-color: #bbb;
+}
+
+.guardian-btn.selected {
+    background: #e3f2fd;
+    border-color: #2196f3;
+    color: #1565c0;
+    font-weight: 500;
+}
+
+.guardian-name {
+    font-size: 0.95rem;
+}
+
+.guardian-relation {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.guardian-btn.selected .guardian-relation {
+    color: #1e88e5;
+}

@@ -21,6 +21,7 @@ const MobileAttendance = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isWizardActive, setIsWizardActive] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
+  const [showPresent, setShowPresent] = useState(false); // Default hidden
 
   // Reset wizard when mode changes
   useEffect(() => {
@@ -126,6 +127,8 @@ const MobileAttendance = ({
           )}
 
           {/* Present List */}
+          {/* Present List - Hidden by default as per user request */}
+          {/* 
           {presentCount > 0 && (
             <div>
               <Text style={{ color: '#059669', fontWeight: 'bold', borderBottom: '1px solid #a7f3d0', display: 'block', marginBottom: '0.5rem' }}>Presentes ({presentCount})</Text>
@@ -136,13 +139,24 @@ const MobileAttendance = ({
               </ul>
             </div>
           )}
+          */}
         </div>
 
         <div style={{ display: 'flex', gap: '1rem' }}>
           <Button variant="secondary" onClick={handlePrev} style={{ flex: 1 }}>
             Volver
           </Button>
-          <Button variant="primary" onClick={onSave} disabled={saving} style={{ flex: 1 }}>
+          <Button
+            variant="primary"
+            onClick={async () => {
+              await onSave();
+              // Close wizard and summary to show the main list
+              setIsWizardActive(false);
+              setShowSummary(false);
+            }}
+            disabled={!hasChanges || saving}
+            style={{ flex: 1 }}
+          >
             {saving ? 'Guardando...' : 'Guardar Todo'}
           </Button>
         </div>
@@ -177,20 +191,32 @@ const MobileAttendance = ({
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: 'auto' }}>
+            {/* Primary Action: Present */}
             <Button
-              variant={status === 'presente' ? 'success' : 'secondary'}
+              variant="success"
               onClick={() => handleMark('presente')}
-              style={{ padding: '1.5rem', fontSize: '1.2rem', backgroundColor: status === 'presente' ? '#10b981' : undefined }}
+              style={{ padding: '1.5rem', fontSize: '1.5rem', backgroundColor: '#10b981', color: 'white', fontWeight: 'bold' }}
             >
-              PRESENTE
+              ✅ PRESENTE
             </Button>
-            <Button
-              variant={status === 'ausente' ? 'danger' : 'secondary'}
-              onClick={() => handleMark('ausente')}
-              style={{ padding: '1.5rem', fontSize: '1.2rem', backgroundColor: status === 'ausente' ? '#ef4444' : undefined }}
-            >
-              AUSENTE
-            </Button>
+
+            {/* Secondary Actions: Exceptions */}
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <Button
+                variant="warning"
+                onClick={() => handleMark('llegada_tarde')}
+                style={{ flex: 1, padding: '1rem', backgroundColor: '#f59e0b', color: 'white' }}
+              >
+                ⏱️ Tarde
+              </Button>
+              <Button
+                variant="info"
+                onClick={() => handleMark('retiro_anticipado')}
+                style={{ flex: 1, padding: '1rem', backgroundColor: '#3b82f6', color: 'white' }}
+              >
+                🏃 Retiro Ant.
+              </Button>
+            </div>
           </div>
         </Card>
 
@@ -205,11 +231,15 @@ const MobileAttendance = ({
           <Button
             variant="secondary"
             onClick={() => {
+              // Create explicit "Absent" on Skip?
+              // The user said: "por deduccion si al cerrar el turno figure ausente todo aquel que no se apreto presente".
+              // So skipping essentially leaves it undefined, which Save logic converts to 'ausente'.
+              // We just advance.
               if (currentIndex < students.length - 1) setCurrentIndex(prev => prev + 1);
               else setShowSummary(true);
             }}
           >
-            Siguiente
+            Saltar (Ausente) ➡️
           </Button>
         </div>
       </div>
@@ -266,28 +296,51 @@ const MobileAttendance = ({
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {/* Simple List View */}
-          {students.map(student => {
-            const status = attendanceRecords[student.id]; // undefined if no record
-            return (
-              <Card key={student.id} style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <Text style={{ fontWeight: 'bold' }}>{student.paternal_surname} {student.first_name}</Text>
-                  <Text variant="small" style={{ color: '#666' }}>{student.street} {student.number}</Text>
-                </div>
-                <div style={{
-                  padding: '0.25rem 0.5rem',
-                  borderRadius: '4px',
-                  backgroundColor: status === 'presente' ? '#d1fae5' : status === 'ausente' ? '#fee2e2' : '#f3f4f6',
-                  color: status === 'presente' ? '#065f46' : status === 'ausente' ? '#991b1b' : '#374151',
-                  fontSize: '0.8rem',
-                  fontWeight: 'bold'
-                }}>
-                  {status ? status.toUpperCase() : 'SIN REGISTRO'}
-                </div>
-              </Card>
-            )
-          })}
+          {/* Filter Toggle */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
+            <button
+              onClick={() => setShowPresent(!showPresent)}
+              style={{ background: 'none', border: 'none', color: '#666', textDecoration: 'underline', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+            >
+              {showPresent ? '👁️ Ocultar Presentes' : '❌ Ver Presentes Ocultos'}
+            </button>
+          </div>
+
+          {/* Filtered List View */}
+          {students
+            .filter(student => {
+              if (showPresent) return true;
+              const status = attendanceRecords[student.id];
+              // Hide if Present or Late Arrival (effectively present)
+              return status !== 'presente' && status !== 'llegada_tarde';
+            })
+            .map(student => {
+              const status = attendanceRecords[student.id]; // undefined if no record
+              return (
+                <Card key={student.id} style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <Text style={{ fontWeight: 'bold' }}>{student.paternal_surname} {student.first_name}</Text>
+                    <Text variant="small" style={{ color: '#666' }}>{student.street} {student.number}</Text>
+                  </div>
+                  <div style={{
+                    padding: '0.25rem 0.5rem',
+                    borderRadius: '4px',
+                    backgroundColor: status === 'presente' ? '#d1fae5' : status === 'ausente' ? '#fee2e2' : '#f3f4f6',
+                    color: status === 'presente' ? '#065f46' : status === 'ausente' ? '#991b1b' : '#374151',
+                    fontSize: '0.8rem',
+                    fontWeight: 'bold'
+                  }}>
+                    {status ? status.toUpperCase() : 'SIN REGISTRO'}
+                  </div>
+                </Card>
+              )
+            })}
+
+          {!showPresent && students.some(s => attendanceRecords[s.id] === 'presente' || attendanceRecords[s.id] === 'llegada_tarde') && (
+            <div style={{ textAlign: 'center', marginTop: '10px', color: '#999', fontSize: '0.9rem' }}>
+              Se ocultaron los alumnos presentes.
+            </div>
+          )}
         </div>
       )}
     </div>

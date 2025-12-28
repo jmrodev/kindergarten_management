@@ -24,7 +24,10 @@ const DesktopAttendance = ({
     hasChanges,
     saving,
     viewMode,
-    onToggleViewMode
+    onToggleViewMode,
+
+    onOpenDetails,
+    onShowHistory // New prop
 }) => {
 
     const renderDatePicker = () => {
@@ -73,6 +76,8 @@ const DesktopAttendance = ({
         const boysPresent = students.filter(s => s.gender === 'M' && attendanceRecords[s.id] === 'presente').length;
         const girlsPresent = students.filter(s => s.gender === 'F' && attendanceRecords[s.id] === 'presente').length;
 
+        const isViewMode = viewMode === 'view';
+
         return (
             <>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
@@ -84,10 +89,12 @@ const DesktopAttendance = ({
                         <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#b91c1c' }}>{absentCount}</div>
                         <div style={{ color: '#991b1b', fontWeight: '500' }}>Ausentes</div>
                     </div>
-                    <div style={{ padding: '1rem', backgroundColor: '#f3f4f6', borderRadius: '8px', textAlign: 'center', border: '1px solid #9ca3af' }}>
-                        <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#4b5563' }}>{unregisteredCount}</div>
-                        <div style={{ color: '#374151', fontWeight: '500' }}>Sin Registro</div>
-                    </div>
+                    {!isViewMode && (
+                        <div style={{ padding: '1rem', backgroundColor: '#f3f4f6', borderRadius: '8px', textAlign: 'center', border: '1px solid #9ca3af' }}>
+                            <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#4b5563' }}>{unregisteredCount}</div>
+                            <div style={{ color: '#374151', fontWeight: '500' }}>Sin Registro</div>
+                        </div>
+                    )}
                     <div style={{ padding: '1rem', backgroundColor: '#dbeafe', borderRadius: '8px', textAlign: 'center', border: '1px solid #3b82f6' }}>
                         <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#1e40af' }}>{boysPresent}</div>
                         <div style={{ color: '#1e3a8a', fontWeight: '500' }}>Nenes Presentes</div>
@@ -105,42 +112,80 @@ const DesktopAttendance = ({
                             <TableCell as="th">DNI</TableCell>
                             <TableCell as="th">Género</TableCell>
                             <TableCell as="th">Estado</TableCell>
-                            <TableCell as="th">Acción</TableCell>
+                            {!isViewMode && <TableCell as="th">Acción</TableCell>}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {students.map(student => {
                             const status = attendanceRecords[student.id];
                             const fullName = `${student.first_name} ${student.paternal_surname || ''} ${student.maternal_surname || ''}`.trim();
+
+                            // Map generic status to display
+                            let statusLabel = 'Sin Registro';
+                            let statusClass = 'status-none';
+
+                            if (status === 'presente') { statusLabel = 'Presente'; statusClass = 'status-active'; }
+                            else if (status === 'ausente') { statusLabel = 'Ausente'; statusClass = 'status-inactive'; }
+                            else if (status === 'llegada_tarde') { statusLabel = 'Llegada Tarde'; statusClass = 'status-warning'; }
+                            else if (status === 'retiro_anticipado') { statusLabel = 'Retiro Anticipado'; statusClass = 'status-info'; }
+
+                            // Styles for view mode
+                            const statusStyle = isViewMode ? {
+                                padding: '5px 10px',
+                                borderRadius: '4px',
+                                fontWeight: 'bold',
+                                backgroundColor: status === 'presente' ? '#d1fae5' : status === 'ausente' ? '#fee2e2' : '#f3f4f6',
+                                color: status === 'presente' ? '#065f46' : status === 'ausente' ? '#991b1b' : '#374151'
+                            } : {};
+
                             return (
                                 <TableRow key={student.id}>
                                     <TableCell>{fullName}</TableCell>
                                     <TableCell>{student.dni || 'N/A'}</TableCell>
                                     <TableCell>{student.gender === 'M' ? 'Varón' : student.gender === 'F' ? 'Mujer' : '-'}</TableCell>
                                     <TableCell>
-                                        <span className={`status-badge ${status === 'presente' ? 'status-active' : status === 'ausente' ? 'status-inactive' : 'status-none'}`}
-                                            style={!status ? { backgroundColor: '#e5e7eb', color: '#374151', border: '1px solid #d1d5db' } : {}}>
-                                            {status === 'presente' ? 'Presente' : status === 'ausente' ? 'Ausente' : 'Sin Registro'}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell>
-                                        {viewMode === 'register' ? (
-                                            <Button
-                                                variant={status === 'presente' ? 'danger' : 'success'}
-                                                size="small"
-                                                onClick={() => onToggleStatus(student.id)}
-                                            >
-                                                {status === 'presente' ? 'Marcar Ausente' : 'Marcar Presente'}
-                                            </Button>
+                                        {isViewMode ? (
+                                            <span style={statusStyle}>
+                                                {statusLabel}
+                                            </span>
                                         ) : (
-                                            <span style={{ color: '#666', fontSize: '0.9rem' }}>-</span>
+                                            <span className={`status-badge ${statusClass}`}
+                                                style={!status ? { backgroundColor: '#e5e7eb', color: '#374151', border: '1px solid #d1d5db' } : {}}>
+                                                {statusLabel}
+                                            </span>
                                         )}
                                     </TableCell>
+                                    {!isViewMode && (
+                                        <TableCell>
+                                            <div style={{ display: 'flex', gap: '5px' }}>
+                                                {/* Button Group 1: Normal Attendance */}
+                                                <Button
+                                                    variant={status === 'presente' ? 'danger' : 'success'}
+                                                    size="small"
+                                                    onClick={() => onToggleStatus(student.id, status === 'presente' ? 'ausente' : 'presente')}
+                                                    title={status === 'presente' ? 'Marcar Ausente' : 'Marcar Presente'}
+                                                    style={{ minWidth: '100px' }}
+                                                >
+                                                    {status === 'presente' ? '❌ Ausente' : '✅ Presente'}
+                                                </Button>
+
+                                                {/* Button Group 2: Out of Hours / Exception */}
+                                                <Button
+                                                    variant="warning"
+                                                    size="small"
+                                                    onClick={() => onOpenDetails(student, null)}
+                                                    title="Fuera de Horario (Tarde/Retiro)"
+                                                >
+                                                    ⏱️/🏃 Borrar/Editar
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    )}
                                 </TableRow>
                             );
                         })}
                     </TableBody>
-                </Table>
+                </Table >
             </>
         );
     };
@@ -205,41 +250,116 @@ const DesktopAttendance = ({
         // Calculate stats per student
         const studentStats = students.map(student => {
             const studentRecords = attendanceHistory.filter(r => r.student_id === student.id);
-            const present = studentRecords.filter(r => r.status === 'presente').length;
+            const present = studentRecords.filter(r => r.status === 'presente' || r.status === 'llegada_tarde' || r.status === 'retiro_anticipado').length;
             const absent = studentRecords.filter(r => r.status === 'ausente').length;
-            const total = present + absent; // Ignoring others for % base? or total days?
+            const lates = studentRecords.filter(r => r.status === 'llegada_tarde').length;
+            const early = studentRecords.filter(r => r.status === 'retiro_anticipado').length;
+
+            const total = present + absent;
             const percentage = total > 0 ? Math.round((present / total) * 100) : 0;
-            return { ...student, present, absent, percentage };
+            return { ...student, present, absent, lates, early, percentage };
         });
 
+        const topAbsent = [...studentStats].sort((a, b) => b.absent - a.absent).slice(0, 3).filter(s => s.absent > 0);
+        const topLates = [...studentStats].sort((a, b) => b.lates - a.lates).slice(0, 3).filter(s => s.lates > 0);
+        const topEarly = [...studentStats].sort((a, b) => b.early - a.early).slice(0, 3).filter(s => s.early > 0);
+
         return (
-            <Table striped bordered responsive>
-                <TableHeader>
-                    <TableRow>
-                        <TableCell as="th">Alumno</TableCell>
-                        <TableCell as="th">Presentes</TableCell>
-                        <TableCell as="th">Ausentes</TableCell>
-                        <TableCell as="th">% Asistencia</TableCell>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {studentStats.map(student => (
-                        <TableRow key={student.id}>
-                            <TableCell>{`${student.first_name} ${student.paternal_surname}`}</TableCell>
-                            <TableCell>{student.present}</TableCell>
-                            <TableCell>{student.absent}</TableCell>
-                            <TableCell>
-                                <span style={{
-                                    fontWeight: 'bold',
-                                    color: student.percentage < 75 ? 'red' : 'green'
-                                }}>
-                                    {student.percentage}%
-                                </span>
-                            </TableCell>
+            <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+                    {/* Visual Warnings */}
+                    <div style={{ border: '1px solid #fee2e2', borderRadius: '8px', padding: '15px', background: '#fff1f2' }}>
+                        <h4 style={{ color: '#991b1b', marginTop: 0 }}>🚨 Más Faltas</h4>
+                        {topAbsent.length > 0 ? (
+                            <ul style={{ paddingLeft: '20px', margin: 0 }}>
+                                {topAbsent.map(s => (
+                                    <li
+                                        key={s.id}
+                                        style={{ color: '#7f1d1d', cursor: 'pointer', textDecoration: 'underline' }}
+                                        onClick={() => onShowHistory(s, 'ausente')}
+                                        title="Ver detalle de faltas"
+                                    >
+                                        <strong>{s.first_name} {s.paternal_surname}</strong>: {s.absent}
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : <span style={{ color: '#991b1b', fontStyle: 'italic' }}>Sin faltas registradas</span>}
+                    </div>
+
+                    <div style={{ border: '1px solid #fef3c7', borderRadius: '8px', padding: '15px', background: '#fffbeb' }}>
+                        <h4 style={{ color: '#92400e', marginTop: 0 }}>⏱️ Llegadas Tarde</h4>
+                        {topLates.length > 0 ? (
+                            <ul style={{ paddingLeft: '20px', margin: 0 }}>
+                                {topLates.map(s => (
+                                    <li
+                                        key={s.id}
+                                        style={{ color: '#78350f', cursor: 'pointer', textDecoration: 'underline' }}
+                                        onClick={() => onShowHistory(s, 'llegada_tarde')}
+                                        title="Ver detalle de llegadas tarde"
+                                    >
+                                        <strong>{s.first_name} {s.paternal_surname}</strong>: {s.lates}
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : <span style={{ color: '#92400e', fontStyle: 'italic' }}>Todos puntuales</span>}
+                    </div>
+
+                    <div style={{ border: '1px solid #e0e7ff', borderRadius: '8px', padding: '15px', background: '#eef2ff' }}>
+                        <h4 style={{ color: '#3730a3', marginTop: 0 }}>🏃 Retiro Anticipado</h4>
+                        {topEarly.length > 0 ? (
+                            <ul style={{ paddingLeft: '20px', margin: 0 }}>
+                                {topEarly.map(s => (
+                                    <li
+                                        key={s.id}
+                                        style={{ color: '#312e81', cursor: 'pointer', textDecoration: 'underline' }}
+                                        onClick={() => onShowHistory(s, 'retiro_anticipado')}
+                                        title="Ver detalle de retiros anticipados"
+                                    >
+                                        <strong>{s.first_name} {s.paternal_surname}</strong>: {s.early}
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : <span style={{ color: '#3730a3', fontStyle: 'italic' }}>Sin retiros anticipados</span>}
+                    </div>
+                </div>
+
+                <Table striped bordered responsive>
+                    <TableHeader>
+                        <TableRow>
+                            <TableCell as="th">Alumno</TableCell>
+                            <TableCell as="th">Presentes</TableCell>
+                            <TableCell as="th">Ausentes</TableCell>
+                            <TableCell as="th">Tardanzas</TableCell>
+                            <TableCell as="th">Retiros Ant.</TableCell>
+                            <TableCell as="th">% Asistencia</TableCell>
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+                    </TableHeader>
+                    <TableBody>
+                        {studentStats.map(student => (
+                            <TableRow
+                                key={student.id}
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => onShowHistory(student, 'all')}
+                                title="Ver historial completo"
+                            >
+                                <TableCell>{`${student.first_name} ${student.paternal_surname}`}</TableCell>
+                                <TableCell>{student.present}</TableCell>
+                                <TableCell>{student.absent}</TableCell>
+                                <TableCell>{student.lates}</TableCell>
+                                <TableCell>{student.early}</TableCell>
+                                <TableCell>
+                                    <span style={{
+                                        fontWeight: 'bold',
+                                        color: student.percentage < 75 ? 'red' : 'green'
+                                    }}>
+                                        {student.percentage}%
+                                    </span>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </>
         );
     };
 

@@ -367,9 +367,9 @@ const Classes = () => {
         </FormGroup>
         <FormGroup>
           <Input
-            label="Grupo de Edad"
+            label="Edad Ideal / Referencia"
             name="age_group"
-            type="number"
+            type="text"
             value={formState.age_group}
             onChange={handleChange}
             required

@@ -6,6 +6,9 @@ import DesktopAttendance from '../components/Organisms/DesktopAttendance';
 import MobileAttendance from '../components/Organisms/MobileAttendance';
 import attendanceService from '../services/attendanceService';
 import api from '../utils/api';
+import AttendanceDetailModal from '../components/Molecules/AttendanceDetailModal';
+import StudentHistoryModal from '../components/Molecules/StudentHistoryModal';
+import '../components/Molecules/AttendanceDetailModal.css';
 
 const Attendance = () => {
   const isMobile = useIsMobile();
@@ -23,6 +26,17 @@ const Attendance = () => {
   const [reportType, setReportType] = useState('daily');
   const [attendanceHistory, setAttendanceHistory] = useState([]);
   const [viewMode, setViewMode] = useState('register'); // 'register' or 'view'
+
+  // Modal State
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedStudentForDetail, setSelectedStudentForDetail] = useState(null);
+  const [detailModalData, setDetailModalData] = useState(null);
+
+  // History Modal State
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [selectedHistoryStudent, setSelectedHistoryStudent] = useState(null);
+  const [selectedHistoryType, setSelectedHistoryType] = useState('all');
+  const [historyRecords, setHistoryRecords] = useState([]);
 
   // Load classrooms on mount
   useEffect(() => {
@@ -143,18 +157,8 @@ const Attendance = () => {
     setHasChanges(true);
   };
 
-  const handleToggleStatus = (studentId) => {
-    const currentStatus = attendanceRecords[studentId];
-    // If undefined/null (sin registro) -> Mark Presente
-    // If Presente -> Mark Ausente
-    // If Ausente -> Mark Presente
-    const newStatus = currentStatus === 'presente' ? 'ausente' : 'presente';
-
-    setAttendanceRecords(prev => ({
-      ...prev,
-      [studentId]: newStatus
-    }));
-    setHasChanges(true);
+  const handleToggleStatus = (studentId, status) => {
+    handleSetStatus(studentId, status);
   };
 
   const handleToggleViewMode = () => {
@@ -163,11 +167,98 @@ const Attendance = () => {
         return;
       }
     }
+
+    // Always reset to original records when switching modes to ensure
+    // we see the source of truth (view mode) or start fresh (register mode)
+    // and discard any unsaved changes if the user confirmed.
+    setAttendanceRecords({ ...originalRecords });
+    setHasChanges(false);
+
     setViewMode(viewMode === 'register' ? 'view' : 'register');
-    if (viewMode === 'view') {
-      // Reset changes when going back to register mode
-      setAttendanceRecords({ ...originalRecords });
-      setHasChanges(false);
+  };
+
+  const handleOpenDetails = async (student, initialStatus = null) => {
+    // Set selected immediately for UI feedback if needed, but we wait for data
+    // fetch full details to get guardians
+    try {
+      const fullStudentRes = await api.get(`/api/students/${student.id}`);
+      // Response format is { status: 'success', data: { ... } } or directly data depending on interceptor
+      // Looking at api.js interaction usually returns data directly if success.
+      // Let's assume standard response unwrapping in api.js or handle both.
+      const fullStudent = fullStudentRes.data || fullStudentRes;
+
+      setSelectedStudentForDetail(fullStudent);
+      setDetailModalData(null); // Reset for new
+
+      setDetailModalOpen(true);
+      if (initialStatus) {
+        // If a specific status triggers the modal (e.g. Late/Early), set it locally immediately
+        // This serves as the "draft" status passed to the modal via attendanceRecords prop or we can pass a new prop.
+        // But the modal uses `currentStatus` from `attendanceRecords`.
+        // So we update the local record temporarily to reflect the intended status.
+        handleSetStatus(student.id, initialStatus);
+      }
+    } catch (err) {
+      console.error("Error fetching student details", err);
+      alert("Error al cargar detalles del alumno");
+    }
+  };
+
+  const handleSaveDetails = (studentId, status, details) => {
+    // Update status
+    handleSetStatus(studentId, status);
+    saveSingleRecord(studentId, status, details);
+  };
+
+  const handleShowHistory = (student, type) => {
+    setSelectedHistoryStudent(student);
+    setSelectedHistoryType(type);
+
+    // Filter history
+    const records = attendanceHistory.filter(r => {
+      if (r.student_id !== student.id) return false;
+      if (type === 'all') return true;
+      // Strict match for type, but allow some flexibility if needed? No, user clicked specific list.
+      return r.status === type;
+    });
+
+    // Sort by date desc
+    records.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    setHistoryRecords(records);
+    setHistoryModalOpen(true);
+  };
+
+  const saveSingleRecord = async (studentId, status, details) => {
+    try {
+      setSaving(true);
+      const data = {
+        student_id: studentId,
+        date: selectedDate,
+        status: status,
+        classroom_id: selectedClassroom,
+        ...details
+      };
+
+      await attendanceService.create(data); // Create or Update logic inside service/backend needed? 
+      // Actually create() inserts. We should check if exists.
+      // But attendance is usually 1 record per student per day.
+      // The backend `create` does Insert. 
+      // We might need an `upsert` or check existence.
+      // For now, let's assume create works (or we might need to fix backend to upsert).
+
+      // Update local state
+      setAttendanceRecords(prev => ({ ...prev, [studentId]: status }));
+      setOriginalRecords(prev => ({ ...prev, [studentId]: status }));
+
+      // Close modal
+      // setDetailModalOpen(false); // Handled by caller? No, handleSaveDetails closes?
+      console.log('Detalle guardado');
+    } catch (err) {
+      console.error("Error saving detail", err);
+      alert("Error al guardar detalle: " + err.message);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -190,10 +281,10 @@ const Attendance = () => {
       await Promise.all(promises);
 
       // Update original records and reset changes flag
-      setOriginalRecords({ ...attendanceRecords });
       setHasChanges(false);
 
       console.log('Asistencia guardada exitosamente');
+      alert('Asistencia guardada exitosamente');
     } catch (err) {
       console.error('Error saving attendance:', err);
       setError(err.message || 'Error al guardar asistencia');
@@ -226,24 +317,49 @@ const Attendance = () => {
   }
 
   return (
-    <DesktopAttendance
-      classrooms={classrooms}
-      students={students}
-      attendanceRecords={attendanceRecords}
-      attendanceHistory={attendanceHistory}
-      selectedClassroom={selectedClassroom}
-      setSelectedClassroom={setSelectedClassroom}
-      selectedDate={selectedDate}
-      setSelectedDate={setSelectedDate}
-      reportType={reportType}
-      setReportType={setReportType}
-      onToggleStatus={handleToggleStatus}
-      onSave={handleSaveAttendance}
-      hasChanges={hasChanges}
-      saving={saving}
-      viewMode={viewMode}
-      onToggleViewMode={handleToggleViewMode}
-    />
+    <>
+      <DesktopAttendance
+        classrooms={classrooms}
+        students={students}
+        attendanceRecords={attendanceRecords}
+        attendanceHistory={attendanceHistory}
+        selectedClassroom={selectedClassroom}
+        setSelectedClassroom={setSelectedClassroom}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        reportType={reportType}
+        setReportType={setReportType}
+        onToggleStatus={handleToggleStatus}
+        onSave={handleSaveAttendance}
+        hasChanges={hasChanges}
+        saving={saving}
+        viewMode={viewMode}
+        onToggleViewMode={handleToggleViewMode}
+        onOpenDetails={handleOpenDetails}
+        onShowHistory={handleShowHistory}
+      />
+      {detailModalOpen && selectedStudentForDetail && (
+        <AttendanceDetailModal
+          isOpen={detailModalOpen}
+          onClose={() => setDetailModalOpen(false)}
+          onSave={handleSaveDetails}
+          student={selectedStudentForDetail}
+          currentStatus={attendanceRecords[selectedStudentForDetail.id]}
+          initialData={detailModalData}
+          guardians={selectedStudentForDetail.guardians || []}
+        />
+      )}
+
+      {historyModalOpen && selectedHistoryStudent && (
+        <StudentHistoryModal
+          isOpen={historyModalOpen}
+          onClose={() => setHistoryModalOpen(false)}
+          student={selectedHistoryStudent}
+          historyType={selectedHistoryType}
+          records={historyRecords}
+        />
+      )}
+    </>
   );
 };
 

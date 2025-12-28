@@ -230,25 +230,9 @@ router.post('/change-password', protect, async (req, res, next) => {
     }
 });
 
-const { passport, isGoogleConfigured } = require('../config/passport'); // Import passport and isGoogleConfigured
+// Google Auth removed.
 
 // Google OAuth routes (if configured)
-if (isGoogleConfigured) {
-    // Authenticate with Google
-    router.get('/google',
-        passport.authenticate('google', { scope: ['profile', 'email'] })
-    );
-
-    // Google OAuth callback
-    router.get('/google/callback',
-        passport.authenticate('google', { failureRedirect: process.env.FRONTEND_URL }),
-        (req, res) => {
-            // Successful authentication, generate JWT and redirect
-            // req.user contains the user object from the deserializeUser function in passport.js
-            const token = generateToken(req.user);
-            res.redirect(`${process.env.PARENT_PORTAL_REDIRECT_URL}?token=${token}`);
-        }
-    );
-}
+// Google OAuth routes were here.
 
 module.exports = router;

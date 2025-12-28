@@ -26,7 +26,6 @@ const dashboardRoutes = require('./routes/dashboardRoutes'); // Import dashboard
 const healthInsuranceRoutes = require('./routes/healthInsuranceRoutes');
 const pediatricianRoutes = require('./routes/pediatricianRoutes');
 const { AppError, errorHandler } = require('./middleware/errorHandler');
-const { initializePassport, passport, isGoogleConfigured } = require('./config/passport');
 const { jsonSerializer } = require('./utils/serialization'); // Import jsonSerializer
 const path = require('path');
 
@@ -34,24 +33,16 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Database connection pool
-const pool = mariadb.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'kindergarten_db',
-    connectionLimit: 10, // Aumentado para mejor rendimiento
-    acquireTimeout: 60000, // Tiempo de espera para adquirir conexión (60 segundos)
-    timeout: 60000, // Tiempo de espera general (60 segundos)
-    reconnect: true // Permitir reconexión automática
-});
+const { pool } = require('./db');
 
 // Make pool available to routes
 app.set('pool', pool);
 
-// Initialize Passport with the pool
-if (isGoogleConfigured) {
-    initializePassport(pool);
-}
+// Initialize Passport with the pool - REMOVED
+// if (isGoogleConfigured) {
+//     initializePassport(pool);
+// }
+
 
 // Test database connection
 pool.getConnection()

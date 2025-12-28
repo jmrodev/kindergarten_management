@@ -9,10 +9,15 @@ class ClassroomRepository {
       let query = `
         SELECT c.*, 
                s.first_name as teacher_first_name, 
-               s.paternal_surname as teacher_surname
+               s.paternal_surname as teacher_surname,
+               CAST(COUNT(st.id) AS CHAR) as student_count, -- Cast to CHAR to avoid BigInt issues if any, though count is usually safe
+               MIN(TIMESTAMPDIFF(MONTH, st.birth_date, CURDATE()))/12 as min_age_years,
+               MAX(TIMESTAMPDIFF(MONTH, st.birth_date, CURDATE()))/12 as max_age_years
         FROM classroom c
         LEFT JOIN staff s ON c.teacher_id = s.id
+        LEFT JOIN student st ON st.classroom_id = c.id AND st.status IN ('inscripto', 'activo')
         WHERE 1=1
+        GROUP BY c.id, s.id -- Group by necessary fields
       `;
       const params = [];
 

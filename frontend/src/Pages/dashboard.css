@@ -223,3 +223,65 @@
         font-size: var(--font-size-base);
     }
 }
+/* Classroom Stats inside Dashboard Card */
+.classroom-stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.classroom-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(0,0,0,0.05); /* Adjusted for light theme usually, or verify bg */
+}
+
+/* Stat card blue uses var(--info-bg) which is usually light blue. 
+   If dark theme, I should be careful. 
+   Assuming light theme based on white bg in stats-card default.
+   .stat-card.blue .stat-icon is colored. The card itself has white bg? 
+   No: .stat-card { background: var(--bg-primary); ... } which is likely white.
+   So border should be dark.
+*/
+
+.classroom-stat-row:last-child {
+  border-bottom: none;
+}
+
+.classroom-name {
+  font-weight: 600;
+  max-width: 45%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-primary);
+}
+
+.classroom-values {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.gender-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.classroom-stat-total {
+    margin-top: 8px;
+    text-align: right;
+    font-size: 1rem;
+    font-weight: bold;
+    border-top: 1px solid var(--border-color);
+    padding-top: 6px;
+    color: var(--text-primary);
+}

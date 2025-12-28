@@ -21,22 +21,22 @@ class Attendance {
         query += ' AND a.student_id = ?';
         params.push(filters.studentId);
       }
-      
+
       if (filters.staffId) {
         query += ' AND a.staff_id = ?';
         params.push(filters.staffId);
       }
-      
+
       if (filters.classroomId) {
         query += ' AND a.classroom_id = ?';
         params.push(filters.classroomId);
       }
-      
+
       if (filters.date) {
         query += ' AND a.date = ?';
         params.push(filters.date);
       }
-      
+
       if (filters.startDate && filters.endDate) {
         query += ' AND a.date BETWEEN ? AND ?';
         params.push(filters.startDate, filters.endDate);
@@ -99,15 +99,20 @@ class Attendance {
     try {
       const result = await conn.query(
         `INSERT INTO attendance (student_id, date, status, leave_type_optional, 
-         classroom_id, staff_id) 
-         VALUES (?, ?, ?, ?, ?, ?)`,
+         classroom_id, staff_id, check_in_time, check_out_time, check_in_adult, check_out_adult, notes) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           attendanceData.student_id,
           attendanceData.date,
           attendanceData.status,
           attendanceData.leave_type_optional,
           attendanceData.classroom_id,
-          attendanceData.staff_id
+          attendanceData.staff_id,
+          attendanceData.check_in_time,
+          attendanceData.check_out_time,
+          attendanceData.check_in_adult,
+          attendanceData.check_out_adult,
+          attendanceData.notes
         ]
       );
       return result.insertId;
@@ -121,7 +126,9 @@ class Attendance {
     try {
       const result = await conn.query(
         `UPDATE attendance SET student_id = ?, date = ?, status = ?, 
-         leave_type_optional = ?, classroom_id = ?, staff_id = ? WHERE id = ?`,
+         leave_type_optional = ?, classroom_id = ?, staff_id = ?, 
+         check_in_time = ?, check_out_time = ?, check_in_adult = ?, check_out_adult = ?, notes = ? 
+         WHERE id = ?`,
         [
           attendanceData.student_id,
           attendanceData.date,
@@ -129,6 +136,11 @@ class Attendance {
           attendanceData.leave_type_optional,
           attendanceData.classroom_id,
           attendanceData.staff_id,
+          attendanceData.check_in_time,
+          attendanceData.check_out_time,
+          attendanceData.check_in_adult,
+          attendanceData.check_out_adult,
+          attendanceData.notes,
           id
         ]
       );
@@ -184,19 +196,19 @@ class Attendance {
         query += ' AND a.staff_id = ?';
         params.push(filters.staffId);
       }
-      
+
       if (filters.date) {
         query += ' AND a.date = ?';
         params.push(filters.date);
       }
-      
+
       if (filters.startDate && filters.endDate) {
         query += ' AND a.date BETWEEN ? AND ?';
         params.push(filters.startDate, filters.endDate);
       }
 
       query += ' ORDER BY a.date DESC, stf.paternal_surname';
-      
+
       const result = await conn.query(query, params);
       return result;
     } finally {
