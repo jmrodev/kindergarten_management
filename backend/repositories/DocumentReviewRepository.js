@@ -145,7 +145,10 @@ class DocumentReviewRepository {
             return result;
         } finally {
             conn.release();
-          static async getPendingCount() {
+        }
+    }
+
+    static async getPendingCount() {
         const conn = await getConnection();
         try {
             const result = await conn.query(
@@ -157,8 +160,6 @@ class DocumentReviewRepository {
         } finally {
             conn.release();
         }
-    }
-}
     }
 }
 

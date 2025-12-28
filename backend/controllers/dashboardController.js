@@ -1,33 +1,25 @@
+// backend/controllers/dashboardController.js
 const { AppError } = require('../middleware/errorHandler');
 
-const getDashboardStats = async (req, res, next) => {
-    const pool = req.app.get('pool');
+// Repositories
+const ClassroomRepository = require('../repositories/ClassroomRepository');
+const StudentRepository = require('../repositories/StudentRepository');
+const StaffRepository = require('../repositories/StaffRepository');
+const DocumentReviewRepository = require('../repositories/DocumentReviewRepository');
 
+const getDashboardStats = async (req, res, next) => {
     try {
-        // 1. Total Active Students (status = 'activo' or 'inscripto')
         // 1. Total Active Students & Classroom stats
-        // We aggregate by classroom and gender.
-        const classroomStatsQuery = `
-            SELECT 
-                c.id as classroom_id,
-                c.name as classroom_name,
-                s.gender,
-                CAST(COUNT(s.id) AS SIGNED) as count
-            FROM classroom c
-            LEFT JOIN student s ON c.id = s.classroom_id AND s.status IN ('activo', 'inscripto')
-            WHERE c.is_active = TRUE
-            GROUP BY c.id, c.name, s.gender
-            ORDER BY c.name
-        `;
-        const classroomStatsResult = await pool.query(classroomStatsQuery);
+        // We aggregate by classroom and gender using Repo.
+        const classroomStatsResult = await ClassroomRepository.getStatsByGender();
 
         // Process results into a structured format
-        // { [classroom_name]: { total: 0, M: 0, F: 0 } } or array
         const classroomMap = {};
-
         let totalActiveStudents = 0;
 
         classroomStatsResult.forEach(row => {
+            const count = Number(row.count);
+            // Handle raw row structure (row.classroom_id etc)
             if (!classroomMap[row.classroom_id]) {
                 classroomMap[row.classroom_id] = {
                     id: row.classroom_id,
@@ -38,15 +30,31 @@ const getDashboardStats = async (req, res, next) => {
                     U: 0
                 };
             }
-            const count = Number(row.count);
-            // Always add to total
+
             classroomMap[row.classroom_id].total += count;
             totalActiveStudents += count;
 
             if (row.gender) {
-                classroomMap[row.classroom_id][row.gender] = count;
+                if (classroomMap[row.classroom_id][row.gender] !== undefined) {
+                    classroomMap[row.classroom_id][row.gender] = count;
+                    // Wait, logic in original was: aggregation by gender. So each row is unique (classroom, gender).
+                    // So we assign count.
+                    // But if there are multiple rows for one gender? (Duplicates?) Group by handles it.
+                    // Actually, original code: classroomMap[row.classroom_id][row.gender] = count;
+                    // BUT if multiple rows for same class/gender? SQL Group By prevents it.
+                    // Correct logic:
+                    /*
+                    if (row.gender) {
+                        classroomMap[row.classroom_id][row.gender] = count;
+                    } 
+                    */
+                    // My Repo query groups by c.id, c.name, s.gender. So unique.
+                    // The loop logic works.
+                    classroomMap[row.classroom_id][row.gender] = count;
+                } else {
+                    classroomMap[row.classroom_id][row.gender] = count; // If gender is something else
+                }
             } else {
-                // Optional: track unknown gender
                 classroomMap[row.classroom_id].U = (classroomMap[row.classroom_id].U || 0) + count;
             }
         });
@@ -55,141 +63,83 @@ const getDashboardStats = async (req, res, next) => {
         const classroomStats = Object.values(classroomMap);
 
         // 2. Total Staff (is_active = TRUE)
-        const staffQuery = `
-            SELECT CAST(COUNT(*) AS SIGNED) as count 
-            FROM staff 
-            WHERE is_active = TRUE
-        `;
-        const staffResult = await pool.query(staffQuery);
-        const totalStaff = Number(staffResult[0].count);
+        const totalStaff = await StaffRepository.count({ isActive: true });
 
-        // 3. Pending Enrollments (status = 'preinscripto' or 'pendiente')
-        const pendingEnrollmentsQuery = `
-            SELECT CAST(COUNT(*) AS SIGNED) as count 
-            FROM student 
-            WHERE status IN ('preinscripto', 'pendiente', 'sorteo')
-        `;
-        const pendingEnrollmentsResult = await pool.query(pendingEnrollmentsQuery);
-        const pendingEnrollments = Number(pendingEnrollmentsResult[0].count);
+        // 3. Pending Enrollments (status = 'preinscripto' or 'pendiente' or 'sorteo')
+        // StudentRepository.count takes 'status'. Usually singular.
+        // We need 'IN' clause support or check manually.
+        // Or create specific method.
+        // Let's call count multiple times or assume 0?
+        // Or use SQL 'IN' if Repo supports array?
+        // Checking StudentRepository.count: ' AND s.status = ?'. Only single value.
+        // I will do sum of 3 calls for now, or assume 'preinscripto' covers most.
+        // Original: status IN ('preinscripto', 'pendiente', 'sorteo')
+        // Let's update StudentRepository for array status later? 
+        // For now, let's just use 'preinscripto' as primary, or sum them.
+        // Or better: Add helper method in StudentRepository `countPendingEnrollments`.
+        // Since I'm editing controllers, I should have prepared Repo.
+        // The original `dashboardController` had a complex query.
+        // I can use `StudentRepository.count` 3 times.
+        const p1 = await StudentRepository.count({ status: 'preinscripto' });
+        const p2 = await StudentRepository.count({ status: 'pendiente' });
+        const p3 = await StudentRepository.count({ status: 'sorteo' });
+        const pendingEnrollments = Number(p1) + Number(p2) + Number(p3);
 
-        // 4. Pending Document Reviews (if applicable, using document_review table or pending_documentation table)
-        // Using document_review table for general reviews
-        let pendingReviews = 0;
-        try {
-            const pendingReviewsQuery = `
-                SELECT CAST(COUNT(*) AS SIGNED) as count 
-                FROM document_review 
-                WHERE status = 'pendiente'
-            `;
-            const pendingReviewsResult = await pool.query(pendingReviewsQuery);
-            pendingReviews = Number(pendingReviewsResult[0].count);
-        } catch (err) {
-            // Table might not exist or be empty, ignore for now
-            console.warn('Could not fetch document_review stats:', err.message);
-        }
 
-        // Alternative: Students with pending docs from v_students_with_pending_docs
-        let studentsWithPendingDocs = 0;
-        try {
-            const pendingDocsQuery = `
-                SELECT CAST(COUNT(DISTINCT id) AS SIGNED) as count
-                FROM v_students_with_pending_docs
-            `;
-            const pendingDocsResult = await pool.query(pendingDocsQuery);
-            studentsWithPendingDocs = Number(pendingDocsResult[0].count);
-        } catch (err) {
-            console.warn('Could not fetch v_students_with_pending_docs stats:', err.message);
-        }
+        // 4. Pending Document Reviews
+        const pendingReviews = await DocumentReviewRepository.getPendingCount();
 
-        // 5. Birthday Logic
-        let birthdays = { today: [], week: [], month: [] };
-        try {
-            // Fetch all students born in the current month
-            // We return day of birth to easily sort/filter in JS
-            const currentMonth = new Date().getMonth() + 1;
-            const birthdayQuery = `
-                 SELECT first_name, paternal_surname, birth_date, classroom_id
-                 FROM student
-                 WHERE MONTH(birth_date) = ? AND status IN ('activo', 'inscripto')
-                 ORDER BY DAY(birth_date)
-             `;
-            const birthdayResult = await pool.query(birthdayQuery, [currentMonth]);
+        // 5. Students with Pending Docs
+        const studentsWithPendingDocs = await StudentRepository.getPendingDocsCount();
 
-            const today = new Date();
-            const currentDay = today.getDate();
-            // Start of week (Sunday)
-            const startOfWeek = new Date(today);
-            startOfWeek.setDate(today.getDate() - today.getDay());
-            // End of week (Saturday)
-            const endOfWeek = new Date(today);
-            endOfWeek.setDate(today.getDate() + (6 - today.getDay()));
+        // 6. Birthday Logic
+        const currentMonth = new Date().getMonth() + 1;
+        const birthdayResult = await StudentRepository.getBirthdaysByMonth(currentMonth);
 
-            birthdays.month = birthdayResult;
+        const birthdays = { today: [], week: [], month: [] };
 
-            birthdays.today = birthdayResult.filter(s => {
-                const d = new Date(s.birth_date);
-                // birth_date is UTC or local, usually we just care about the Day part assuming consistent timezone or just using the number
-                // However, simpler is check if DAY match. 
-                // Note: new Date(s.birth_date).getUTCDate() might be safer if stored as DATE only
-                const birthDay = new Date(s.birth_date).getDate();
-                // Note: If timezone issues arise, use DAY() from SQL directly, but JS filter is fine for small sets
-                // Correct approach for 'Day of Month' independent of year:
-                // Let's rely on the fact that we filtered by Month in SQL.
-                // We just need to match the day number.
-                // Be careful with timezones. '2021-05-15' might parse as 14th if -03:00.
-                // Safer to parse specific YYYY-MM-DD string or use separate day column.
-                // Let's use simple string parsing for safety on 'YYYY-MM-DD'
-                const dayStr = new Date(s.birth_date).toISOString().split('T')[0].split('-')[2];
-                return parseInt(dayStr) === currentDay;
-            });
+        // Process logic (same as before)
+        const today = new Date();
+        const currentDay = today.getDate();
+        const currentYear = today.getFullYear();
 
-            // Logic for "This Week":
-            // Simply check if the day of month is within the range of "This Week"'s days in the current month.
-            // Edge case: Week spanning two months.
-            // Since we only fetched THIS month's birthdays, we only show this week's birthdays THAT FALL IN THIS MONTH.
-            // This is acceptable simplification or we can enhance SQL to check date range of week.
-            // Improving SQL for Week:
-            // Actually, let's keep the JS simple: Calculate this week's start/end Date objects.
-            // Then check if this year's birthday falls in that range.
-            const currentYear = today.getFullYear();
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        const endOfWeek = new Date(today);
+        endOfWeek.setDate(today.getDate() + (6 - today.getDay()));
 
-            birthdays.week = birthdayResult.filter(s => {
-                // Construct this year's birthday
-                const bdate = new Date(s.birth_date);
-                // Watch out for timezones again. 
-                // Let's use string manipulation to be safe 'MM-DD'
-                const bMonth = bdate.getMonth(); // 0-indexed
-                const bDay = bdate.getDate();
+        birthdays.month = birthdayResult;
 
-                const thisYearBday = new Date(currentYear, bMonth, bDay);
+        birthdays.today = birthdayResult.filter(s => {
+            const dayStr = new Date(s.birth_date).toISOString().split('T')[0].split('-')[2];
+            return parseInt(dayStr) === currentDay;
+        });
 
-                // Check if >= today (or startOfWeek?) AND <= endOfWeek
-                // Usually "This week" implies Sunday to Saturday
-                return thisYearBday >= startOfWeek && thisYearBday <= endOfWeek;
-            }).map(s => {
-                // Add "isWeekend" flag
-                const bdate = new Date(s.birth_date);
-                const thisYearBday = new Date(currentYear, bdate.getMonth(), bdate.getDate());
-                const dayOfWeek = thisYearBday.getDay(); // 0 = Sun, 6 = Sat
-                return {
-                    ...s,
-                    isWeekend: (dayOfWeek === 0 || dayOfWeek === 6),
-                    dayOfWeek: dayOfWeek // 0-6
-                };
-            });
-
-        } catch (err) {
-            console.warn('Error calculating birthdays:', err);
-        }
+        birthdays.week = birthdayResult.filter(s => {
+            const bdate = new Date(s.birth_date);
+            const bMonth = bdate.getMonth();
+            const bDay = bdate.getDate();
+            const thisYearBday = new Date(currentYear, bMonth, bDay);
+            return thisYearBday >= startOfWeek && thisYearBday <= endOfWeek;
+        }).map(s => {
+            const bdate = new Date(s.birth_date);
+            const thisYearBday = new Date(currentYear, bdate.getMonth(), bdate.getDate());
+            const dayOfWeek = thisYearBday.getDay();
+            return {
+                ...s,
+                isWeekend: (dayOfWeek === 0 || dayOfWeek === 6),
+                dayOfWeek: dayOfWeek
+            };
+        });
 
         res.json({
             activeStudents,
             classroomStats,
             totalStaff,
             pendingEnrollments,
-            pendingReviews: pendingReviews,
+            pendingReviews,
             studentsWithPendingDocs,
-            birthdays, // Added birthdays to response
+            birthdays,
             lastUpdated: new Date()
         });
 
