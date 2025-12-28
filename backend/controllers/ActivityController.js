@@ -1,14 +1,14 @@
 // controllers/ActivityController.js
 const Activity = require('../models/Activity');
-const Staff = require('../models/Staff');
-const Classroom = require('../models/Classroom');
+const StaffRepository = require('../repositories/StaffRepository');
+const ClassroomRepository = require('../repositories/ClassroomRepository');
 const { AppError } = require('../middleware/errorHandler');
 
 class ActivityController {
   static async getAll(req, res, next) {
     try {
       const filters = {};
-      
+
       if (req.query.teacherId) filters.teacherId = req.query.teacherId;
       if (req.query.classroomId) filters.classroomId = req.query.classroomId;
 
@@ -44,7 +44,7 @@ class ActivityController {
     try {
       // Validate teacher exists
       if (req.body.teacher_id) {
-        const teacher = await Staff.getById(req.body.teacher_id);
+        const teacher = await StaffRepository.getById(req.body.teacher_id);
         if (!teacher) {
           return next(new AppError(`No teacher found with id: ${req.body.teacher_id}`, 404));
         }
@@ -52,7 +52,7 @@ class ActivityController {
 
       // Validate classroom exists
       if (req.body.classroom_id) {
-        const classroom = await Classroom.getById(req.body.classroom_id);
+        const classroom = await ClassroomRepository.getById(req.body.classroom_id);
         if (!classroom) {
           return next(new AppError(`No classroom found with id: ${req.body.classroom_id}`, 404));
         }
@@ -82,7 +82,7 @@ class ActivityController {
 
       // Validate teacher exists
       if (req.body.teacher_id) {
-        const teacher = await Staff.getById(req.body.teacher_id);
+        const teacher = await StaffRepository.getById(req.body.teacher_id);
         if (!teacher) {
           return next(new AppError(`No teacher found with id: ${req.body.teacher_id}`, 404));
         }
@@ -90,7 +90,7 @@ class ActivityController {
 
       // Validate classroom exists
       if (req.body.classroom_id) {
-        const classroom = await Classroom.getById(req.body.classroom_id);
+        const classroom = await ClassroomRepository.getById(req.body.classroom_id);
         if (!classroom) {
           return next(new AppError(`No classroom found with id: ${req.body.classroom_id}`, 404));
         }
@@ -135,9 +135,9 @@ class ActivityController {
   static async getByClassroom(req, res, next) {
     try {
       const { classroomId } = req.params;
-      
+
       // Validate classroom exists
-      const classroom = await Classroom.getById(classroomId);
+      const classroom = await ClassroomRepository.getById(classroomId);
       if (!classroom) {
         return next(new AppError(`No classroom found with id: ${classroomId}`, 404));
       }
@@ -156,9 +156,9 @@ class ActivityController {
   static async getByTeacher(req, res, next) {
     try {
       const { teacherId } = req.params;
-      
+
       // Validate teacher exists
-      const teacher = await Staff.getById(teacherId);
+      const teacher = await StaffRepository.getById(teacherId);
       if (!teacher) {
         return next(new AppError(`No teacher found with id: ${teacherId}`, 404));
       }

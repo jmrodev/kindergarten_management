@@ -1,8 +1,5 @@
 const StudentRepository = require('../repositories/StudentRepository');
-const Student = require('../models/Student');
-const Address = require('../models/Address');
-const EmergencyContact = require('../models/EmergencyContact');
-const Guardian = require('../models/Guardian');
+
 const HealthInsuranceRepository = require('../repositories/HealthInsuranceRepository');
 const PediatricianRepository = require('../repositories/PediatricianRepository');
 const multer = require('multer');

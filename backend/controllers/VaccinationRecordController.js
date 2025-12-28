@@ -1,13 +1,13 @@
 // controllers/VaccinationRecordController.js
 const VaccinationRecord = require('../models/VaccinationRecord');
-const Student = require('../models/Student');
+const StudentRepository = require('../repositories/StudentRepository');
 const { AppError } = require('../middleware/errorHandler');
 
 class VaccinationRecordController {
   static async getAll(req, res, next) {
     try {
       const filters = {};
-      
+
       if (req.query.studentId) filters.studentId = req.query.studentId;
       if (req.query.status) filters.status = req.query.status;
 
@@ -56,7 +56,7 @@ class VaccinationRecordController {
   static async create(req, res, next) {
     try {
       // Validate student exists
-      const student = await Student.getById(req.body.student_id);
+      const student = await StudentRepository.getById(req.body.student_id);
       if (!student) {
         return next(new AppError(`No student found with id: ${req.body.student_id}`, 404));
       }
@@ -85,7 +85,7 @@ class VaccinationRecordController {
 
       // Validate student exists if student_id is being updated
       if (req.body.student_id) {
-        const student = await Student.getById(req.body.student_id);
+        const student = await StudentRepository.getById(req.body.student_id);
         if (!student) {
           return next(new AppError(`No student found with id: ${req.body.student_id}`, 404));
         }

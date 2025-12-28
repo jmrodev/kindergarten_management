@@ -1,15 +1,15 @@
 // controllers/DocumentReviewController.js
 const DocumentReview = require('../models/DocumentReview');
-const Student = require('../models/Student');
-const Guardian = require('../models/Guardian');
-const Staff = require('../models/Staff');
+const StudentRepository = require('../repositories/StudentRepository');
+const GuardianRepository = require('../repositories/GuardianRepository');
+const StaffRepository = require('../repositories/StaffRepository');
 const { AppError } = require('../middleware/errorHandler');
 
 class DocumentReviewController {
   static async getAll(req, res, next) {
     try {
       const filters = {};
-      
+
       if (req.query.documentType) filters.documentType = req.query.documentType;
       if (req.query.status) filters.status = req.query.status;
       if (req.query.reviewerId) filters.reviewerId = req.query.reviewerId;
@@ -46,18 +46,18 @@ class DocumentReviewController {
     try {
       // Validate document type and existence of referenced document
       let documentExists = false;
-      
-      switch(req.body.document_type) {
+
+      switch (req.body.document_type) {
         case 'alumno':
-          const student = await Student.getById(req.body.document_id);
+          const student = await StudentRepository.getById(req.body.document_id);
           documentExists = !!student;
           break;
         case 'padre':
-          const guardian = await Guardian.getById(req.body.document_id);
+          const guardian = await GuardianRepository.getById(req.body.document_id);
           documentExists = !!guardian;
           break;
         case 'personal':
-          const staff = await Staff.getById(req.body.document_id);
+          const staff = await StaffRepository.getById(req.body.document_id);
           documentExists = !!staff;
           break;
         default:
@@ -70,7 +70,7 @@ class DocumentReviewController {
 
       // Validate reviewer exists
       if (req.body.reviewer_id) {
-        const reviewer = await Staff.getById(req.body.reviewer_id);
+        const reviewer = await StaffRepository.getById(req.body.reviewer_id);
         if (!reviewer) {
           return next(new AppError(`No reviewer found with id: ${req.body.reviewer_id}`, 404));
         }
@@ -106,18 +106,18 @@ class DocumentReviewController {
       // Validate document type and existence of referenced document if being updated
       if (req.body.document_type && req.body.document_id) {
         let documentExists = false;
-        
-        switch(req.body.document_type) {
+
+        switch (req.body.document_type) {
           case 'alumno':
-            const student = await Student.getById(req.body.document_id);
+            const student = await StudentRepository.getById(req.body.document_id);
             documentExists = !!student;
             break;
           case 'padre':
-            const guardian = await Guardian.getById(req.body.document_id);
+            const guardian = await GuardianRepository.getById(req.body.document_id);
             documentExists = !!guardian;
             break;
           case 'personal':
-            const staff = await Staff.getById(req.body.document_id);
+            const staff = await StaffRepository.getById(req.body.document_id);
             documentExists = !!staff;
             break;
           default:
@@ -131,7 +131,7 @@ class DocumentReviewController {
 
       // Validate reviewer exists if being updated
       if (req.body.reviewer_id) {
-        const reviewer = await Staff.getById(req.body.reviewer_id);
+        const reviewer = await StaffRepository.getById(req.body.reviewer_id);
         if (!reviewer) {
           return next(new AppError(`No reviewer found with id: ${req.body.reviewer_id}`, 404));
         }

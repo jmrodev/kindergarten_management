@@ -1,15 +1,15 @@
 // controllers/AttendanceController.js
 const Attendance = require('../models/Attendance');
-const Student = require('../models/Student');
-const Staff = require('../models/Staff');
-const Classroom = require('../models/Classroom');
+const StudentRepository = require('../repositories/StudentRepository');
+const StaffRepository = require('../repositories/StaffRepository');
+const ClassroomRepository = require('../repositories/ClassroomRepository');
 const { AppError } = require('../middleware/errorHandler');
 
 class AttendanceController {
   static async getAll(req, res, next) {
     try {
       const filters = {};
-      
+
       if (req.query.studentId) filters.studentId = req.query.studentId;
       if (req.query.staffId) filters.staffId = req.query.staffId;
       if (req.query.classroomId) filters.classroomId = req.query.classroomId;
@@ -69,7 +69,7 @@ class AttendanceController {
     try {
       // Validate student exists if it's a student attendance
       if (req.body.student_id) {
-        const student = await Student.getById(req.body.student_id);
+        const student = await StudentRepository.getById(req.body.student_id);
         if (!student) {
           return next(new AppError(`No student found with id: ${req.body.student_id}`, 404));
         }
@@ -77,7 +77,7 @@ class AttendanceController {
 
       // Validate staff exists if it's a staff attendance
       if (req.body.staff_id) {
-        const staff = await Staff.getById(req.body.staff_id);
+        const staff = await StaffRepository.getById(req.body.staff_id);
         if (!staff) {
           return next(new AppError(`No staff found with id: ${req.body.staff_id}`, 404));
         }
@@ -85,7 +85,7 @@ class AttendanceController {
 
       // Validate classroom exists
       if (req.body.classroom_id) {
-        const classroom = await Classroom.getById(req.body.classroom_id);
+        const classroom = await ClassroomRepository.getById(req.body.classroom_id);
         if (!classroom) {
           return next(new AppError(`No classroom found with id: ${req.body.classroom_id}`, 404));
         }
@@ -115,7 +115,7 @@ class AttendanceController {
 
       // Validate student exists if it's a student attendance
       if (req.body.student_id) {
-        const student = await Student.getById(req.body.student_id);
+        const student = await StudentRepository.getById(req.body.student_id);
         if (!student) {
           return next(new AppError(`No student found with id: ${req.body.student_id}`, 404));
         }
@@ -123,7 +123,7 @@ class AttendanceController {
 
       // Validate staff exists if it's a staff attendance
       if (req.body.staff_id) {
-        const staff = await Staff.getById(req.body.staff_id);
+        const staff = await StaffRepository.getById(req.body.staff_id);
         if (!staff) {
           return next(new AppError(`No staff found with id: ${req.body.staff_id}`, 404));
         }
@@ -131,7 +131,7 @@ class AttendanceController {
 
       // Validate classroom exists
       if (req.body.classroom_id) {
-        const classroom = await Classroom.getById(req.body.classroom_id);
+        const classroom = await ClassroomRepository.getById(req.body.classroom_id);
         if (!classroom) {
           return next(new AppError(`No classroom found with id: ${req.body.classroom_id}`, 404));
         }
@@ -190,7 +190,7 @@ class AttendanceController {
   static async getStaffAttendance(req, res, next) {
     try {
       const filters = {};
-      
+
       if (req.query.staffId) filters.staffId = req.query.staffId;
       if (req.query.date) filters.date = req.query.date;
       if (req.query.startDate && req.query.endDate) {

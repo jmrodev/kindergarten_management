@@ -52,7 +52,7 @@ class StaffRepository {
       }
 
       const results = await conn.query(query, params);
-      return results;
+      return results.map(row => this._handleBigInt(row));
     } finally {
       conn.release();
     }
@@ -75,7 +75,7 @@ class StaffRepository {
          WHERE s.id = ?`,
         [id]
       );
-      return result[0];
+      return this._handleBigInt(result[0]);
     } finally {
       conn.release();
     }
@@ -102,7 +102,7 @@ class StaffRepository {
          WHERE s.email = ?`,
         [email]
       );
-      return result[0];
+      return this._handleBigInt(result[0]);
     } finally {
       conn.release();
     }
@@ -279,6 +279,15 @@ class StaffRepository {
     } finally {
       conn.release();
     }
+  }
+  static _handleBigInt(obj) {
+    if (!obj) return obj;
+    for (const key in obj) {
+      if (typeof obj[key] === 'bigint') {
+        obj[key] = Number(obj[key]);
+      }
+    }
+    return obj;
   }
 }
 

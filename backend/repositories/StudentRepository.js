@@ -464,6 +464,43 @@ class StudentRepository {
       if (!externalConn) conn.release();
     }
   }
+  static async getVaccinationStatus(studentId, externalConn = null) {
+    const conn = externalConn || await getConnection();
+    try {
+      const result = await conn.query(
+        `SELECT s.vaccination_status as overall_status,
+         COUNT(CASE WHEN vr.status = 'faltante' THEN 1 END) as missing_vaccines,
+         COUNT(CASE WHEN vr.status = 'activo' THEN 1 END) as active_vaccines,
+         COUNT(CASE WHEN vr.status = 'completo' THEN 1 END) as complete_vaccines,
+         COUNT(vr.id) as total_vaccines
+         FROM student s
+         LEFT JOIN vaccination_records vr ON s.id = vr.student_id
+         WHERE s.id = ?
+         GROUP BY s.id, s.vaccination_status`,
+        [studentId]
+      );
+      return result[0] || null;
+    } finally {
+      if (!externalConn) conn.release();
+    }
+  }
+
+  static async getPendingDocuments(studentId, externalConn = null) {
+    const conn = externalConn || await getConnection();
+    try {
+      const result = await conn.query(
+        `SELECT pd.*, 
+         CONCAT(stf.first_name, ' ', stf.paternal_surname) as completed_by_name
+         FROM pending_documentation pd
+         LEFT JOIN staff stf ON pd.completed_by = stf.id
+         WHERE pd.student_id = ? AND pd.completed_at IS NULL`,
+        [studentId]
+      );
+      return result;
+    } finally {
+      if (!externalConn) conn.release();
+    }
+  }
 }
 
 module.exports = StudentRepository;

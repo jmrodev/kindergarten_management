@@ -1,14 +1,14 @@
 // controllers/CalendarController.js
 const Calendar = require('../models/Calendar');
-const Classroom = require('../models/Classroom');
-const Staff = require('../models/Staff');
+const ClassroomRepository = require('../repositories/ClassroomRepository');
+const StaffRepository = require('../repositories/StaffRepository');
 const { AppError } = require('../middleware/errorHandler');
 
 class CalendarController {
   static async getAll(req, res, next) {
     try {
       const filters = {};
-      
+
       if (req.query.classroomId) filters.classroomId = req.query.classroomId;
       if (req.query.eventType) filters.eventType = req.query.eventType;
       if (req.query.staffId) filters.staffId = req.query.staffId;
@@ -49,7 +49,7 @@ class CalendarController {
     try {
       // Validate classroom exists
       if (req.body.classroom_id) {
-        const classroom = await Classroom.getById(req.body.classroom_id);
+        const classroom = await ClassroomRepository.getById(req.body.classroom_id);
         if (!classroom) {
           return next(new AppError(`No classroom found with id: ${req.body.classroom_id}`, 404));
         }
@@ -57,7 +57,7 @@ class CalendarController {
 
       // Validate staff exists
       if (req.body.staff_id) {
-        const staff = await Staff.getById(req.body.staff_id);
+        const staff = await StaffRepository.getById(req.body.staff_id);
         if (!staff) {
           return next(new AppError(`No staff found with id: ${req.body.staff_id}`, 404));
         }
@@ -87,7 +87,7 @@ class CalendarController {
 
       // Validate classroom exists
       if (req.body.classroom_id) {
-        const classroom = await Classroom.getById(req.body.classroom_id);
+        const classroom = await ClassroomRepository.getById(req.body.classroom_id);
         if (!classroom) {
           return next(new AppError(`No classroom found with id: ${req.body.classroom_id}`, 404));
         }
@@ -95,7 +95,7 @@ class CalendarController {
 
       // Validate staff exists
       if (req.body.staff_id) {
-        const staff = await Staff.getById(req.body.staff_id);
+        const staff = await StaffRepository.getById(req.body.staff_id);
         if (!staff) {
           return next(new AppError(`No staff found with id: ${req.body.staff_id}`, 404));
         }
@@ -140,12 +140,12 @@ class CalendarController {
   static async getEventsByMonth(req, res, next) {
     try {
       const { year, month } = req.params;
-      
+
       // Validate year and month
       if (year < 1900 || year > 2100) {
         return next(new AppError('Year must be between 1900 and 2100', 400));
       }
-      
+
       if (month < 1 || month > 12) {
         return next(new AppError('Month must be between 1 and 12', 400));
       }
@@ -167,7 +167,7 @@ class CalendarController {
       const { startDate, endDate } = req.query;
 
       // Validate classroom exists
-      const classroom = await Classroom.getById(classroomId);
+      const classroom = await ClassroomRepository.getById(classroomId);
       if (!classroom) {
         return next(new AppError(`No classroom found with id: ${classroomId}`, 404));
       }
