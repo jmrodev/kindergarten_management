@@ -6,7 +6,7 @@ class StudentRepository {
   static STUDENT_COLUMNS = `
     s.id, s.first_name, s.middle_name_optional, s.third_name_optional, 
     s.paternal_surname, s.maternal_surname, s.nickname_optional, s.dni, 
-    s.birth_date, s.address_id, s.classroom_id, 
+    s.birth_date, s.address_id, s.emergency_contact_id, s.classroom_id, 
     s.shift, s.status, s.enrollment_date, s.withdrawal_date, 
     s.health_insurance, s.affiliate_number, s.allergies, s.medications, 
     s.medical_observations, s.blood_type, s.pediatrician_name, 
@@ -126,13 +126,13 @@ class StudentRepository {
       const result = await conn.query(
         `INSERT INTO student (first_name, middle_name_optional, third_name_optional, 
          paternal_surname, maternal_surname, nickname_optional, dni, birth_date, 
-         address_id, classroom_id, shift, gender, status, 
+         address_id, emergency_contact_id, classroom_id, shift, gender, status, 
          enrollment_date, withdrawal_date, health_insurance, affiliate_number, 
          allergies, medications, medical_observations, blood_type, 
          pediatrician_name, pediatrician_phone, photo_authorization, 
          trip_authorization, medical_attention_authorization, 
          has_siblings_in_school, special_needs, vaccination_status, observations) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           studentData.first_name,
           studentData.middle_name_optional,
@@ -142,6 +142,7 @@ class StudentRepository {
           studentData.dni,
           studentData.birth_date,
           studentData.address_id,
+          studentData.emergency_contact_id,
           studentData.classroom_id,
           studentData.shift,
           studentData.gender,
@@ -232,7 +233,7 @@ class StudentRepository {
       const result = await conn.query(
         `UPDATE student SET first_name = ?, middle_name_optional = ?, 
          third_name_optional = ?, paternal_surname = ?, maternal_surname = ?, 
-         nickname_optional = ?, dni = ?, birth_date = ?, address_id = ?, 
+         nickname_optional = ?, dni = ?, birth_date = ?, address_id = ?, emergency_contact_id = ?,
          classroom_id = ?, shift = ?, gender = ?, status = ?, 
          enrollment_date = ?, withdrawal_date = ?, health_insurance = ?, 
          affiliate_number = ?, allergies = ?, medications = ?, 
@@ -251,7 +252,7 @@ class StudentRepository {
           studentData.dni,
           studentData.birth_date,
           studentData.address_id,
-          // emergency_contact_id is ignored/preserved
+          studentData.emergency_contact_id,
           studentData.classroom_id,
           studentData.shift,
           studentData.gender,
