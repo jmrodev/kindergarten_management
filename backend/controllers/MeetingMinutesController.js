@@ -1,17 +1,17 @@
 // controllers/MeetingMinutesController.js
-const MeetingMinutes = require('../models/MeetingMinutes');
+const MeetingMinutesRepository = require('../repositories/MeetingMinutesRepository');
 const { AppError } = require('../middleware/errorHandler');
 
 class MeetingMinutesController {
   static async getAll(req, res, next) {
     try {
       const filters = {};
-      
+
       if (req.query.meetingType) filters.meetingType = req.query.meetingType;
       if (req.query.startDate) filters.startDate = req.query.startDate;
       if (req.query.endDate) filters.endDate = req.query.endDate;
 
-      const meetingMinutes = await MeetingMinutes.getAll(filters);
+      const meetingMinutes = await MeetingMinutesRepository.getAll(filters);
       res.status(200).json({
         status: 'success',
         data: meetingMinutes
@@ -24,7 +24,7 @@ class MeetingMinutesController {
   static async getById(req, res, next) {
     try {
       const { id } = req.params;
-      const meetingMinute = await MeetingMinutes.getById(id);
+      const meetingMinute = await MeetingMinutesRepository.getById(id);
 
       if (!meetingMinute) {
         return next(new AppError(`No meeting minutes found with id: ${id}`, 404));
@@ -43,9 +43,9 @@ class MeetingMinutesController {
     try {
       // Add created_by from authenticated user
       req.body.created_by = req.user.id;
-      
-      const meetingMinuteId = await MeetingMinutes.create(req.body);
-      const createdMeetingMinute = await MeetingMinutes.getById(meetingMinuteId);
+
+      const meetingMinuteId = await MeetingMinutesRepository.create(req.body);
+      const createdMeetingMinute = await MeetingMinutesRepository.getById(meetingMinuteId);
 
       res.status(201).json({
         status: 'success',
@@ -60,17 +60,17 @@ class MeetingMinutesController {
   static async update(req, res, next) {
     try {
       const { id } = req.params;
-      
+
       // Add updated_by from authenticated user
       req.body.updated_by = req.user.id;
-      
-      const updated = await MeetingMinutes.update(id, req.body);
+
+      const updated = await MeetingMinutesRepository.update(id, req.body);
 
       if (!updated) {
         return next(new AppError(`No meeting minutes found with id: ${id}`, 404));
       }
 
-      const updatedMeetingMinute = await MeetingMinutes.getById(id);
+      const updatedMeetingMinute = await MeetingMinutesRepository.getById(id);
 
       res.status(200).json({
         status: 'success',
@@ -85,7 +85,7 @@ class MeetingMinutesController {
   static async delete(req, res, next) {
     try {
       const { id } = req.params;
-      const deleted = await MeetingMinutes.delete(id);
+      const deleted = await MeetingMinutesRepository.delete(id);
 
       if (!deleted) {
         return next(new AppError(`No meeting minutes found with id: ${id}`, 404));
