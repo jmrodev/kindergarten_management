@@ -38,5 +38,5 @@ Refactor Project to Repository Pattern
 
 # Phase 5: Controller Cleanup (Remove direct SQL)
 
-- [ ] Refactor `EnrollmentController.js` to use Repositories with transactions. <!-- id: 24 -->
-- [ ] Refactor `dashboardController.js` to separate stats logic into Repositories. <!-- id: 25 -->
+- [x] Refactor `EnrollmentController.js` to use Repositories with transactions. <!-- id: 24 -->
+- [x] Refactor `dashboardController.js` to separate stats logic into Repositories. <!-- id: 25 -->
