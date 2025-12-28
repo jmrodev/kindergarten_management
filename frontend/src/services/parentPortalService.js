@@ -1,4 +1,5 @@
 import api from '../utils/api';
+import { formatStudentDataForBackend } from '../utils/studentUtils';
 
 const parentPortalService = {
     /**
@@ -34,7 +35,8 @@ const parentPortalService = {
      * @returns {Promise<Object>} Success message and Student ID
      */
     async submitRegistration(data) {
-        return api.post('/api/parent-portal/submission', data);
+        const payload = formatStudentDataForBackend(data);
+        return api.post('/api/parent-portal/submission', payload);
     },
 
     /**

@@ -1,5 +1,6 @@
 /* global URLSearchParams */
 import api from '../utils/api'
+import { formatStudentDataForBackend } from '../utils/studentUtils';
 
 const studentsService = {
   /**
@@ -96,7 +97,7 @@ const studentsService = {
    * @returns {Promise<Object>} Created student
    */
   async create(data) {
-    const payload = this._formatForBackend(data)
+    const payload = formatStudentDataForBackend(data)
     return api.post('/api/students', payload)
   },
 
@@ -110,7 +111,7 @@ const studentsService = {
     // Note: Update endpoint might share logic or differ. 
     // EnrollmentController uses similar mapping but expects specific structure.
     // For safety, we use the same structure.
-    const payload = this._formatForBackend(data)
+    const payload = formatStudentDataForBackend(data)
     return api.put(`/api/students/${id}`, payload)
   },
 

@@ -59,7 +59,10 @@ export const studentFields = [
         type: 'email',
         showInMobile: true,
         showInDesktop: false,
-        valueFn: (s) => s.guardian_email || s.emergency_contact?.email_optional
+        valueFn: (s) => {
+            const g = (s.guardians || []).find(x => x.is_primary) || (s.guardians || []).find(x => x.is_emergency);
+            return g ? (g.email || g.email_optional || g.guardian_email) : '—';
+        }
     },
     {
         key: 'guardian_phone',
@@ -67,6 +70,9 @@ export const studentFields = [
         type: 'phone',
         showInMobile: true,
         showInDesktop: false,
-        valueFn: (s) => s.guardian_phone || s.emergency_contact?.phone
+        valueFn: (s) => {
+            const g = (s.guardians || []).find(x => x.is_primary) || (s.guardians || []).find(x => x.is_emergency);
+            return g ? (g.phone || g.guardian_phone) : '—';
+        }
     }
 ];
