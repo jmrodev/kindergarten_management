@@ -151,6 +151,27 @@ class ClassroomRepository {
       conn.release();
     }
   }
+  static async getStatsByGender() {
+    const conn = await getConnection();
+    try {
+      const query = `
+        SELECT 
+            c.id as classroom_id,
+            c.name as classroom_name,
+            s.gender,
+            CAST(COUNT(s.id) AS SIGNED) as count
+        FROM classroom c
+        LEFT JOIN student s ON c.id = s.classroom_id AND s.status IN ('activo', 'inscripto')
+        WHERE c.is_active = TRUE
+        GROUP BY c.id, c.name, s.gender
+        ORDER BY c.name
+      `;
+      const results = await conn.query(query);
+      return results;
+    } finally {
+      conn.release();
+    }
+  }
 }
 
 module.exports = ClassroomRepository;

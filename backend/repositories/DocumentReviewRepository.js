@@ -145,7 +145,20 @@ class DocumentReviewRepository {
             return result;
         } finally {
             conn.release();
+          static async getPendingCount() {
+        const conn = await getConnection();
+        try {
+            const result = await conn.query(
+                `SELECT CAST(COUNT(*) AS SIGNED) as count 
+         FROM document_review 
+         WHERE status = 'pendiente'`
+            );
+            return Number(result[0].count);
+        } finally {
+            conn.release();
         }
+    }
+}
     }
 }
 

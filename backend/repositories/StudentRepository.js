@@ -529,6 +529,39 @@ class StudentRepository {
       if (!externalConn) conn.release();
     }
   }
+  static async getBirthdaysByMonth(month) {
+    const conn = await getConnection();
+    try {
+      const query = `
+           SELECT first_name, paternal_surname, birth_date, classroom_id
+           FROM student
+           WHERE MONTH(birth_date) = ? AND status IN ('activo', 'inscripto')
+           ORDER BY DAY(birth_date)
+       `;
+      const results = await conn.query(query, [month]);
+      return results;
+    } finally {
+      conn.release();
+    }
+  }
+
+  static async getPendingDocsCount() {
+    const conn = await getConnection();
+    try {
+      const query = `
+            SELECT CAST(COUNT(DISTINCT id) AS SIGNED) as count
+            FROM v_students_with_pending_docs
+        `;
+      const result = await conn.query(query);
+      return Number(result[0].count);
+    } catch (err) {
+      const fallbackQuery = `SELECT CAST(COUNT(DISTINCT student_id) AS SIGNED) as count FROM pending_documentation WHERE completed_at IS NULL`;
+      const result = await conn.query(fallbackQuery);
+      return Number(result[0].count);
+    } finally {
+      conn.release();
+    }
+  }
 }
 
 module.exports = StudentRepository;
