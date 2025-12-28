@@ -37,8 +37,8 @@ class EmergencyContactRepository {
         }
     }
 
-    static async create(emergencyContactData) {
-        const conn = await getConnection();
+    static async create(emergencyContactData, externalConn = null) {
+        const conn = externalConn || await getConnection();
         try {
             const result = await conn.query(
                 `INSERT INTO emergency_contact (student_id, full_name, relationship, 
@@ -56,7 +56,7 @@ class EmergencyContactRepository {
             );
             return result.insertId;
         } finally {
-            conn.release();
+            if (!externalConn) conn.release();
         }
     }
 

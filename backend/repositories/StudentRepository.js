@@ -3,6 +3,33 @@ const { getConnection } = require('../db');
 const GuardianRepository = require('./GuardianRepository');
 
 class StudentRepository {
+  static async linkGuardian(studentId, guardianId, relationData, externalConn = null) {
+    const conn = externalConn || await getConnection();
+    try {
+      await conn.query(
+        `INSERT INTO student_guardian (
+           student_id, guardian_id, relationship_type,
+           is_primary, is_emergency, can_pickup, has_restraining_order, can_change_diaper,
+           custody_rights, financial_responsible
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          studentId,
+          guardianId,
+          relationData.relationship_type || 'otro',
+          relationData.is_primary || false,
+          relationData.is_emergency || false,
+          relationData.can_pickup || false,
+          relationData.has_restraining_order || false,
+          relationData.can_change_diaper || false,
+          relationData.custody_rights !== undefined ? relationData.custody_rights : true, // Default true often
+          relationData.financial_responsible || false
+        ]
+      );
+    } finally {
+      if (!externalConn) conn.release();
+    }
+  }
+
   static STUDENT_COLUMNS = `
     s.id, s.first_name, s.middle_name_optional, s.third_name_optional, 
     s.paternal_surname, s.maternal_surname, s.nickname_optional, s.dni, 
