@@ -229,7 +229,8 @@ CREATE TABLE student (
     FOREIGN KEY (shift_id) REFERENCES shifts(id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
--- Emergency contacts are now handled through guardian/student_guardian tables
+-- Emergency contacts are handled through guardian/student_guardian tables using is_emergency flag.
+-- No separate emergency_contact table needed.
 
 -- Table: student_guardian
 CREATE TABLE student_guardian (

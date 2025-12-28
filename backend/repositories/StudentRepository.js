@@ -21,7 +21,7 @@ class StudentRepository {
           relationData.can_pickup || false,
           relationData.has_restraining_order || false,
           relationData.can_change_diaper || false,
-          relationData.custody_rights !== undefined ? relationData.custody_rights : true, // Default true often
+          relationData.custody_rights !== undefined ? relationData.custody_rights : true,
           relationData.financial_responsible || false
         ]
       );
@@ -30,10 +30,11 @@ class StudentRepository {
     }
   }
 
+  // UPDATED: Removed emergency_contact_id
   static STUDENT_COLUMNS = `
     s.id, s.first_name, s.middle_name_optional, s.third_name_optional, 
     s.paternal_surname, s.maternal_surname, s.nickname_optional, s.dni, 
-    s.birth_date, s.address_id, s.emergency_contact_id, s.classroom_id, 
+    s.birth_date, s.address_id, s.classroom_id, 
     s.shift, s.status, s.enrollment_date, s.withdrawal_date, 
     s.health_insurance, s.affiliate_number, s.allergies, s.medications, 
     s.medical_observations, s.blood_type, s.pediatrician_name, 
@@ -63,7 +64,6 @@ class StudentRepository {
       `;
       const params = [];
 
-      // Apply filters
       if (filters.status) {
         query += ' AND s.status = ?';
         params.push(filters.status);
@@ -86,7 +86,6 @@ class StudentRepository {
 
       query += ' ORDER BY s.paternal_surname, s.first_name';
 
-      // Apply pagination
       if (pagination.limit && pagination.offset !== undefined) {
         query += ' LIMIT ? OFFSET ?';
         params.push(pagination.limit, pagination.offset);
@@ -105,7 +104,6 @@ class StudentRepository {
   static async getById(id, externalConn = null) {
     const conn = externalConn || await getConnection();
     try {
-      // Get student with basic info
       const studentResult = await conn.query(
         `SELECT ${this.STUDENT_COLUMNS}, 
          a.street, a.number, a.city, a.provincia, a.postal_code_optional,
@@ -123,7 +121,6 @@ class StudentRepository {
 
       const student = studentResult[0];
 
-      // Get ALL guardians for this student with their permissions
       const guardiansResult = await conn.query(
         `SELECT g.id, g.first_name, g.paternal_surname, g.maternal_surname,
          g.dni, g.phone, g.email_optional,
@@ -138,7 +135,6 @@ class StudentRepository {
         [id]
       );
 
-      // Attach guardians array to student
       student.guardians = guardiansResult;
 
       return student;
@@ -150,10 +146,11 @@ class StudentRepository {
   static async create(studentData, externalConn = null) {
     const conn = externalConn || await getConnection();
     try {
+      // UPDATED: Removed emergency_contact_id from INSERT
       const result = await conn.query(
         `INSERT INTO student (first_name, middle_name_optional, third_name_optional, 
          paternal_surname, maternal_surname, nickname_optional, dni, birth_date, 
-         address_id, emergency_contact_id, classroom_id, shift, gender, status, 
+         address_id, classroom_id, shift, gender, status, 
          enrollment_date, withdrawal_date, health_insurance, affiliate_number, 
          allergies, medications, medical_observations, blood_type, 
          pediatrician_name, pediatrician_phone, photo_authorization, 
@@ -164,12 +161,13 @@ class StudentRepository {
           studentData.first_name,
           studentData.middle_name_optional,
           studentData.third_name_optional,
+          studentData.paternal_surname,
           studentData.maternal_surname,
           studentData.nickname_optional,
           studentData.dni,
           studentData.birth_date,
           studentData.address_id,
-          studentData.emergency_contact_id,
+          // studentData.emergency_contact_id, // REMOVED
           studentData.classroom_id,
           studentData.shift,
           studentData.gender,
@@ -196,28 +194,18 @@ class StudentRepository {
 
       const studentId = result.insertId;
 
-      // Helper to process and link a guardian
       const processGuardian = async (guardianData, isEmergency = false, relationship = 'otro') => {
         let guardianId = guardianData.id;
 
-        // If no ID, create the guardian first
         if (!guardianId) {
-          // Handle name splitting for emergency contact if needed
           if (isEmergency && guardianData.full_name && !guardianData.first_name) {
             const names = guardianData.full_name.split(' ');
             guardianData.first_name = names[0];
             guardianData.paternal_surname = names.length > 1 ? names.slice(1).join(' ') : 'Unknown';
           }
-
-          // Should probably check if guardian exists by DNI to avoid widespread duplication? 
-          // For now, assuming creation or ID provided.
           guardianId = await GuardianRepository.create(guardianData, conn);
-        } else {
-          // Optional: Update existing guardian data if provided?
-          // await GuardianRepository.update(guardianId, guardianData, conn);
         }
 
-        // Link to student
         await conn.query(
           `INSERT INTO student_guardian (student_id, guardian_id, relationship_type, 
            is_primary, is_emergency, can_pickup, has_restraining_order, can_change_diaper) 
@@ -228,21 +216,19 @@ class StudentRepository {
             guardianData.relationship || relationship,
             guardianData.is_primary || false,
             isEmergency,
-            guardianData.can_pickup || (isEmergency), // Default emergency contacts to can_pickup
+            guardianData.can_pickup || (isEmergency),
             guardianData.has_restraining_order || false,
             guardianData.can_change_diaper || false
           ]
         );
       };
 
-      // Process regular guardians
       if (studentData.guardians && Array.isArray(studentData.guardians)) {
         for (const guardian of studentData.guardians) {
           await processGuardian(guardian, false, guardian.relationship_type);
         }
       }
 
-      // Process emergency contact (legacy support / unified logic)
       if (studentData.emergency_contact) {
         await processGuardian(studentData.emergency_contact, true, studentData.emergency_contact.relationship);
       }
@@ -256,11 +242,11 @@ class StudentRepository {
   static async update(id, studentData, externalConn = null) {
     const conn = externalConn || await getConnection();
     try {
-      // Update the student record
+      // UPDATED: Removed emergency_contact_id from UPDATE
       const result = await conn.query(
         `UPDATE student SET first_name = ?, middle_name_optional = ?, 
          third_name_optional = ?, paternal_surname = ?, maternal_surname = ?, 
-         nickname_optional = ?, dni = ?, birth_date = ?, address_id = ?, emergency_contact_id = ?,
+         nickname_optional = ?, dni = ?, birth_date = ?, address_id = ?,
          classroom_id = ?, shift = ?, gender = ?, status = ?, 
          enrollment_date = ?, withdrawal_date = ?, health_insurance = ?, 
          affiliate_number = ?, allergies = ?, medications = ?, 
@@ -279,7 +265,7 @@ class StudentRepository {
           studentData.dni,
           studentData.birth_date,
           studentData.address_id,
-          studentData.emergency_contact_id,
+          // studentData.emergency_contact_id, // REMOVED
           studentData.classroom_id,
           studentData.shift,
           studentData.gender,
@@ -305,25 +291,12 @@ class StudentRepository {
         ]
       );
 
-      // Handle Guardians Sync
-      // Strategy: Delete existing links and re-create them. 
-      // This is simpler than differencing and allows easy updates of relationship types.
-      // However, it destroys "history" if any additional metadata was on the link, but currently it's just relationship/permissions.
-
       if (studentData.guardians || studentData.emergency_contact) {
-        // Verify we should be updating guardians? 
-        // If the array is provided, we assume it's the NEW complete list.
-
-        // First, clear existing links? 
-        // Or should we be smarter? For now, clearing prevents duplicates.
-        // Note: This only removes the LINK, not the Guardian record itself.
         await conn.query('DELETE FROM student_guardian WHERE student_id = ?', [id]);
 
         const processGuardian = async (guardianData, isEmergency = false, relationship = 'otro') => {
           let guardianId = guardianData.id;
 
-          // If strictly updating, we might expect guardianId to be present.
-          // If not present, create new guardian.
           if (!guardianId) {
             if (isEmergency && guardianData.full_name && !guardianData.first_name) {
               const names = guardianData.full_name.split(' ');
@@ -332,7 +305,6 @@ class StudentRepository {
             }
             guardianId = await GuardianRepository.create(guardianData, conn);
           } else {
-            // Update guardian details too? Usually yes in a full update form.
             await GuardianRepository.update(guardianId, guardianData, conn);
           }
 
@@ -373,7 +345,6 @@ class StudentRepository {
   static async delete(id, externalConn = null) {
     const conn = externalConn || await getConnection();
     try {
-      // Delete related records
       await conn.query('DELETE FROM student_guardian WHERE student_id = ?', [id]);
       await conn.query('DELETE FROM student_documents WHERE student_id = ?', [id]);
       await conn.query('DELETE FROM student_status_history WHERE student_id = ?', [id]);
@@ -382,7 +353,6 @@ class StudentRepository {
       await conn.query('DELETE FROM parent_portal_submissions WHERE student_id = ?', [id]);
       await conn.query('DELETE FROM vaccination_records WHERE student_id = ?', [id]);
 
-      // Then delete the student
       const result = await conn.query('DELETE FROM student WHERE id = ?', [id]);
       return result.affectedRows > 0;
     } finally {
