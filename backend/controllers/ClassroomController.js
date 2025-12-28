@@ -3,7 +3,7 @@ const ClassroomRepository = require('../repositories/ClassroomRepository');
 const { AppError } = require('../middleware/errorHandler'); // Import AppError
 const { sanitizeObject, sanitizeWhitespace } = require('../utils/sanitization'); // Import sanitization utilities
 const ClassroomValidator = require('../utils/ClassroomValidator');
-const { getConnection } = require('../db');
+
 
 class ClassroomController {
     async createClassroom(req, res) {
@@ -20,41 +20,29 @@ class ClassroomController {
                 age_group: age_group
             });
 
-            const conn = await getConnection();
-            try {
-                // Crear la sala
-                const result = await conn.query(
-                    `INSERT INTO classroom (name, capacity, shift, academic_year, age_group, is_active)
-                     VALUES (?, ?, ?, ?, ?, ?)`,
-                    [
-                        name,
-                        parseInt(capacity),
-                        shift || 'Mañana', // Valor por defecto
-                        academic_year || new Date().getFullYear(),
-                        age_group || null,
-                        is_active !== undefined ? is_active : true
-                    ]
-                );
+            // Crear la sala usando el repositorio
+            const classroomData = {
+                name,
+                capacity: parseInt(capacity),
+                shift: shift || 'Mañana', // Valor por defecto
+                academic_year: academic_year || new Date().getFullYear(),
+                age_group: age_group || null,
+                is_active: is_active !== undefined ? is_active : true
+            };
 
-                const classroomId = result.insertId;
+            const classroomId = await ClassroomRepository.create(classroomData);
 
-                // Si se proporciona un maestroId, asignarlo a la sala
-                if (maestroId && maestroId !== '') {
-                    await conn.query(
-                        'UPDATE classroom SET teacher_id = ? WHERE id = ?',
-                        [maestroId, classroomId]
-                    );
-                }
-
-                // Devolver la sala recién creada
-                const createdClassroom = await ClassroomRepository.getById(classroomId);
-                res.status(201).json({
-                    status: 'success',
-                    data: createdClassroom
-                });
-            } finally {
-                conn.release();
+            // Si se proporciona un maestroId, asignarlo a la sala
+            if (maestroId && maestroId !== '') {
+                await ClassroomRepository.assignTeacher(classroomId, maestroId);
             }
+
+            // Devolver la sala recién creada
+            const createdClassroom = await ClassroomRepository.getById(classroomId);
+            res.status(201).json({
+                status: 'success',
+                data: createdClassroom
+            });
         } catch (error) {
             console.error("Error in createClassroom:", error);
             // Si es un error de validación (400), mantenerlo tal cual
@@ -131,44 +119,33 @@ class ClassroomController {
                 age_group: age_group
             }, id);
 
-            const conn = await getConnection();
-            try {
-                // Actualizar la sala
-                const result = await conn.query(
-                    `UPDATE classroom SET name = ?, capacity = ?, shift = ?,
-                     academic_year = ?, age_group = ?, is_active = ? WHERE id = ?`,
-                    [
-                        name || null,
-                        capacity ? parseInt(capacity) : null,
-                        shift || null,
-                        academic_year || null,
-                        age_group || null,
-                        is_active,
-                        id
-                    ]
-                );
+            // Actualizar la sala usando el repositorio
+            const classroomData = {
+                name: name || null,
+                capacity: capacity ? parseInt(capacity) : null,
+                shift: shift || null,
+                academic_year: academic_year || null,
+                age_group: age_group || null,
+                is_active
+            };
 
-                if (result.affectedRows === 0) {
-                    throw new AppError("Classroom not found", 404);
-                }
+            const success = await ClassroomRepository.update(id, classroomData);
 
-                // Si se proporciona un maestroId, actualizar la asignación
-                if (maestroId !== undefined) {
-                    await conn.query(
-                        'UPDATE classroom SET teacher_id = ? WHERE id = ?',
-                        [maestroId, id]
-                    );
-                }
-
-                // Devolver la sala actualizada
-                const updatedClassroom = await ClassroomRepository.getById(id);
-                res.status(200).json({
-                    status: 'success',
-                    data: updatedClassroom
-                });
-            } finally {
-                conn.release();
+            if (!success) {
+                throw new AppError("Classroom not found", 404);
             }
+
+            // Si se proporciona un maestroId, actualizar la asignación
+            if (maestroId !== undefined) {
+                await ClassroomRepository.assignTeacher(id, maestroId);
+            }
+
+            // Devolver la sala actualizada
+            const updatedClassroom = await ClassroomRepository.getById(id);
+            res.status(200).json({
+                status: 'success',
+                data: updatedClassroom
+            });
         } catch (error) {
             console.error(`Error in updateClassroom for id ${req.params.id}:`, error);
             // Si es un error de validación (400), mantenerlo tal cual
