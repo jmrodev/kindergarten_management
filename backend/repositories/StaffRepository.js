@@ -9,7 +9,7 @@ class StaffRepository {
       let query = `
         SELECT s.*, 
                a.street, a.number, a.city, a.provincia,
-               c.name as classroom_name,
+               GROUP_CONCAT(c.name SEPARATOR ', ') as classroom_name,
                r.role_name,
                al.access_name
         FROM staff s
@@ -40,7 +40,7 @@ class StaffRepository {
       }
 
       // Apply sorting
-      query += ' ORDER BY s.paternal_surname, s.first_name';
+      query += ' GROUP BY s.id ORDER BY s.paternal_surname, s.first_name';
 
       // Apply pagination
       if (pagination.limit && pagination.offset !== undefined) {
@@ -241,7 +241,7 @@ class StaffRepository {
     const conn = await getConnection();
     try {
       let query = `
-        SELECT CAST(COUNT(*) AS SIGNED) as count
+        SELECT CAST(COUNT(DISTINCT s.id) AS SIGNED) as count
         FROM staff s
         LEFT JOIN classroom c ON c.teacher_id = s.id
         LEFT JOIN role r ON s.role_id = r.id
