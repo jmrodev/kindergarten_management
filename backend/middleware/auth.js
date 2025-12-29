@@ -1,6 +1,6 @@
 // middleware/auth.js
 const jwt = require('jsonwebtoken')
-const Staff = require('../models/Staff')
+const StaffRepository = require('../repositories/StaffRepository')
 const { AppError } = require('./errorHandler')
 const { getConnection } = require('../db')
 
@@ -87,7 +87,7 @@ const protect = async (req, res, next) => {
         // Get staff user from database (original behavior)
         const userId =
           typeof decoded.id === 'number' ? BigInt(decoded.id) : decoded.id
-        const user = await Staff.getById(userId)
+        const user = await StaffRepository.getById(userId)
 
         if (!user || !user.is_active) {
           return next(new AppError('No staff found with this token', 401))
@@ -98,7 +98,8 @@ const protect = async (req, res, next) => {
 
       next()
     } catch (error) {
-      return next(new AppError('Not authorized, token failed', 401))
+      console.error('[Middleware Auth Error]:', error);
+      return next(new AppError('Not authorized, token failed: ' + error.message, 401))
     }
   }
 

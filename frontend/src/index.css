@@ -1,3 +1,8 @@
+@import './components/Atoms/atoms.css';
+@import './components/Molecules/molecules.css';
+@import './components/Organisms/organisms.css';
+@import './Pages/pages.css';
+
 :root {
   font-family: var(--font-family-base);
   line-height: 1.5;
@@ -19,6 +24,13 @@ body {
   min-width: 320px;
   min-height: 100vh;
   width: 100%;
+  background-color: var(--bg-secondary);
+  background-image:
+    radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 0) 0, transparent 50%),
+    radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 0) 0, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 0) 0, transparent 50%);
+  /* Very subtle cool slate undertone */
+  background: linear-gradient(to bottom right, #f8fafc, #f1f5f9);
 }
 
 * {

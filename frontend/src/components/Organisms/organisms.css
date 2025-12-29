@@ -1,5 +1,3 @@
-@import '../Atoms/atoms.css';
-
 /* 
  * Organisms Styles - Modern Layout 
  */
@@ -8,8 +6,9 @@
    Sidebar Layout
    ======================================================================== */
 .sidebar-layout {
-  background-color: white;
-  border-right: 1px solid var(--neutral-200);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: var(--backdrop-blur);
+  border-right: 1px solid var(--glass-border);
   padding: 0;
   height: 100vh;
   overflow-y: auto;
@@ -390,8 +389,10 @@ tr:hover td {
 }
 
 .menu-link.active {
-  background-color: var(--primary-50);
-  color: var(--primary-700);
+  background: var(--gradient-primary-soft);
+  color: var(--primary-800);
+  font-weight: 600;
+  border-right: 3px solid var(--primary-600);
 }
 
 .menu-item-icon {
@@ -486,8 +487,10 @@ tr:hover td {
 .app-header {
   height: 64px;
   padding: 0 2rem;
-  background-color: white;
-  border-bottom: 1px solid var(--neutral-200);
+  background: var(--glass-bg);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+  border-bottom: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
   justify-content: space-between;

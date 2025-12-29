@@ -101,7 +101,7 @@ function Dashboard() {
           <div className="stat-icon">📋</div>
           <div className="stat-info">
             <h3>Revisiones Pendientes</h3>
-            <p className="stat-value">{stats.pendingReviews + stats.studentsWithPendingDocs}</p>
+            <p className="stat-value">{(stats.pendingReviews || 0) + (stats.studentsWithPendingDocs || 0)}</p>
           </div>
         </div>
       </section>

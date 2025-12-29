@@ -162,12 +162,15 @@
 /* Variantes de botón */
 .btn-primary {
   color: white;
-  background-color: var(--primary-500);
-  border-color: transparent;
+  background: var(--gradient-primary);
+  border: none;
+  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: var(--primary-600);
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+  box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+  transform: translateY(-1px);
 }
 
 .btn-secondary {

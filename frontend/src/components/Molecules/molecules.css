@@ -1,5 +1,3 @@
-@import '../Atoms/atoms.css';
-
 /* Estilos específicos para moléculas */
 
 /* Estilos para el formulario de login */
@@ -24,6 +22,7 @@
   border-radius: var(--border-radius);
   text-align: center;
 }
+
 .login-form {
   width: 100%;
   display: flex;
