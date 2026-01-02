@@ -4,6 +4,7 @@
 @import './Pages/pages.css';
 
 :root {
+  color-scheme: light;
   font-family: var(--font-family-base);
   line-height: 1.5;
   font-weight: 400;

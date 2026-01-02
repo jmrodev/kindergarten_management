@@ -2,7 +2,7 @@ export const studentFields = [
     {
         key: 'dni',
         label: 'DNI',
-        showInMobile: true,
+        showInMobile: false,
         showInDesktop: true
     },
     {
@@ -15,13 +15,13 @@ export const studentFields = [
     {
         key: 'classroom_name',
         label: 'Salón',
-        showInMobile: true,
+        showInMobile: false,
         showInDesktop: true
     },
     {
         key: 'address',
         label: 'Dirección',
-        showInMobile: true,
+        showInMobile: false,
         showInDesktop: true,
         valueFn: (student) => {
             if (!student.street && !student.number) return '—';
@@ -31,7 +31,7 @@ export const studentFields = [
     {
         key: 'status',
         label: 'Estado',
-        showInMobile: true,
+        showInMobile: false,
         showInDesktop: true,
         render: (value) => (
             <span className={`status-badge status-${(value || 'pendiente').toLowerCase()}`}>
@@ -43,21 +43,21 @@ export const studentFields = [
     {
         key: 'pediatrician_name',
         label: 'Pediatra',
-        showInMobile: true,
+        showInMobile: false,
         showInDesktop: false // Could be added if desired
     },
     {
         key: 'pediatrician_phone',
         label: 'Tel. Pediatra',
         type: 'phone',
-        showInMobile: true,
+        showInMobile: false,
         showInDesktop: false
     },
     {
         key: 'guardian_email',
         label: 'Email Tutor',
         type: 'email',
-        showInMobile: true,
+        showInMobile: false,
         showInDesktop: false,
         valueFn: (s) => {
             const g = (s.guardians || []).find(x => x.is_primary) || (s.guardians || []).find(x => x.is_emergency);
@@ -68,7 +68,7 @@ export const studentFields = [
         key: 'guardian_phone',
         label: 'Tel. Tutor',
         type: 'phone',
-        showInMobile: true,
+        showInMobile: false,
         showInDesktop: false,
         valueFn: (s) => {
             const g = (s.guardians || []).find(x => x.is_primary) || (s.guardians || []).find(x => x.is_emergency);

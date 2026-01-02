@@ -97,8 +97,9 @@ const studentsService = {
    * @returns {Promise<Object>} Created student
    */
   async create(data) {
-    const payload = formatStudentDataForBackend(data)
-    return api.post('/api/students', payload)
+    // Controller expects flat snake_case object (same as frontend state)
+    // Do NOT format to nested camelCase
+    return api.post('/api/students', data)
   },
 
   /**
@@ -108,11 +109,8 @@ const studentsService = {
    * @returns {Promise<Object>} Updated student
    */
   async update(id, data) {
-    // Note: Update endpoint might share logic or differ. 
-    // EnrollmentController uses similar mapping but expects specific structure.
-    // For safety, we use the same structure.
-    const payload = formatStudentDataForBackend(data)
-    return api.put(`/api/students/${id}`, payload)
+    // Controller expects flat snake_case object
+    return api.put(`/api/students/${id}`, data)
   },
 
   /**

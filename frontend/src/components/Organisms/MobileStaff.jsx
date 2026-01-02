@@ -7,13 +7,7 @@ import DataCardList from '../Organisms/DataCardList';
 
 const MobileStaff = ({ staff, onEdit, onDelete, onAdd, searchTerm, setSearchTerm, onView }) => {
   // Campos para la vista de cards en móvil
-  const cardFields = [
-    { key: 'role_name', label: 'Rol' },
-    { key: 'dni', label: 'DNI' },
-    { key: 'email', label: 'Email' },
-    { key: 'classroom', label: 'Salón Asignado' },
-    { key: 'phone', label: 'Teléfono' }
-  ];
+  const cardFields = [];
 
   return (
     <Card>

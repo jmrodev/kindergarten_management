@@ -10,6 +10,7 @@ class StaffRepository {
         SELECT s.*, 
                a.street, a.number, a.city, a.provincia,
                GROUP_CONCAT(c.name SEPARATOR ', ') as classroom_name,
+               (SELECT c2.id FROM classroom c2 WHERE c2.teacher_id = s.id LIMIT 1) as actual_classroom_id,
                r.role_name,
                al.access_name
         FROM staff s
@@ -286,6 +287,10 @@ class StaffRepository {
       if (typeof obj[key] === 'bigint') {
         obj[key] = Number(obj[key]);
       }
+    }
+    if (obj.actual_classroom_id) {
+      obj.classroom_id = obj.actual_classroom_id;
+      delete obj.actual_classroom_id;
     }
     return obj;
   }

@@ -104,7 +104,7 @@ const Classes = () => {
     setFormState({
       name: classItem.name,
       capacity: classItem.capacity,
-      shift: classItem.shift,
+      shift: classItem.shift || 'Mañana',
       academic_year: classItem.academic_year || classItem.academicYear, // handle both casing just in case
       age_group: classItem.age_group || classItem.ageGroup,
       maestroId: classItem.teacher_id || ''
@@ -177,131 +177,8 @@ const Classes = () => {
 
   const isMobile = useIsMobile();
 
-  if (isMobile) {
-    const cardFields = classFields.filter(f => f.showInMobile);
-
-    return (
-      <>
-        <Card>
-          <Text variant="h1">Clases</Text>
-
-          <div className="classes-header">
-            <Button variant="primary" onClick={handleAdd}>Agregar Clase</Button>
-            <Input
-              type="text"
-              placeholder="Buscar clases..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-          </div>
-
-          <DataCardList
-            items={filteredClasses}
-            title="Clases"
-            fields={cardFields}
-            onEdit={handleEdit}
-            onDelete={confirmDelete}
-            onAdd={handleAdd}
-            onItemSelect={handleView}
-            itemTitleKey="name"
-          />
-        </Card>
-
-        <ClassDetailModal classItem={detailClass} isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} />
-
-        <Modal
-          isOpen={isDeleteModalOpen}
-          onClose={() => setIsDeleteModalOpen(false)}
-          title="Confirmar Eliminación"
-        >
-          <div style={{ padding: '20px' }}>
-            <p>¿Está seguro que desea eliminar la clase <strong>{classToDelete?.name}</strong>?</p>
-            <p>Esta acción no se puede deshacer.</p>
-            <div className="modal-footer">
-              <Button variant="secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</Button>
-              <Button variant="danger" onClick={handleDelete}>Eliminar</Button>
-            </div>
-          </div>
-        </Modal>
-      </>
-    );
-  }
-
-  return (
-    <Card>
-      <Text variant="h1">Clases</Text>
-
-      <div className="classes-header">
-        <Button variant="primary" onClick={handleAdd}>Agregar Clase</Button>
-        <Input
-          type="text"
-          placeholder="Buscar clases..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="search-input"
-        />
-      </div>
-
-      <Table striped bordered responsive>
-        <TableHeader>
-          <TableRow>
-            {classFields.filter(f => f.showInDesktop).map(field => (
-              <TableCell as="th" key={field.key}>{field.label}</TableCell>
-            ))}
-            <TableCell as="th">Acciones</TableCell>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredClasses.map(classItem => (
-            <TableRow key={classItem.id}>
-              {classFields.filter(f => f.showInDesktop).map(field => (
-                <TableCell key={field.key}>
-                  {field.render
-                    ? field.render(field.valueFn ? field.valueFn(classItem) : classItem[field.key], classItem)
-                    : (field.valueFn ? field.valueFn(classItem) : (classItem[field.key] || 'N/A'))
-                  }
-                </TableCell>
-              ))}
-              <TableCell>
-                <div className="actions-cell">
-                  <button
-                    className="icon-action-btn view-btn"
-                    onClick={() => handleView(classItem)}
-                    title="Ver Detalle"
-                  >
-                    👁️
-                  </button>
-                  <button
-                    className="icon-action-btn edit-btn"
-                    onClick={() => handleEdit(classItem)}
-                    title="Editar"
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    className="icon-action-btn delete-btn"
-                    onClick={() => confirmDelete(classItem)}
-                    title="Eliminar"
-                  >
-                    🗑️
-                  </button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-
-      {/* Pagination Controls */}
-      {!loading && !error && (
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-        />
-      )}
-
+  const modals = (
+    <>
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -395,8 +272,122 @@ const Classes = () => {
           </div>
         </div>
       </Modal>
+    </>
+  );
+
+  if (isMobile) {
+    const cardFields = classFields.filter(f => f.showInMobile);
+
+    return (
+      <>
+        <Card>
+          <Text variant="h1">Clases</Text>
+
+          <div className="classes-header">
+            <Button variant="primary" onClick={handleAdd}>Agregar Clase</Button>
+            <Input
+              type="text"
+              placeholder="Buscar clases..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+          </div>
+
+          <DataCardList
+            items={filteredClasses}
+            title="Clases"
+            fields={cardFields}
+            onEdit={handleEdit}
+            onDelete={confirmDelete}
+            onAdd={handleAdd}
+            onItemSelect={handleView}
+            itemTitleKey="name"
+          />
+        </Card>
+
+        <ClassDetailModal classItem={detailClass} isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} />
+        {modals}
+      </>
+    );
+  }
+
+  return (
+    <Card>
+      <Text variant="h1">Clases</Text>
+
+      <div className="classes-header">
+        <Button variant="primary" onClick={handleAdd}>Agregar Clase</Button>
+        <Input
+          type="text"
+          placeholder="Buscar clases..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="search-input"
+        />
+      </div>
+
+      <Table striped bordered responsive>
+        <TableHeader>
+          <TableRow>
+            {classFields.filter(f => f.showInDesktop).map(field => (
+              <TableCell as="th" key={field.key}>{field.label}</TableCell>
+            ))}
+            <TableCell as="th">Acciones</TableCell>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredClasses.map(classItem => (
+            <TableRow key={classItem.id}>
+              {classFields.filter(f => f.showInDesktop).map(field => (
+                <TableCell key={field.key}>
+                  {field.render
+                    ? field.render(field.valueFn ? field.valueFn(classItem) : classItem[field.key], classItem)
+                    : (field.valueFn ? field.valueFn(classItem) : (classItem[field.key] || 'N/A'))
+                  }
+                </TableCell>
+              ))}
+              <TableCell>
+                <div className="actions-cell">
+                  <button
+                    className="icon-action-btn view-btn"
+                    onClick={() => handleView(classItem)}
+                    title="Ver Detalle"
+                  >
+                    👁️
+                  </button>
+                  <button
+                    className="icon-action-btn edit-btn"
+                    onClick={() => handleEdit(classItem)}
+                    title="Editar"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    className="icon-action-btn delete-btn"
+                    onClick={() => confirmDelete(classItem)}
+                    title="Eliminar"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      {/* Pagination Controls */}
+      {!loading && !error && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
+      )}
 
       <ClassDetailModal classItem={detailClass} isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} />
+      {modals}
     </Card>
   );
 };

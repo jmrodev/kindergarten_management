@@ -10,7 +10,11 @@ const classesService = {
         if (page) params.append('page', page);
         if (limit) params.append('limit', limit);
         // Add other filters if needed
-        if (filters.isActive !== undefined) params.append('isActive', filters.isActive);
+        Object.keys(filters).forEach(key => {
+            if (filters[key] !== undefined) {
+                params.append(key, filters[key]);
+            }
+        });
 
         const queryString = params.toString();
         return api.get(`/api/classrooms${queryString ? '?' + queryString : ''}`)

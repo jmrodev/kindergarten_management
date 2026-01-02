@@ -18,6 +18,7 @@ import Enrollments from './Pages/enrollments';
 import Permissions from './Pages/permissions';
 import MobileMenu from './components/Organisms/MobileMenu';
 import ParentRegistrationWrapper from './components/Organisms/ParentRegistrationWrapper';
+import Contacts from './Pages/Contacts';
 
 function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -65,6 +66,7 @@ function App() {
     // Staff / Standard Menu
     const baseItems = [
       { path: '/', label: 'Dashboard', icon: '/src/assets/svg/dashboard.svg' },
+      { path: '/contacts', label: 'Contactos', icon: '/src/assets/svg/user.svg' }, // Available to all staff
     ];
 
     // Helper to check permission from BD (module:action format)
@@ -341,6 +343,7 @@ function App() {
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/enrollments" element={<Enrollments />} />
           <Route path="/permissions" element={<Permissions />} />
+          <Route path="/contacts" element={<Contacts />} />
           <Route path="/parent/register" element={<ParentRegistrationWrapper />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -6,6 +6,9 @@ const { protect, checkPermission } = require('../middleware/auth')
 // All routes protected and check permissions from role_permission table
 router.use(protect)
 
+// Directory route - accessible to all authenticated staff
+router.get('/directory', StaffController.getAllStaff)
+
 router.get('/', checkPermission('personal', 'ver'), StaffController.getAllStaff)
 router.get(
   '/roles',

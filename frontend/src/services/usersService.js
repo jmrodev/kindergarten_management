@@ -20,6 +20,25 @@ const usersService = {
     const queryString = params.toString();
     return api.get(`/api/staff${queryString ? '?' + queryString : ''}`);
   },
+  /**
+   * Get staff directory (read-only, accessible to all)
+   * @returns {Promise<Array>} Array of users
+   */
+  async getDirectory({ page, limit, ...filters } = {}) {
+    const params = new URLSearchParams();
+    if (page) params.append('page', page);
+    if (limit) params.append('limit', limit);
+
+    // Append all other filters
+    Object.keys(filters).forEach(key => {
+      if (filters[key] !== undefined && filters[key] !== null) {
+        params.append(key, filters[key]);
+      }
+    });
+
+    const queryString = params.toString();
+    return api.get(`/api/staff/directory${queryString ? '?' + queryString : ''}`);
+  },
 
   /**
    * Get user by ID

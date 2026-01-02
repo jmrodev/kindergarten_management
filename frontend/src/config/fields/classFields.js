@@ -1,13 +1,13 @@
 export const classFields = [
     { key: 'id', label: 'ID', showInMobile: false, showInDesktop: true },
     { key: 'name', label: 'Nombre', showInMobile: false, showInDesktop: true }, // Mobile uses title
-    { key: 'capacity', label: 'Capacidad', showInMobile: true, showInDesktop: true },
+    { key: 'capacity', label: 'Capacidad', showInMobile: false, showInDesktop: true },
     { key: 'shift', label: 'Turno', showInMobile: true, showInDesktop: true },
-    { key: 'academic_year', label: 'Año Académico', showInMobile: true, showInDesktop: true },
+    { key: 'academic_year', label: 'Año Académico', showInMobile: false, showInDesktop: true },
     {
         key: 'age_group',
         label: 'Edad (Real/Ideal)',
-        showInMobile: true,
+        showInMobile: false,
         showInDesktop: true,
         valueFn: (c) => {
             if (c.min_age_years && c.max_age_years) {
@@ -26,7 +26,7 @@ export const classFields = [
     {
         key: 'teacher',
         label: 'Maestro',
-        showInMobile: true,
+        showInMobile: false,
         showInDesktop: true,
         valueFn: (c) => (c.teacher_first_name && c.teacher_surname) ? `${c.teacher_first_name} ${c.teacher_surname}` : 'Sin asignar'
     }
