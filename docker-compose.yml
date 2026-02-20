@@ -1,0 +1,48 @@
+services:
+  db:
+    image: mariadb:10.11
+    container_name: kindergarten_db
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: cima1255
+      MARIADB_DATABASE: kindergarten_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+      - mariadb_data:/var/lib/mysql
+
+  backend:
+    build: ./backend
+    container_name: kindergarten_backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASSWORD=cima1255
+      - DB_NAME=kindergarten_db
+      - PORT=3000
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  frontend:
+    build: ./frontend
+    container_name: kindergarten_frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://backend:3000
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  mariadb_data:

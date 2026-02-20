@@ -8,6 +8,7 @@
   font-family: var(--font-family-base);
   line-height: 1.5;
   font-weight: 400;
+  --scrollbar-width: 8px;
 
   color: var(--text-primary);
   background-color: var(--bg-secondary);

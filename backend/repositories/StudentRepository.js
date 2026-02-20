@@ -532,6 +532,19 @@ class StudentRepository {
       conn.release();
     }
   }
+
+  static async assignClassroom(studentId, classroomId) {
+    const conn = await getConnection();
+    try {
+      const result = await conn.query(
+        'UPDATE student SET classroom_id = ? WHERE id = ?',
+        [classroomId, studentId]
+      );
+      return result.affectedRows > 0;
+    } finally {
+      conn.release();
+    }
+  }
 }
 
 module.exports = StudentRepository;

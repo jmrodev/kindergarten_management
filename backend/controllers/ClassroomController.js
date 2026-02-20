@@ -137,7 +137,7 @@ class ClassroomController {
 
             // Si se proporciona un maestroId, actualizar la asignación
             if (maestroId !== undefined) {
-                await ClassroomRepository.assignTeacher(id, maestroId);
+                await ClassroomRepository.assignTeacher(id, maestroId === '' ? null : maestroId);
             }
 
             // Devolver la sala actualizada

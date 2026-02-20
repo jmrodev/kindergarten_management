@@ -100,7 +100,7 @@ class ClassroomRepository {
           classroomData.shift,
           classroomData.academic_year,
           classroomData.age_group,
-          classroomData.is_active,
+          classroomData.is_active !== undefined ? !!classroomData.is_active : true,
           id
         ]
       );
@@ -123,6 +123,14 @@ class ClassroomRepository {
   static async assignTeacher(classroomId, teacherId) {
     const conn = await getConnection();
     try {
+      // CLEAR the teacher from ANY OTHER classroom first to maintain 1:1 or N:1 correctly
+      if (teacherId) {
+        await conn.query(
+          'UPDATE classroom SET teacher_id = NULL WHERE teacher_id = ?',
+          [teacherId]
+        );
+      }
+
       const result = await conn.query(
         'UPDATE classroom SET teacher_id = ? WHERE id = ?',
         [teacherId, classroomId]

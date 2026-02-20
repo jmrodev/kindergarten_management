@@ -1,17 +1,25 @@
 import { useEffect } from 'react';
 import '../Atoms/atoms.css';
 
+// Global counter to handle nested modals
+let openModalsCount = 0;
+
 const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
   useEffect(() => {
     if (isOpen) {
+      openModalsCount++;
       document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
+      // Optional: prevents layout shift
+      document.body.style.paddingRight = 'var(--scrollbar-width, 0px)';
 
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
+      return () => {
+        openModalsCount--;
+        if (openModalsCount === 0) {
+          document.body.style.overflow = 'unset';
+          document.body.style.paddingRight = '0px';
+        }
+      };
+    }
   }, [isOpen]);
 
   if (!isOpen) return null;

@@ -43,7 +43,8 @@ const Classes = () => {
     shift: 'Mañana',
     academic_year: new Date().getFullYear(),
     age_group: '',
-    maestroId: ''
+    maestroId: '',
+    is_active: true
   });
 
   useEffect(() => {
@@ -102,12 +103,13 @@ const Classes = () => {
   const handleEdit = (classItem) => {
     setCurrentClass(classItem);
     setFormState({
-      name: classItem.name,
-      capacity: classItem.capacity,
+      name: classItem.name || '',
+      capacity: classItem.capacity ?? '',
       shift: classItem.shift || 'Mañana',
-      academic_year: classItem.academic_year || classItem.academicYear, // handle both casing just in case
-      age_group: classItem.age_group || classItem.ageGroup,
-      maestroId: classItem.teacher_id || ''
+      academic_year: classItem.academic_year || classItem.academicYear || new Date().getFullYear(),
+      age_group: classItem.age_group || classItem.ageGroup || '',
+      maestroId: classItem.teacher_id || '',
+      is_active: classItem.is_active !== undefined ? !!classItem.is_active : true
     });
     setIsModalOpen(true);
   };
@@ -157,16 +159,17 @@ const Classes = () => {
       shift: 'Mañana',
       academic_year: new Date().getFullYear(),
       age_group: '',
-      maestroId: ''
+      maestroId: '',
+      is_active: true
     });
     setIsModalOpen(true);
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormState(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
   };
 
@@ -251,6 +254,17 @@ const Classes = () => {
             onChange={handleChange}
             required
           />
+        </FormGroup>
+        <FormGroup>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              name="is_active"
+              checked={formState.is_active}
+              onChange={handleChange}
+            />
+            Sala Activa
+          </label>
         </FormGroup>
         <div className="modal-footer">
           <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancelar</Button>

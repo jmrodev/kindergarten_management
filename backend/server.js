@@ -69,6 +69,10 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Servir 
 
 
 // Routes
+app.get('/', (req, res) => {
+    res.json({ status: 'success', message: 'Kindergarten Management API is running' });
+});
+
 app.use('/api/auth', authRoutes); // Auth routes (public)
 app.use('/api/students', studentRoutes); // Protected in next step
 app.use('/api/classrooms', classroomRoutes); // Protected in next step
