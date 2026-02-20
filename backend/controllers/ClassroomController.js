@@ -172,12 +172,13 @@ class ClassroomController {
         } catch (error) {
             console.error(`Error in deleteClassroom for id ${req.params.id}:`, error);
 
-            // Check if it's a constraint error
-            if (error.message && error.message.includes('student(s) are still assigned')) {
-                throw new AppError(error.message, 409);
+            // Check if it's a constraint error (MariaDB errno 1451)
+            if (error.errno === 1451 || (error.message && error.message.includes('foreign key constraint fails'))) {
+                throw new AppError('No se puede eliminar la sala porque tiene alumnos, personal o actividades asociadas. Primero desasigne o elimine esos registros.', 409);
             }
 
-            throw new AppError('Error deleting classroom', 500);
+            // Fallback for other errors
+            throw new AppError('Error al intentar eliminar la sala: ' + error.message, 500);
         }
     }
 }

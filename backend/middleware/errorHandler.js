@@ -21,13 +21,16 @@ class AppError extends Error {
 const errorHandler = (err, req, res, next) => {
     // Handle specific database errors
     if (err.errno) {
-        switch(err.errno) {
+        switch (err.errno) {
             case 1062: // Duplicate entry
                 const field = err.message.match(/'([^']+)'/g) || ['field'];
                 err = new AppError(`Duplicate entry error for field: ${field[0]}`, 400);
                 break;
             case 1452: // Cannot add or update child row: a foreign key constraint fails
                 err = new AppError('Foreign key constraint failed. Related record does not exist.', 400);
+                break;
+            case 1451: // Cannot delete or update a parent row: a foreign key constraint fails
+                err = new AppError('No se puede eliminar este registro porque otros datos dependen de él.', 409);
                 break;
             case 1054: // Unknown column
                 err = new AppError('Invalid field in request. Please check field names.', 400);
