@@ -11,8 +11,6 @@ const SidebarMenu = ({
   items,
   collapsed = false,
   onToggleCollapse,
-  onExpand,
-  hidden = false,
   title = 'Menu Principal',
   currentPath,
   ...props
@@ -21,52 +19,33 @@ const SidebarMenu = ({
   const actualCurrentPath = currentPath || location.pathname;
 
   return (
-    <>
-      {!hidden && (
-        <Sidebar collapsed={collapsed} className={hidden ? 'sidebar-hidden' : ''} {...props}>
-          <div className="sidebar-header">
-            {!collapsed && <Text variant="h3" className="menu-title">{title}</Text>}
-            <Button
-              variant="secondary"
-              size="small"
-              className="sidebar-toggle-btn"
-              onClick={onToggleCollapse}
-              title={collapsed ? 'Expandir menú' : 'Contraer menú'}
-            >
-              {collapsed ? '→' : '←'}
-            </Button>
-          </div>
-          <Menu>
-            {items.map((item, index) => (
-              <MenuItem
-                key={index}
-                href={item.path}
-                active={actualCurrentPath === item.path}
-                onClick={item.onClick}
-              >
-                {item.icon && <SvgIcon src={item.icon} size={18} className="menu-item-icon" />}
-                {!collapsed && <span className="menu-item-text">{item.label}</span>}
-              </MenuItem>
-            ))}
-          </Menu>
-        </Sidebar>
-      )}
-      {/* Pestaña clickeable cuando el menú está oculto */}
-      {/* Pestaña vertical para abrir el menú (Hover strip) */}
-      {hidden && (
-        <div
-          className="sidebar-tab"
-          onMouseEnter={onExpand}
-          onClick={onExpand}
-          title="Desliza el mouse para abrir"
+    <Sidebar collapsed={collapsed} {...props}>
+      <div className="sidebar-header">
+        {!collapsed && <Text variant="h3" className="menu-title">{title}</Text>}
+        <Button
+          variant="secondary"
+          size="small"
+          className="sidebar-toggle-btn"
+          onClick={onToggleCollapse}
+          title={collapsed ? 'Expandir menú' : 'Contraer menú'}
         >
-          <div className="sidebar-tab-content">
-            <span className="sidebar-tab-icon">›</span>
-            <span className="sidebar-tab-text">MENU</span>
-          </div>
-        </div>
-      )}
-    </>
+          {collapsed ? '→' : '←'}
+        </Button>
+      </div>
+      <Menu>
+        {items.map((item, index) => (
+          <MenuItem
+            key={index}
+            href={item.path}
+            active={actualCurrentPath === item.path}
+            onClick={item.onClick}
+          >
+            {item.icon && <SvgIcon src={item.icon} size={18} className="menu-item-icon" />}
+            {!collapsed && <span className="menu-item-text">{item.label}</span>}
+          </MenuItem>
+        ))}
+      </Menu>
+    </Sidebar>
   );
 };
 

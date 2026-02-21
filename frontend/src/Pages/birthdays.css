@@ -3,29 +3,29 @@
 .birthday-section {
   background-color: #fff;
   border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-  margin-top: 20px;
+  padding: 15px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  margin-top: 15px;
 }
 
 .birthday-section h2 {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   color: #2c3e50;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
   border-bottom: 2px solid #f0f2f5;
-  padding-bottom: 10px;
+  padding-bottom: 8px;
 }
 
 .birthday-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 15px;
 }
 
 .birthday-card {
   background: #f8f9fa;
   border-radius: 8px;
-  padding: 15px;
+  padding: 10px;
   border-left: 4px solid #3498db;
 }
 
@@ -35,9 +35,9 @@
 }
 
 .birthday-card h3 {
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: #7f8c8d;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
@@ -53,8 +53,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 0;
+  padding: 6px 0;
   border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
 }
 
 .birthday-item:last-child {

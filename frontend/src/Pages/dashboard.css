@@ -23,20 +23,20 @@
 /* Stats Grid */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-2xl);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: var(--spacing-xl);
 }
 
 .stat-card {
     background: var(--bg-primary);
-    padding: 1.5rem;
-    border-radius: var(--border-radius-lg);
+    padding: 1rem;
+    border-radius: var(--border-radius);
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-sm);
     display: flex;
     align-items: center;
-    gap: 1.25rem;
+    gap: 1rem;
     transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
@@ -46,10 +46,10 @@
 }
 
 .stat-icon {
-    font-size: 2rem;
+    font-size: 1.5rem;
     background: var(--neutral-50);
-    width: 56px;
-    height: 56px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -59,7 +59,7 @@
 
 .stat-info h3 {
     margin: 0;
-    font-size: var(--font-size-sm);
+    font-size: 0.8rem;
     color: var(--text-tertiary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -68,7 +68,7 @@
 
 .stat-value {
     margin: 0.25rem 0 0 0;
-    font-size: var(--font-size-2xl);
+    font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-primary);
     line-height: 1.2;
@@ -126,9 +126,9 @@
 .action-btn {
     background: white;
     border: 1px solid var(--border-color);
-    padding: 1rem 1.5rem;
+    padding: 0.75rem 1rem;
     border-radius: var(--border-radius);
-    font-size: var(--font-size-base);
+    font-size: 0.9rem;
     font-weight: 500;
     color: var(--text-primary);
     cursor: pointer;
@@ -136,10 +136,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     box-shadow: var(--shadow-sm);
     flex: 1;
-    min-width: 200px;
+    min-width: 180px;
 }
 
 .action-btn:hover {
@@ -153,8 +153,8 @@
 /* System Info */
 .info-card {
     background: white;
-    padding: 1.5rem;
-    border-radius: var(--border-radius-lg);
+    padding: 1rem;
+    border-radius: var(--border-radius);
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-sm);
 }
@@ -223,22 +223,24 @@
         font-size: var(--font-size-base);
     }
 }
+
 /* Classroom Stats inside Dashboard Card */
 .classroom-stats-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-  width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    width: 100%;
 }
 
 .classroom-stat-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.9rem;
-  padding-bottom: 4px;
-  border-bottom: 1px solid rgba(0,0,0,0.05); /* Adjusted for light theme usually, or verify bg */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    /* Adjusted for light theme usually, or verify bg */
 }
 
 /* Stat card blue uses var(--info-bg) which is usually light blue. 
@@ -250,36 +252,36 @@
 */
 
 .classroom-stat-row:last-child {
-  border-bottom: none;
+    border-bottom: none;
 }
 
 .classroom-name {
-  font-weight: 600;
-  max-width: 45%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--text-primary);
+    font-weight: 600;
+    max-width: 45%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-primary);
 }
 
 .classroom-values {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
 }
 
 .gender-stat {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
 }
 
 .classroom-stat-total {
     margin-top: 8px;
     text-align: right;
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: bold;
     border-top: 1px solid var(--border-color);
     padding-top: 6px;

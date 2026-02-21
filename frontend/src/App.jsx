@@ -15,7 +15,6 @@ import Staff from './Pages/staff';
 import Classes from './Pages/classes';
 import Attendance from './Pages/attendance';
 import Enrollments from './Pages/enrollments';
-import Permissions from './Pages/permissions';
 import MobileMenu from './components/Organisms/MobileMenu';
 import ParentRegistrationWrapper from './components/Organisms/ParentRegistrationWrapper';
 import Contacts from './Pages/Contacts';
@@ -25,11 +24,9 @@ function App() {
   const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 768);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [sidebarHidden, setSidebarHidden] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [menuItems, setMenuItems] = useState([]);
   const [userPermissions, setUserPermissions] = useState({});
-  const [sidebarAutoCollapseTimer, setSidebarAutoCollapseTimer] = useState(null);
   const location = useLocation();
 
   // Define updateMenuItems before using it
@@ -105,10 +102,7 @@ function App() {
       baseItems.push({ path: '/enrollments', label: 'Inscripciones', icon: '/src/assets/svg/menu.svg' });
     }
 
-    // Permissions management - ONLY if has configuracion:ver permission in BD
-    if (can('configuracion', 'ver')) {
-      baseItems.push({ path: '/permissions', label: 'Permisos', icon: '/src/assets/svg/lock.svg' });
-    }
+    // Permissions management removed per user request
 
     // console.log(`[updateMenuItems] Role: ${canonicalRole}, Items: ${baseItems.length}, Perms keys: ${Object.keys(permissions).length}`);
     setMenuItems(baseItems);
@@ -190,7 +184,6 @@ function App() {
       }
 
       if (mobileView) {
-        setSidebarHidden(false);
         setSidebarCollapsed(false);
       }
     };
@@ -199,21 +192,7 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    let timer;
-
-    if (!isMobileView && user && !sidebarHidden) {
-      timer = setTimeout(() => {
-        setSidebarCollapsed(true);
-        setSidebarHidden(true);
-      }, 2000);
-    }
-
-    return () => {
-      if (timer) clearTimeout(timer);
-      if (sidebarAutoCollapseTimer) clearTimeout(sidebarAutoCollapseTimer);
-    };
-  }, [isMobileView, user, sidebarHidden, sidebarAutoCollapseTimer]);
+  // Removed auto-collapse sidebar logic to keep it fixed
 
   const handleLogin = (userData) => {
     // After login the Login page already saved token and user in localStorage
@@ -268,20 +247,7 @@ function App() {
   };
 
   const showSidebar = () => {
-    setSidebarHidden(false);
-    setSidebarCollapsed(false);
-
-    // Clear existing timer if any
-    if (sidebarAutoCollapseTimer) {
-      clearTimeout(sidebarAutoCollapseTimer);
-    }
-
-    // Set new timer to auto-collapse after 3 seconds
-    const timer = setTimeout(() => {
-      setSidebarCollapsed(true);
-    }, 3000);
-
-    setSidebarAutoCollapseTimer(timer);
+    // Persistent sidebar, no need to show
   };
 
   if (loading) {
@@ -299,14 +265,11 @@ function App() {
           <SidebarMenu
             items={menuItems}
             collapsed={sidebarCollapsed}
-            hidden={sidebarHidden}
             onToggleCollapse={toggleSidebarCollapse}
-            onExpand={showSidebar}
             title={`Sistema de Gestión - ${user.firstName} ${user.lastName}`}
             currentPath={location.pathname}
           />
         )}
-        sidebarHidden={sidebarHidden}
         headerContent={
           <HeaderWithMenu
             onMenuToggle={toggleMobileMenu}
@@ -342,7 +305,6 @@ function App() {
           <Route path="/classes" element={<Classes />} />
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/enrollments" element={<Enrollments />} />
-          <Route path="/permissions" element={<Permissions />} />
           <Route path="/contacts" element={<Contacts />} />
           <Route path="/parent/register" element={<ParentRegistrationWrapper />} />
           <Route path="*" element={<Navigate to="/" replace />} />

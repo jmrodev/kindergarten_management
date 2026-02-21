@@ -2,7 +2,7 @@ import Layout from './Layout';
 import Header from '../Atoms/Header';
 import './organisms.css';
 
-const AppLayout = ({ children, sidebar, headerContent, className = '', isMobileMenuOpen = false, onBackdropClick, sidebarHidden, ...props }) => {
+const AppLayout = ({ children, sidebar, headerContent, className = '', isMobileMenuOpen = false, onBackdropClick, ...props }) => {
   const header = headerContent || <Header className="app-header" />;
 
   return (
@@ -12,7 +12,6 @@ const AppLayout = ({ children, sidebar, headerContent, className = '', isMobileM
       className={`app-layout ${className}`}
       isMobileMenuOpen={isMobileMenuOpen}
       onBackdropClick={onBackdropClick}
-      sidebarHidden={sidebarHidden}
       {...props}
     >
       {children}

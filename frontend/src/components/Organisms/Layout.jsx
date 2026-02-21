@@ -1,6 +1,6 @@
 import '../Atoms/atoms.css';
 
-const Layout = ({ children, sidebar, header, className = '', isMobileMenuOpen = false, sidebarHidden = false, ...props }) => {
+const Layout = ({ children, sidebar, header, className = '', isMobileMenuOpen = false, ...props }) => {
   const baseClasses = 'layout';
   const customClasses = className;
 
@@ -10,12 +10,7 @@ const Layout = ({ children, sidebar, header, className = '', isMobileMenuOpen = 
   ].filter(Boolean).join(' ');
 
   // Determinar clases para el main content basado en estado del sidebar
-  let mainContentClasses = "layout-main";
-  if (!sidebar) {
-    mainContentClasses = "layout-main-full";
-  } else if (sidebarHidden) {
-    mainContentClasses = "layout-main layout-main-full"; // Ocupa todo el ancho cuando el sidebar está oculto
-  }
+  let mainContentClasses = sidebar ? "layout-main" : "layout-main-full";
 
   return (
     <>
@@ -24,7 +19,7 @@ const Layout = ({ children, sidebar, header, className = '', isMobileMenuOpen = 
       )}
       <div className={layoutClasses}>
         {/* Sidebar on the left */}
-        {sidebar && <aside className="layout-sidebar">{sidebar}</aside>}
+        {sidebar && <div className="layout-sidebar">{sidebar}</div>}
 
         {/* content on the right (header + main) */}
         <div className="app-content">
